@@ -1,0 +1,23 @@
+# External references are intentionally not part of this repository.
+/fork/
+
+# Python tooling
+/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated terrain and preview files
+/generated/
+*.bin
+*.png
+*.tif
+*.npz
+
+# Local editor and OS state
+.idea/
+.vscode/
+.DS_Store
