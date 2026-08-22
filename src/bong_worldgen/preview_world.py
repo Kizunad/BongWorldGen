@@ -6,8 +6,14 @@ import json
 import math
 from pathlib import Path
 
+import numpy as np
+
 from .adapters import to_bong_tile, write_bong_raster
+from .adapters.bong_raster import BASE_SURFACE_PALETTE
+from .data.world import PoiDefinition, ZoneDefinition
+from .data.world_definition import WORLD
 from .data.recipes import DEFAULT_RECIPE
+from .data.wilderness import wilderness_palette_manifest
 from .engine import TerrainRecipe, generate_heightfield
 
 
@@ -19,6 +25,41 @@ SPAN_ENCODING = {
     "spans_file": "spans.bin",
     "slot_layout": "i16_le(floor_y, ceiling_y) x max_spans, unused slots = sentinel",
 }
+OVERVIEW_STRIDE = 32
+
+
+def _zone_manifest(zone: ZoneDefinition) -> dict[str, object]:
+    """Project authored zone metadata into the console manifest shape."""
+
+    # Keep this adapter local: the typed Python zone model remains independent
+    # from the browser-facing manifest contract.
+    return {
+        "name": zone.name,
+        "display_name": zone.display_name,
+        "terrain_profile": zone.terrain_profile,
+        "spirit_qi": zone.spirit_qi,
+        "danger_level": zone.danger_level,
+        "worldgen": {
+            "center_xz": [zone.center_x, zone.center_z],
+            "size_xz": [zone.size_x, zone.size_z],
+            "shape": zone.shape,
+            "boundary": {"mode": zone.boundary_mode, "width": zone.boundary_width},
+            "source": "authored_zone_data",
+        },
+    }
+
+
+def _poi_manifest(zone_name: str, poi: PoiDefinition) -> dict[str, object]:
+    return {
+        "zone": zone_name,
+        "kind": poi.kind,
+        "name": poi.name,
+        "pos_xyz": list(poi.pos_xyz),
+        "tags": list(poi.tags),
+        "unlock": poi.unlock,
+        "qi_affinity": poi.qi_affinity,
+        "danger_bias": poi.danger_bias,
+    }
 
 
 def _tile_range(minimum: int, maximum: int, tile_size: int) -> range:
@@ -47,6 +88,11 @@ def export_preview_world(
     rasters_dir = output_dir / "rasters"
     rasters_dir.mkdir(parents=True, exist_ok=True)
     tile_entries: list[dict[str, object]] = []
+    overview_width = (max_x - min_x + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE
+    overview_height = (max_z - min_z + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE
+    overview_elevation = np.full((overview_height, overview_width), np.nan, dtype=np.float32)
+    overview_surface = np.zeros((overview_height, overview_width), dtype=np.uint8)
+    overview_wilderness = np.zeros((overview_height, overview_width), dtype=np.uint8)
 
     for tile_z in _tile_range(min_z, max_z, tile_size):
         for tile_x in _tile_range(min_x, max_x, tile_size):
@@ -61,6 +107,18 @@ def export_preview_world(
                 origin_z=origin_z,
             )
             tile = to_bong_tile(field, sea_level=recipe.sea_level)
+            for local_z in range(0, tile_size, OVERVIEW_STRIDE):
+                world_z = origin_z + local_z
+                oz = (world_z - min_z) // OVERVIEW_STRIDE
+                if oz < 0 or oz >= overview_height:
+                    continue
+                for local_x in range(0, tile_size, OVERVIEW_STRIDE):
+                    world_x = origin_x + local_x
+                    ox = (world_x - min_x) // OVERVIEW_STRIDE
+                    if 0 <= ox < overview_width:
+                        overview_elevation[oz, ox] = tile.height[local_z, local_x]
+                        overview_surface[oz, ox] = tile.surface_id[local_z, local_x]
+                        overview_wilderness[oz, ox] = tile.wilderness_id[local_z, local_x]
             write_bong_raster(
                 tile,
                 rasters_dir,
@@ -82,10 +140,27 @@ def export_preview_world(
                         "biome_id",
                         "feature_mask",
                         "boundary_weight",
+                        "wilderness_id",
+                        "riverbed_id",
+                        "cave_id",
                     ],
                     "spans": True,
                 }
             )
+
+    if not np.isfinite(overview_elevation).all():
+        raise ValueError("overview sampling left uncovered cells; choose aligned world bounds")
+    overview_elevation.tofile(rasters_dir / "overview_height.bin")
+    overview_surface.tofile(rasters_dir / "overview_surface_id.bin")
+    overview_wilderness.tofile(rasters_dir / "overview_wilderness_id.bin")
+
+    surface_palette = list(BASE_SURFACE_PALETTE)
+    riverbed_palette = list(
+        dict.fromkeys(material for river in recipe.rivers for material in river.bed_materials)
+    )
+    for material in riverbed_palette:
+        if material not in surface_palette:
+            surface_palette.append(material)
 
     manifest = {
         "version": 2,
@@ -99,10 +174,28 @@ def export_preview_world(
             "min_z": min_z,
             "max_z": max_z,
         },
-        "surface_palette": ["stone", "coarse_dirt", "gravel", "grass_block"],
+        "overview": {
+            "width": overview_width,
+            "height": overview_height,
+            "origin_x": min_x,
+            "origin_z": min_z,
+            "cell_size": OVERVIEW_STRIDE,
+            "height_file": "overview_height.bin",
+            "surface_file": "overview_surface_id.bin",
+            "wilderness_file": "overview_wilderness_id.bin",
+            "note": "Display-only overview; full-resolution tile rasters remain authoritative.",
+        },
+        "surface_palette": surface_palette,
+        "riverbed_palette": riverbed_palette,
+        "cave_palette": [network.name for network in recipe.caves],
         "biome_palette": ["minecraft:plains", "minecraft:river"],
+        "wilderness_palette": wilderness_palette_manifest(),
         "tiles": tile_entries,
-        "pois": [],
+        "pois": [
+            _poi_manifest(zone.name, poi)
+            for zone in WORLD.zones
+            for poi in zone.pois
+        ],
         "poi_connections": [],
         "zones": [
             {
@@ -112,10 +205,11 @@ def export_preview_world(
                 "spirit_qi": 0.35,
                 "danger_level": 2,
                 "worldgen": {"generator": "bong_worldgen", "seed": seed},
-            }
+            },
+            *(_zone_manifest(zone) for zone in WORLD.zones),
         ],
-        "semantic_layers": [],
-        "vertical_layers": [],
+        "semantic_layers": ["cave_id"],
+        "vertical_layers": ["spans"],
         "notes": [
             "Generated by standalone BongWorldGen.",
             "The existing Three.js console reads this manifest directly.",

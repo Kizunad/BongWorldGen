@@ -1,11 +1,12 @@
-"""Recipe interpreter for the standalone procedural terrain engine."""
+"""独立程序化地形引擎的配方解释器。"""
 
 from __future__ import annotations
 
 import numpy as np
 
+from .caves import generate_underground
 from .geometry import polyline_distance_and_progress
-from .models import Heightfield, TerrainRecipe
+from .models import Heightfield, NoiseLayer, Point, River, TerrainRecipe
 from .noise import sample_noise
 
 
@@ -56,23 +57,209 @@ def _apply_basins(
     return output
 
 
+def _polyline_stations(
+    path: tuple[Point, ...], station_count: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """返回沿折线采样的归一化进度和坐标。"""
+
+    if station_count < 2:
+        raise ValueError("river profile needs at least two stations")
+    lengths = np.asarray(
+        [
+            np.hypot(path[index + 1].x - point.x, path[index + 1].z - point.z)
+            for index, point in enumerate(path[:-1])
+        ],
+        dtype=np.float64,
+    )
+    total = max(float(lengths.sum()), 1.0e-9)
+    cumulative = np.concatenate(([0.0], np.cumsum(lengths)))
+    distances = np.linspace(0.0, total, station_count)
+    segment_ids = np.searchsorted(cumulative[1:], distances, side="right")
+    segment_ids = np.minimum(segment_ids, len(path) - 2)
+    segment_start = cumulative[segment_ids]
+    segment_length = np.maximum(lengths[segment_ids], 1.0e-9)
+    local_t = np.clip((distances - segment_start) / segment_length, 0.0, 1.0)
+    start = path[:-1]
+    end = path[1:]
+    start_x = np.asarray([point.x for point in start], dtype=np.float64)
+    start_z = np.asarray([point.z for point in start], dtype=np.float64)
+    end_x = np.asarray([point.x for point in end], dtype=np.float64)
+    end_z = np.asarray([point.z for point in end], dtype=np.float64)
+    station_x = start_x[segment_ids] + (end_x[segment_ids] - start_x[segment_ids]) * local_t
+    station_z = start_z[segment_ids] + (end_z[segment_ids] - start_z[segment_ids]) * local_t
+    return distances / total, station_x, station_z
+
+
+def _sample_regular_grid(
+    values: np.ndarray,
+    grid_x: np.ndarray,
+    grid_z: np.ndarray,
+    sample_x: np.ndarray,
+    sample_z: np.ndarray,
+) -> np.ndarray:
+    """在规则世界坐标网格上双线性采样，并把边界坐标钳制到网格内。"""
+
+    height, width = values.shape
+    cell_x = float(grid_x[0, 1] - grid_x[0, 0]) if width > 1 else 1.0
+    cell_z = float(grid_z[1, 0] - grid_z[0, 0]) if height > 1 else 1.0
+    grid_origin_x = float(grid_x[0, 0])
+    grid_origin_z = float(grid_z[0, 0])
+    gx = np.clip((sample_x - grid_origin_x) / cell_x, 0.0, width - 1.0)
+    gz = np.clip((sample_z - grid_origin_z) / cell_z, 0.0, height - 1.0)
+    x0 = np.floor(gx).astype(np.int64)
+    z0 = np.floor(gz).astype(np.int64)
+    x1 = np.minimum(x0 + 1, width - 1)
+    z1 = np.minimum(z0 + 1, height - 1)
+    tx = gx - x0
+    tz = gz - z0
+    top = values[z0, x0] * (1.0 - tx) + values[z0, x1] * tx
+    bottom = values[z1, x0] * (1.0 - tx) + values[z1, x1] * tx
+    return top * (1.0 - tz) + bottom * tz
+
+
+def _smooth_profile(profile: np.ndarray) -> np.ndarray:
+    """消除单个站点的地形尖峰，同时不引入过冲。"""
+
+    radius = min(4, max(1, profile.size // 32))
+    kernel = np.full(2 * radius + 1, 1.0 / (2 * radius + 1), dtype=np.float64)
+    padded = np.pad(profile, (radius, radius), mode="edge")
+    return np.convolve(padded, kernel, mode="valid")
+
+
+def _river_surface_profile(
+    terrain: np.ndarray,
+    grid_x: np.ndarray,
+    grid_z: np.ndarray,
+    river: River,
+    cell_size: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """沿一条手工河流构建单调下降的水面和两岸上限。"""
+
+    total_length = sum(
+        float(np.hypot(end.x - start.x, end.z - start.z))
+        for start, end in zip(river.path, river.path[1:])
+    )
+    station_count = max(32, min(256, int(total_length / max(cell_size * 4.0, 1.0)) + 1))
+    station_t, station_x, station_z = _polyline_stations(river.path, station_count)
+    tangent_x = np.gradient(station_x)
+    tangent_z = np.gradient(station_z)
+    tangent_length = np.maximum(np.hypot(tangent_x, tangent_z), 1.0e-9)
+    normal_x = -tangent_z / tangent_length
+    normal_z = tangent_x / tangent_length
+    width_profile = river.width * (1.0 + (river.widening - 1.0) * station_t)
+    terrain_profile = _sample_regular_grid(
+        terrain,
+        grid_x,
+        grid_z,
+        station_x,
+        station_z,
+    )
+    center_profile = _smooth_profile(terrain_profile)
+    bank_offset = width_profile * 1.2
+    left_bank = _sample_regular_grid(
+        terrain,
+        grid_x,
+        grid_z,
+        station_x + normal_x * bank_offset,
+        station_z + normal_z * bank_offset,
+    )
+    right_bank = _sample_regular_grid(
+        terrain,
+        grid_x,
+        grid_z,
+        station_x - normal_x * bank_offset,
+        station_z - normal_z * bank_offset,
+    )
+
+    bank_profile = np.minimum(left_bank, right_bank)
+    bank_profile = _smooth_profile(bank_profile)
+    bank_cap = np.floor(bank_profile) - river.bank_clearance
+    surface_profile = np.minimum(
+        center_profile,
+        bank_profile,
+    ) - river.bank_clearance
+    surface_profile = np.minimum(surface_profile, bank_cap)
+    surface_profile -= river.water_drop * station_t
+    # 河流剖面必须向下游流动：可以下降，但不能爬过路径上的横向山脊。
+    surface_profile = np.minimum.accumulate(surface_profile)
+    return station_t, surface_profile, bank_cap
+
+
 def _apply_rivers(
     terrain: np.ndarray,
     water: np.ndarray,
     x: np.ndarray,
     z: np.ndarray,
     recipe: TerrainRecipe,
-) -> tuple[np.ndarray, np.ndarray]:
+    seed: int,
+    riverbed_id: np.ndarray,
+    riverbed_palette: tuple[str, ...],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     output_height = terrain
     output_water = water
-    for river in recipe.rivers:
+    output_riverbed = riverbed_id
+    palette_index = {name: index for index, name in enumerate(riverbed_palette)}
+    for river_index, river in enumerate(recipe.rivers):
         distance, progress = polyline_distance_and_progress(x, z, river.path)
         width = river.width * (1.0 + (river.widening - 1.0) * progress)
-        channel = np.exp(-((distance / np.maximum(width, 1.0e-6)) ** 2))
-        output_height = output_height - channel * river.depth
-        river_water = output_height + 0.75
-        output_water = np.where(channel > 0.16, np.maximum(output_water, river_water), output_water)
-    return output_height, output_water
+        channel_mask = distance <= width
+        cell_size = float(x[0, 1] - x[0, 0]) if x.shape[1] > 1 else 1.0
+        riverbed_mask = distance <= width + cell_size
+        station_t, water_profile, bank_profile = _river_surface_profile(
+            output_height,
+            x,
+            z,
+            river,
+            cell_size=cell_size,
+        )
+        water_surface = np.floor(np.interp(progress, station_t, water_profile))
+        bank_cap = np.floor(np.interp(progress, station_t, bank_profile))
+        normalized_distance = np.clip(distance / np.maximum(width, 1.0e-6), 0.0, 1.0)
+        cross_section = np.power(np.maximum(1.0 - normalized_distance**2, 0.0), 1.5)
+        target_bed = water_surface - river.depth * cross_section
+        output_height = np.where(
+            channel_mask,
+            np.minimum(output_height, target_bed),
+            output_height,
+        )
+
+        # 水体是纵向剖面；已有湖水可以并入河道，但仍受剖面级
+        # 两岸上限约束。
+        existing_water = np.where(output_water >= 0.0, output_water, -np.inf)
+        channel_water = np.maximum(existing_water, water_surface)
+        channel_water = np.minimum(channel_water, bank_cap)
+        channel_water = np.where(
+            channel_mask & (channel_water > output_height), channel_water, -1.0
+        )
+        output_water = np.where(channel_mask, channel_water, output_water)
+
+        material_count = len(river.bed_materials)
+        material_noise = sample_noise(
+            x,
+            z,
+            # 低频材质斑块让相邻河床方块保持连贯，避免每列都随机
+            # 换材质。
+            layer=NoiseLayer(
+                kind="value",
+                scale=max(river.width * 3.5, 8.0),
+                octaves=1,
+                seed_offset=river_index * 1543,
+            ),
+            seed=seed + 271_828,
+        )
+        material_choice = np.minimum(
+            ((material_noise + 1.0) * 0.5 * material_count).astype(np.int64),
+            material_count - 1,
+        )
+        material_ids = np.asarray(
+            [palette_index[name] for name in river.bed_materials], dtype=np.int16
+        )
+        output_riverbed = np.where(
+            riverbed_mask,
+            material_ids[material_choice],
+            output_riverbed,
+        )
+    return output_height, output_water, output_riverbed
 
 
 def generate_heightfield(
@@ -85,7 +272,7 @@ def generate_heightfield(
     origin_z: float = 0.0,
     cell_size: float = 1.0,
 ) -> Heightfield:
-    """Evaluate one recipe into contiguous float32 scalar fields."""
+    """将一份配方计算为连续存储的 float32 标量场。"""
 
     x, z = _coordinate_grid(width, height, origin_x, origin_z, cell_size)
     terrain = np.full(x.shape, recipe.base_height, dtype=np.float64)
@@ -97,11 +284,31 @@ def generate_heightfield(
     moisture = sample_noise(x, z, recipe.moisture_noise, seed + 100_003)
     moisture = np.clip((moisture + 1.0) * 0.5, 0.0, 1.0)
     water = np.where(terrain < recipe.sea_level, recipe.sea_level, -1.0)
-    terrain, water = _apply_rivers(terrain, water, x, z, recipe)
+    riverbed_palette = tuple(
+        dict.fromkeys(material for river in recipe.rivers for material in river.bed_materials)
+    )
+    riverbed = np.full(terrain.shape, -1, dtype=np.int16)
+    terrain, water, riverbed = _apply_rivers(
+        terrain,
+        water,
+        x,
+        z,
+        recipe,
+        seed,
+        riverbed,
+        riverbed_palette,
+    )
     water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
+    underground = generate_underground(terrain, x, z, recipe, seed)
 
     return Heightfield(
         height=np.ascontiguousarray(terrain, dtype=np.float32),
         moisture=np.ascontiguousarray(moisture, dtype=np.float32),
         water_level=np.ascontiguousarray(water, dtype=np.float32),
+        riverbed_id=np.ascontiguousarray(riverbed, dtype=np.int16),
+        riverbed_palette=riverbed_palette,
+        solid_spans=np.ascontiguousarray(underground.solid_spans, dtype=np.int16),
+        underground_blocks=underground.blocks,
+        cave_id=np.ascontiguousarray(underground.cave_id, dtype=np.uint8),
+        cave_palette=underground.cave_palette,
     )
