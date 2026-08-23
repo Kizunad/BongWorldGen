@@ -10,7 +10,7 @@ Bong 的独立程序化地形生成器。项目只保留一条清晰的数据流
             ↓
     Bong raster 转换层
             ↓
-    height / surface_id / water_level / biome_id / feature_mask
+    height / surface_id / water_level / biome_id / feature_mask / wilderness_id / riverbed_id
 
 fork/ 下的仓库只用于算法对照，不参与运行时导入，也不会提交到本仓库。当前参考
 仓库为 Kizunad/Procedural-Maps，其上游没有声明许可证，因此核心实现采用独立代码，
@@ -62,3 +62,117 @@ world_metadata.py。重新从 Bong JSON 同步时运行导入工具即可重新�
 
 导入工具只负责格式转换，不参与生成逻辑。后续可以逐步把旧 JSON 的字段迁移成类型化
 的 Python 数据对象。
+
+## 荒野类型数据
+
+### 河床材质
+
+河流的河床材质是配方数据，不写死在生成器里。直接在 `River` 上配置候选集合：
+
+```python
+River(
+    path=(Point(0, 0), Point(800, 600)),
+    width=18.0,
+    depth=6.0,
+    widening=2.5,
+    bed_materials=("mud", "gravel", "sand", "clay"),
+)
+```
+
+同一 seed 会用低频噪声在河道内稳定地混合这些材质。`Heightfield` 保存
+`riverbed_id` 和 `riverbed_palette`；raster 转换层另外写出 `riverbed_id.bin`，BlueMap
+转换层则把这些名字映射为 Minecraft 方块。支持 `dirt`、`mud`、`gravel`、`sand`、
+`clay`、`coarse_dirt`、`packed_mud` 和 `mud_bricks`。未知材质会在 Anvil 导出时明确报错。
+
+### 地下洞穴
+
+`TerrainRecipe.caves` 使用 Godot Voxel 风格的确定性洞穴图、2D worm 场、路径 SDF 和
+3D seeded noise 组合生成浅层洞穴：先对 2D 噪声平方并按阈值截取 worm，再用 `y²-1`
+抛物线调制出圆形截面；低频调制让通道自然收缩成死胡同，垂直扰动让洞穴上下起伏，
+FastNoiseLite 风格的 XZ domain warp 改变通道走向，3D 噪声再改变洞壁细节，屋顶厚度参数
+阻止洞穴穿出地表。最终通过 `SDF smooth union` 合并支洞和洞室，再由 `solid_spans` 完成
+等价于 Godot `terrain - caves` 的体素空腔扣除。
+`solid_spans` 会把每列的地下实心段写入控制台 `spans.bin` 和 Minecraft Anvil，因而
+控制台可以直接看到洞顶、洞底和连通空腔，而不是只看地表高度。
+
+洞穴实现按职责拆分在 `src/bong_worldgen/engine/caves/`：
+
+- `generator.py`：编排洞穴网络、可选地下结构、`cave_id` 和最终地下结果；
+- `spans.py`：把三维空腔折叠为服务端消费的 top-first `solid_spans`；
+- `structures.py`：预留未来天然地下特征的稀疏方块扩展边界；当前不生成人工建筑；
+- `worms.py`：实现 Godot Voxel 文档中的 2D worm、Y 轴扰动和死胡同调制；
+- `topology.py`：根据 seed 和配方锚点生成确定性的支洞边与洞室节点；
+- `__init__.py`：只暴露洞穴子系统的公共入口。
+
+`engine/pipeline.py` 只调用 `generate_underground()`，不再持有洞穴几何或地下建筑细节。
+这样修改洞穴噪声、垂直范围或后续地下结构时，不会把地表河流和基础高度场一起改动。
+
+服务端不需要从几何反推矿洞：每个 tile 额外写出 `cave_id.bin`（`0` 表示无矿洞，
+`1..N` 对应 manifest 的 `cave_palette`），`spans.bin` 则提供该列实际的地下垂直范围。
+Rust loader 读取这两个层即可判断某个 chunk/列是否属于矿洞，以及可进入的 Y 区间。
+
+洞穴噪声接口和 domain-warp 组织方式参考 FastNoiseLite 的公开 API 设计；本项目使用
+独立 NumPy 实现，没有复制其 C++ 源码，也不增加 C++ 运行时依赖：
+
+<https://github.com/Auburn/FastNoiseLite>
+
+默认配方会为洞穴图生成确定性的地表入口。入口是独立阶段，只放宽入口柱的屋顶限制，
+不会让普通洞道随机穿出地表。当前洞室直接作为自然洞穴的一部分生成，不输出人工矿厅或
+固定建筑方块；未来天然拱门、沉积物等地下特征可以复用稀疏方块输出，不需要修改
+Three.js 解码器。
+
+每个 raster tile 现在额外输出 `wilderness_id.bin`，每个地表柱一个 `uint8` id。
+类型表写在 manifest 的 `wilderness_palette` 中，当前 id 是稳定契约：
+
+- `0 grassland`：草地，可放草、灌木和树
+- `1 mountains`：群山，可放石头、松树和矿物
+- `2 lake`：湖泊，可放芦苇、水生植物和岸线内容
+- `3 river`：河流，可放河岸内容和桥
+
+类型表同时携带 `decoration_tags`，后续 `decorations.rs` 应按 id/tag 读取，
+不要依赖前端颜色或中文显示名。
+
+完整 raster 仍然是权威数据；manifest 另外提供 `overview`，指向一份仅用于控制台
+快速定位的低分辨率高度/地表材质/荒野索引。控制台先显示 overview，再在后台加载完整 tiles，
+不会用 overview 替代服务器或 `decorations.rs` 使用的详细数据。
+
+## 最小 Three.js 控制台
+
+控制台已经迁移到本项目的 `console/`，不再依赖 Bong 原仓库的 FastAPI
+`console_server`、zone 参数编辑或 regen 接口。它只读取：
+
+```text
+/world/manifest.json
+/world/tile_<x>_<z>/*.bin
+```
+
+默认使用旧版地表材质视图，并提供水体、POI 和荒野类型高亮。点击荒野图例中的某一类，
+只会在真实地表上叠加对应 `wilderness_id` 的半透明高亮。启动：
+
+```bash
+cd console
+npm install
+npm run dev
+```
+
+默认读取 `../generated/console-world/rasters`；可以用 `BONG_WORLD_DIR` 指向另一份
+已生成 raster。当前阶段只建立 wilderness 数据契约和控制台迁移，zones 的重新设计
+暂不在此变更中处理。
+
+## BlueMap 地图
+
+BlueMap 是当前的完整地图查看器。转换层直接把 `Heightfield` 写成 Minecraft 1.20.1
+Anvil world，地表使用草地、岩石、积雪、砂砾和真实水方块；BlueMap 再负责方块模型、
+多级细节、俯视、透视和自由飞行。
+
+首次渲染会下载固定版本 BlueMap 5.23，并校验 SHA-256。BlueMap 还需要下载 Mojang 的
+1.20.1 客户端资源，所以必须显式确认持有 Minecraft Java Edition 并接受 EULA：
+
+```bash
+.venv/bin/python tools/bluemap.py render --accept-minecraft-eula
+.venv/bin/python tools/bluemap.py serve
+```
+
+访问 `http://127.0.0.1:8100/`。每次 `render` 都会先替换
+`generated/bluemap-world` 和 `.bluemap/web`，不会保留按版本命名的整份历史世界；
+BlueMap 的客户端资源缓存保留在 `.bluemap/data`，避免每次重复下载。

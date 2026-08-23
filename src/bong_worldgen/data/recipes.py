@@ -6,7 +6,15 @@ review without mixing configuration with the generator implementation.
 
 from __future__ import annotations
 
-from ..engine.models import Basin, MountainRange, NoiseLayer, Point, River, TerrainRecipe
+from ..engine.models import (
+    Basin,
+    CaveNetwork,
+    MountainRange,
+    NoiseLayer,
+    Point,
+    River,
+    TerrainRecipe,
+)
 
 
 DEFAULT_RECIPE = TerrainRecipe(
@@ -76,12 +84,37 @@ DEFAULT_RECIPE = TerrainRecipe(
             width=22.0,
             depth=7.0,
             widening=3.0,
+            bed_materials=("mud", "gravel", "sand", "clay"),
         ),
         River(
             path=(Point(-4500.0, -4200.0), Point(-3500.0, -2600.0), Point(-1900.0, -1200.0)),
             width=10.0,
             depth=4.0,
             widening=2.0,
+            bed_materials=("dirt", "gravel", "sand"),
+        ),
+    ),
+    caves=(
+        CaveNetwork(
+            name="shallow_mine_network",
+            paths=(
+                (
+                    Point(-920.0, -2180.0),
+                    Point(-820.0, -2050.0),
+                    Point(-700.0, -2140.0),
+                ),
+                (
+                    Point(-820.0, -2050.0),
+                    Point(-650.0, -1950.0),
+                ),
+                (
+                    Point(-820.0, -2050.0),
+                    Point(-860.0, -1900.0),
+                ),
+            ),
+            width=2.5,
+            height=4,
+            depth=10.0,
         ),
     ),
     sea_level=61.0,

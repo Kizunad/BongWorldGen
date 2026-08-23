@@ -17,6 +17,14 @@ __pycache__/
 *.tif
 *.npz
 
+# Local BlueMap runtime, cache and rendered web map
+/.tools/
+/.bluemap/
+
+# JavaScript console dependencies and build output
+/console/node_modules/
+/console/dist/
+
 # Local editor and OS state
 .idea/
 .vscode/

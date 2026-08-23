@@ -3,6 +3,7 @@
 from .recipes import DEFAULT_RECIPE
 from .world import PoiDefinition, WorldBounds, WorldDefinition, ZoneDefinition
 from .world_definition import WORLD
+from .wilderness import WILDERNESS_BY_ID, WILDERNESS_PALETTE, WildernessType
 
 __all__ = [
     "DEFAULT_RECIPE",
@@ -11,4 +12,7 @@ __all__ = [
     "WorldBounds",
     "WorldDefinition",
     "ZoneDefinition",
+    "WildernessType",
+    "WILDERNESS_BY_ID",
+    "WILDERNESS_PALETTE",
 ]
