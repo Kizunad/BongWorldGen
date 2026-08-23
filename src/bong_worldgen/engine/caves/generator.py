@@ -81,6 +81,49 @@ def _domain_warp_cave_coordinates(
     return x + offset_x * strength, z + offset_z * strength
 
 
+def _axis_slice(axis: np.ndarray, lower: float, upper: float) -> slice | None:
+    """返回覆盖世界坐标区间的最小网格切片，并保留一格边界余量。"""
+
+    if axis[-1] < lower or axis[0] > upper:
+        return None
+    start = max(0, int(np.searchsorted(axis, lower, side="left")) - 1)
+    stop = min(axis.size, int(np.searchsorted(axis, upper, side="right")) + 1)
+    return slice(start, stop) if start < stop else None
+
+
+def _network_bounds(network, topology) -> tuple[float, float, float, float]:
+    """计算网络在 XZ 平面的保守影响范围，用于裁剪 3D 噪声计算。"""
+
+    points = [point for path in topology.paths for point in path]
+    points.extend(topology.chambers)
+    points.extend(topology.entrances)
+    margin = (
+        max(network.width, network.chamber_radius, network.entrance_radius)
+        + network.domain_warp_strength
+        + network.smooth_union
+        + 2.0
+    )
+    return (
+        min(point.x for point in points) - margin,
+        max(point.x for point in points) + margin,
+        min(point.z for point in points) - margin,
+        max(point.z for point in points) + margin,
+    )
+
+
+def _empty_underground(terrain: np.ndarray) -> UndergroundResult:
+    """创建没有洞穴时的结果，交给 spans 模块走向量化快速路径。"""
+
+    height, width = terrain.shape
+    empty_void = np.empty((0, height, width), dtype=bool)
+    return UndergroundResult(
+        build_solid_spans(terrain, empty_void, np.empty(0, dtype=np.int16)),
+        (),
+        np.zeros((height, width), dtype=np.uint8),
+        (),
+    )
+
+
 def generate_underground(
     terrain: np.ndarray,
     x: np.ndarray,
@@ -89,6 +132,9 @@ def generate_underground(
     seed: int,
 ) -> UndergroundResult:
     """生成 worm 洞穴空腔、地下结构、洞穴 ID 和垂直实心段。"""
+
+    if not recipe.caves:
+        return _empty_underground(terrain)
 
     feature_bounds: list[tuple[int, int]] = []
     for network in recipe.caves:
@@ -113,14 +159,6 @@ def generate_underground(
                 )
             )
     height, width = terrain.shape
-    if not feature_bounds:
-        empty_void = np.zeros((0, height, width), dtype=bool)
-        return UndergroundResult(
-            build_solid_spans(terrain, empty_void, np.empty(0, dtype=np.int16)),
-            (),
-            np.zeros((height, width), dtype=np.uint8),
-            (),
-        )
 
     offset_min = min(bounds[0] for bounds in feature_bounds)
     offset_max = max(bounds[1] for bounds in feature_bounds)
@@ -128,28 +166,43 @@ def generate_underground(
     cave_void = np.zeros((cave_offsets.size, height, width), dtype=bool)
     cave_id = np.zeros((height, width), dtype=np.uint8)
     cave_palette = tuple(network.name for network in recipe.caves)
-    surface = np.floor(terrain).astype(np.int16)
+    x_axis = x[0, :]
+    z_axis = z[:, 0]
 
     for network_index, network in enumerate(recipe.caves):
-        network_void = np.zeros_like(cave_void)
         network_seed = seed + network_index * 9_973
         topology = generate_cave_topology(network, network_seed)
+        min_x, max_x, min_z, max_z = _network_bounds(network, topology)
+        x_slice = _axis_slice(x_axis, min_x, max_x)
+        z_slice = _axis_slice(z_axis, min_z, max_z)
+        if x_slice is None or z_slice is None:
+            # 当前 tile 与网络的确定性世界范围没有交集，不做任何 3D
+            # noise/SDF 计算；最终 spans 模块会走全空腔快速路径。
+            continue
+
+        crop_x = x[z_slice, x_slice]
+        crop_z = z[z_slice, x_slice]
+        crop_surface = np.floor(terrain[z_slice, x_slice]).astype(np.int16)
+        network_void = np.zeros(
+            (cave_offsets.size, crop_surface.shape[0], crop_surface.shape[1]),
+            dtype=bool,
+        )
         warped_x, warped_z = _domain_warp_cave_coordinates(
-            x,
-            z,
+            crop_x,
+            crop_z,
             network.name,
             network.domain_warp_scale,
             network.domain_warp_strength,
             network_seed,
         )
         worm = sample_worm_field(warped_x, warped_z, network, network_seed)
-        network_density = np.full(cave_void.shape, -np.inf, dtype=np.float64)
-        entrance_density = np.full(cave_void.shape, -np.inf, dtype=np.float64)
+        network_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
+        entrance_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
         for path in topology.paths:
             distance, _ = polyline_distance_and_progress(warped_x, warped_z, path)
             vertical_radius = max(network.height * 0.5, 1.0)
             for level_index, offset in enumerate(cave_offsets):
-                world_y = surface + int(offset)
+                world_y = crop_surface + int(offset)
                 vertical_coordinate = (
                     float(offset) + network.depth - worm.vertical_offset
                 ) / vertical_radius
@@ -184,13 +237,13 @@ def generate_underground(
                 )
 
         for level_index, offset in enumerate(cave_offsets):
-            world_y = surface + int(offset)
+            world_y = crop_surface + int(offset)
             # 将这一层的路径并集与洞室节点合并。洞室使用独立的椭球
             # SDF，能够打破“所有地方都是细管”的视觉单调性。
             for chamber in topology.chambers:
                 chamber_sdf = np.sqrt(
-                    ((x - chamber.x) / network.chamber_radius) ** 2
-                    + ((z - chamber.z) / network.chamber_radius) ** 2
+                    ((crop_x - chamber.x) / network.chamber_radius) ** 2
+                    + ((crop_z - chamber.z) / network.chamber_radius) ** 2
                     + ((float(offset) + network.depth) / network.chamber_height) ** 2
                 ) - 1.0
                 network_density[level_index] = _smooth_max(
@@ -200,7 +253,7 @@ def generate_underground(
                 )
             network_void[level_index] = (
                 (network_density[level_index] >= network.sdf_threshold)
-                & (world_y <= surface - network.roof_thickness)
+                & (world_y <= crop_surface - network.roof_thickness)
                 & (world_y > SPAN_MIN_Y)
             )
 
@@ -223,11 +276,12 @@ def generate_underground(
                 )
             network_void[level_index] |= (
                 (entrance_density[level_index] >= network.sdf_threshold)
-                & (world_y <= surface)
+                & (world_y <= crop_surface)
                 & (world_y > SPAN_MIN_Y)
             )
-        cave_void |= network_void
-        cave_id[np.any(network_void, axis=0)] = np.uint8(network_index + 1)
+        cave_void[:, z_slice, x_slice] |= network_void
+        network_columns = np.any(network_void, axis=0)
+        cave_id[z_slice, x_slice][network_columns] = np.uint8(network_index + 1)
 
     return UndergroundResult(
         build_solid_spans(terrain, cave_void, cave_offsets),

@@ -228,20 +228,28 @@ export function spansToVoxelGeometry(
     return surfaceColorForId(sid, manifestSurfacePalette);
   };
 
-  // Does the neighbor column (one stride away) cover world-Y range [floor,ceil]?
-  // If it has no span overlapping [floor, ceil], the side face is exposed.
-  const neighborCovers = (
+  // Does every column in the neighboring LOD block cover world-Y range
+  // [floor,ceil]? A stride quad spans the whole block edge, so a single
+  // representative column is insufficient: if any boundary column exposes
+  // this range, keep the whole side quad to avoid a crack.
+  const neighborBlockCovers = (
     nx: number,
     nz: number,
     floorY: number,
     ceilingY: number,
   ): boolean => {
     if (nx < 0 || nz < 0 || nx >= ts || nz >= ts) return cullTileEdges;
-    const nspans = cols[idx(nx, nz)];
-    for (const s of nspans) {
-      if (s.floorY <= floorY && s.ceilingY >= ceilingY) return true;
+    const endX = Math.min(ts, nx + stride);
+    const endZ = Math.min(ts, nz + stride);
+    for (let z = nz; z < endZ; z += 1) {
+      for (let x = nx; x < endX; x += 1) {
+        const covered = cols[idx(x, z)].some(
+          (s) => s.floorY <= floorY && s.ceilingY >= ceilingY,
+        );
+        if (!covered) return false;
+      }
     }
-    return false;
+    return true;
   };
 
   const quads: Quad[] = [];
@@ -312,7 +320,7 @@ export function spansToVoxelGeometry(
 
         // Side faces — exposed where the neighbor column doesn't cover [floor,ceil].
         // -X
-        if (!neighborCovers(lx - stride, lz, span.floorY, span.ceilingY)) {
+        if (!neighborBlockCovers(lx - stride, lz, span.floorY, span.ceilingY)) {
           quads.push({
             normal: [-1, 0, 0],
             color,
@@ -325,7 +333,7 @@ export function spansToVoxelGeometry(
           });
         }
         // +X
-        if (!neighborCovers(lx + stride, lz, span.floorY, span.ceilingY)) {
+        if (!neighborBlockCovers(lx + stride, lz, span.floorY, span.ceilingY)) {
           quads.push({
             normal: [1, 0, 0],
             color,
@@ -338,7 +346,7 @@ export function spansToVoxelGeometry(
           });
         }
         // -Z
-        if (!neighborCovers(lx, lz - stride, span.floorY, span.ceilingY)) {
+        if (!neighborBlockCovers(lx, lz - stride, span.floorY, span.ceilingY)) {
           quads.push({
             normal: [0, 0, -1],
             color,
@@ -351,7 +359,7 @@ export function spansToVoxelGeometry(
           });
         }
         // +Z
-        if (!neighborCovers(lx, lz + stride, span.floorY, span.ceilingY)) {
+        if (!neighborBlockCovers(lx, lz + stride, span.floorY, span.ceilingY)) {
           quads.push({
             normal: [0, 0, 1],
             color,

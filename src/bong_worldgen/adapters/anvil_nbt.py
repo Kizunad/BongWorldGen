@@ -201,7 +201,19 @@ def _section_blocks(
             ceiling = solid_spans[:, :, slot, 1][None, :, :]
             valid = (floor != 32767) & (ceiling != 32767)
             blocks = np.where(valid & (world_y >= floor) & (world_y <= ceiling), STONE, blocks)
-    blocks = np.where(world_y == heights, surface_blocks[None, :, :], blocks)
+    # 洞穴入口的顶层实心 span 可能低于 surface_y；此时 surface_y 是
+    # 空气，而不是应该被恢复的地表方块。只有确实有 span 覆盖到地表的
+    # 列才写回 surface_blocks，避免把入口重新封死。
+    if solid_spans is None:
+        surface_columns = np.ones(surface_y.shape, dtype=bool)
+    else:
+        top_ceiling = solid_spans[:, :, 0, 1]
+        surface_columns = top_ceiling == surface_y
+    blocks = np.where(
+        (world_y == heights) & surface_columns[None, :, :],
+        surface_blocks[None, :, :],
+        blocks,
+    )
     water_mask = (water >= 0) & (world_y > heights) & (world_y <= water)
     if water_flow is None:
         water_ids = np.full(blocks.shape, WATER, dtype=np.uint8)

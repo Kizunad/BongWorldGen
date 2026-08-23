@@ -378,4 +378,43 @@ describe("spansToVoxelGeometry — LOD stride downsamples", () => {
     expect(lod.faceCount).toBeGreaterThan(0);
     expect(lod.faceCount).toBeLessThan(dense.faceCount);
   });
+
+  it("keeps a stride face when any column in the neighboring block is exposed", () => {
+    // The sampled block is x=0..1. Its +X neighbor is x=2..3; only x=2
+    // reaches the sampled height, so the entire x=2 edge must stay visible.
+    const cols: SpanTuple[][] = [
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 60]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 60]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+      [[-64, 70]],
+    ];
+    const tile = tileFrom(4, cols);
+    const geo = spansToVoxelGeometry(tile, PALETTE, { stride: 2 });
+    let hasPositiveXFace = false;
+    for (let vertex = 0; vertex < geo.positions.length / 3; vertex += 4) {
+      const normalOffset = vertex * 3;
+      if (
+        geo.normals[normalOffset] === 1 &&
+        geo.normals[normalOffset + 1] === 0 &&
+        geo.normals[normalOffset + 2] === 0 &&
+        geo.positions[normalOffset] === 2
+      ) {
+        hasPositiveXFace = true;
+        break;
+      }
+    }
+    expect(hasPositiveXFace).toBe(true);
+  });
 });

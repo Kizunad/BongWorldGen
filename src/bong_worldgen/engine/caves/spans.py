@@ -26,6 +26,17 @@ def build_solid_spans(
     sentinel = np.int16(32767)
     spans = np.full((height, width, SPAN_MAX_SPANS, 2), sentinel, dtype=np.int16)
     surface = np.rint(terrain).astype(np.int16)
+
+    # 没有空腔时所有列都是一段从基岩到地表的实心范围。这个分支同时
+    # 覆盖无洞穴配方和洞穴范围之外的 tile，避免为每一列启动 Python
+    # 区间扫描循环。
+    if cave_void.size == 0 or not np.any(cave_void):
+        spans[:, :, 0] = np.stack(
+            (np.full((height, width), SPAN_MIN_Y, dtype=np.int16), surface),
+            axis=-1,
+        )
+        return spans
+
     for z_index in range(height):
         for x_index in range(width):
             void_levels = np.flatnonzero(cave_void[:, z_index, x_index])

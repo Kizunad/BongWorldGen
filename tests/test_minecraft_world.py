@@ -131,6 +131,33 @@ def test_anvil_section_carves_cave_spans_and_overlays_structure_blocks() -> None
     assert blocks[7, 3, 4] == CHEST
 
 
+def test_anvil_keeps_cave_entrance_open_when_top_span_is_below_surface() -> None:
+    surface = np.full((1, 1), 80, dtype=np.int16)
+    water = np.full((1, 1), -1, dtype=np.int16)
+    surface_blocks = np.full((1, 1), 1, dtype=np.uint8)
+    spans = np.full((1, 1, 4, 2), 32767, dtype=np.int16)
+    spans[0, 0, 0] = (70, 79)
+
+    blocks = _section_blocks(
+        5,
+        surface,
+        water,
+        surface_blocks,
+        solid_spans=spans,
+    )
+
+    assert blocks[0, 0, 0] == AIR, "入口的 surface_y 应保持空气，不能重新盖回地表方块"
+
+    lower_section = _section_blocks(
+        4,
+        surface,
+        water,
+        surface_blocks,
+        solid_spans=spans,
+    )
+    assert lower_section[15, 0, 0] == 1, "入口下方仍应保留顶层实心 span"
+
+
 def test_export_maps_configured_riverbed_materials_to_minecraft_blocks(tmp_path: Path) -> None:
     size = 16
     height = np.full((size, size), 70.0, dtype=np.float32)

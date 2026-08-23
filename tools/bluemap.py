@@ -100,16 +100,24 @@ def _run_bluemap(*args: str) -> None:
     subprocess.run(command, cwd=ROOT, check=True)
 
 
+def _validate_render_args(args: argparse.Namespace) -> None:
+    """在清理已有预览前验证所有会影响输出范围的参数。"""
+
+    if args.width < 1 or args.height < 1:
+        raise SystemExit("--width and --height must be positive")
+    if args.width % 16 or args.height % 16:
+        raise SystemExit("--width and --height must be multiples of 16")
+    if args.origin_x % 16 or args.origin_z % 16:
+        raise SystemExit("--origin-x and --origin-z must be multiples of 16")
+
+
 def render(args: argparse.Namespace) -> None:
+    _validate_render_args(args)
     if not args.accept_minecraft_eula:
         raise SystemExit(
             "render requires --accept-minecraft-eula: BlueMap downloads Mojang's 1.20.1 "
             "client resources and requires a licensed Java Edition account"
         )
-    if args.width % 16 or args.height % 16:
-        raise SystemExit("--width and --height must be multiples of 16")
-    if args.origin_x % 16 or args.origin_z % 16:
-        raise SystemExit("--origin-x and --origin-z must be multiples of 16")
 
     ensure_bluemap()
     _replace_directory(WORLD_DIR)
