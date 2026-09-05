@@ -15,7 +15,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..models import CaveNetwork, NoiseLayer
+from ..terrain_config import NoiseLayer
+from ..underground_config import CaveNetwork
 from ..noise import sample_noise
 
 

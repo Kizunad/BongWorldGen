@@ -21,10 +21,6 @@ __pycache__/
 /.tools/
 /.bluemap/
 
-# JavaScript console dependencies and build output
-/console/node_modules/
-/console/dist/
-
 # Local editor and OS state
 .idea/
 .vscode/

@@ -1,4 +1,4 @@
-"""Minimal Minecraft 1.20.1 NBT encoders used by the Anvil adapter."""
+"""Anvil 适配器使用的 Minecraft 1.20.1 最小 NBT 编码器。"""
 
 from __future__ import annotations
 
@@ -11,8 +11,10 @@ import numpy as np
 
 
 DATA_VERSION = 3465
+# Bong server 的 overworld 使用 -64..431（496 格），与
+# server/src/world/terrain/mod.rs 的 WORLD_HEIGHT/MIN_Y 保持一致。
 WORLD_MIN_Y = -64
-WORLD_MAX_Y = 320
+WORLD_MAX_Y = WORLD_MIN_Y + 496
 SECTION_HEIGHT = 16
 CHUNK_WIDTH = 16
 
@@ -21,9 +23,12 @@ TAG_BYTE = 1
 TAG_SHORT = 2
 TAG_INT = 3
 TAG_LONG = 4
+TAG_FLOAT = 5
+TAG_DOUBLE = 6
 TAG_STRING = 8
 TAG_LIST = 9
 TAG_COMPOUND = 10
+TAG_INT_ARRAY = 11
 TAG_LONG_ARRAY = 12
 
 AIR = 0
@@ -45,6 +50,22 @@ OAK_LOG = 15
 OAK_PLANKS = 16
 CHEST = 17
 TORCH = 18
+COAL_ORE = 19
+IRON_ORE = 20
+COPPER_ORE = 21
+GLOW_LICHEN = 22
+MOSS_BLOCK = 23
+SPORE_BLOSSOM = 24
+ICE = 25
+PACKED_ICE = 26
+BLUE_ICE = 27
+POWDER_SNOW = 28
+ANDESITE = 29
+CALCITE = 30
+TUFF = 31
+DEEPSLATE = 32
+DEAD_BUSH = 33
+STONE_BRICKS = 34
 
 BLOCK_NAMES = (
     "minecraft:air",
@@ -66,14 +87,99 @@ BLOCK_NAMES = (
     "minecraft:oak_planks",
     "minecraft:chest",
     "minecraft:torch",
+    "minecraft:coal_ore",
+    "minecraft:iron_ore",
+    "minecraft:copper_ore",
+    "minecraft:glow_lichen",
+    "minecraft:moss_block",
+    "minecraft:spore_blossom",
+    "minecraft:ice",
+    "minecraft:packed_ice",
+    "minecraft:blue_ice",
+    "minecraft:powder_snow",
+    "minecraft:andesite",
+    "minecraft:calcite",
+    "minecraft:tuff",
+    "minecraft:deepslate",
+    "minecraft:dead_bush",
+    "minecraft:stone_bricks",
 )
+
+# 导入的 Schematic 会携带完整 blockstate。基础地形继续使用上面的固定 ID，
+# 结构方块则按首次出现顺序注册到扩展 palette；最终每个 section 仍写成
+# Minecraft 原生的局部 palette，不会把这些内部 ID 暴露到世界文件。
+_DYNAMIC_BLOCK_STATES: list[tuple[str, dict[str, str] | None]] = []
+_DYNAMIC_BLOCK_IDS: dict[str, int] = {}
+
+
+def _split_blockstate(blockstate: str) -> tuple[str, dict[str, str] | None]:
+    state = blockstate.strip().lower()
+    if not state.startswith("minecraft:"):
+        state = f"minecraft:{state}"
+    if "[" not in state:
+        return state, None
+    if not state.endswith("]"):
+        raise ValueError(f"invalid Minecraft blockstate {blockstate!r}")
+    name, raw_properties = state[:-1].split("[", 1)
+    properties: dict[str, str] = {}
+    for item in raw_properties.split(","):
+        if not item or "=" not in item:
+            raise ValueError(f"invalid Minecraft blockstate property in {blockstate!r}")
+        key, value = item.split("=", 1)
+        properties[key] = value
+    return name, properties or None
+
+
+def register_blockstate(blockstate: str) -> int:
+    """把结构 blockstate 注册为 Anvil 编码器内部 ID。"""
+
+    name, properties = _split_blockstate(blockstate)
+    canonical = name
+    if properties:
+        canonical += "[" + ",".join(
+            f"{key}={value}" for key, value in sorted(properties.items())
+        ) + "]"
+    existing = _DYNAMIC_BLOCK_IDS.get(canonical)
+    if existing is not None:
+        return existing
+    block_id = len(BLOCK_NAMES) + len(_DYNAMIC_BLOCK_STATES)
+    _DYNAMIC_BLOCK_IDS[canonical] = block_id
+    _DYNAMIC_BLOCK_STATES.append((name, properties))
+    return block_id
+
+
+def _registered_blockstate(block_id: int) -> tuple[str, dict[str, str] | None]:
+    if 0 <= block_id < len(BLOCK_NAMES):
+        return BLOCK_NAMES[block_id], _block_properties(block_id)
+    dynamic_index = block_id - len(BLOCK_NAMES)
+    if not 0 <= dynamic_index < len(_DYNAMIC_BLOCK_STATES):
+        raise ValueError(f"unknown Anvil block id {block_id}")
+    return _DYNAMIC_BLOCK_STATES[dynamic_index]
 
 
 def _block_properties(block_id: int) -> dict[str, str] | None:
-    """Return explicit block-state properties for non-default palette entries."""
+    """返回非默认方块 palette 项需要写出的显式状态属性。"""
 
+    if block_id == GRASS_BLOCK:
+        # BlueMap 按 blockstate 条件选择模型；省略 snowy 会无法匹配
+        # grass_block.json 的 snowy=false 变体，导致渲染时露出下方石块。
+        return {"snowy": "false"}
     if block_id == FLOWING_WATER_LEVEL_1:
         return {"level": "1"}
+    if block_id == GLOW_LICHEN:
+        # Glow lichen 的默认状态可能没有任何附着面，渲染器会把它当作
+        # 不可见方块。洞穴占位点已经保证它落在洞壁上，这里显式打开六面
+        # 使 BlueMap 和 Minecraft 都能看到植物；后续 Server 可按真实墙面
+        # 朝向收窄为单面状态。
+        return {
+            "down": "true",
+            "east": "true",
+            "north": "true",
+            "south": "true",
+            "up": "true",
+            "waterlogged": "false",
+            "west": "true",
+        }
     return None
 
 
@@ -152,8 +258,8 @@ def _write_palette(buffer: BytesIO, block_ids: np.ndarray) -> None:
     for block_id in palette_ids:
         _named(buffer, TAG_STRING, "Name")
         block_id = int(block_id)
-        _string(buffer, BLOCK_NAMES[block_id])
-        properties = _block_properties(block_id)
+        name, properties = _registered_blockstate(block_id)
+        _string(buffer, name)
         if properties is not None:
             _named(buffer, TAG_COMPOUND, "Properties")
             for name, value in properties.items():
@@ -185,6 +291,7 @@ def _section_blocks(
     water_flow: np.ndarray | None = None,
     solid_spans: np.ndarray | None = None,
     structure_blocks: np.ndarray | None = None,
+    surface_cover_layers: np.ndarray | None = None,
 ) -> np.ndarray:
     world_y = (
         section_y * SECTION_HEIGHT + np.arange(SECTION_HEIGHT, dtype=np.int16)
@@ -193,9 +300,9 @@ def _section_blocks(
     water = water_y[None, :, :]
 
     if solid_spans is None:
-        blocks = np.where(world_y < heights, STONE, AIR).astype(np.uint8)
+        blocks = np.where(world_y < heights, STONE, AIR).astype(np.uint16)
     else:
-        blocks = np.full((SECTION_HEIGHT, *surface_y.shape), AIR, dtype=np.uint8)
+        blocks = np.full((SECTION_HEIGHT, *surface_y.shape), AIR, dtype=np.uint16)
         for slot in range(solid_spans.shape[2]):
             floor = solid_spans[:, :, slot, 0][None, :, :]
             ceiling = solid_spans[:, :, slot, 1][None, :, :]
@@ -214,12 +321,39 @@ def _section_blocks(
         surface_blocks[None, :, :],
         blocks,
     )
+    if surface_cover_layers is not None:
+        if surface_cover_layers.shape != (4, *surface_y.shape):
+            raise ValueError(
+                "surface_cover_layers must have shape (4, height, width) for a chunk"
+            )
+        # 数组顺序是 powder/snow/ice/blue，实际堆叠从底部 blue 向上到
+        # 顶部 powder。每一层都只占用原地形上方的格子，因此不会覆盖石头。
+        cursor = np.zeros(surface_y.shape, dtype=np.int16)
+        for material_index, block_id in (
+            (3, BLUE_ICE),
+            (2, ICE),
+            (1, SNOW_BLOCK),
+            (0, POWDER_SNOW),
+        ):
+            count = surface_cover_layers[material_index].astype(np.int16, copy=False)
+            # ``heights`` 已经带有广播用的首轴；这里改用二维高度，
+            # 避免再次加轴后让 blocks 变成四维数组。
+            start = surface_y + 1 + cursor
+            end = start + count
+            cover_mask = (
+                surface_columns[None, :, :]
+                & (count[None, :, :] > 0)
+                & (world_y >= start[None, :, :])
+                & (world_y < end[None, :, :])
+            )
+            blocks = np.where(cover_mask, block_id, blocks)
+            cursor += count
     water_mask = (water >= 0) & (world_y > heights) & (world_y <= water)
     if water_flow is None:
-        water_ids = np.full(blocks.shape, WATER, dtype=np.uint8)
+        water_ids = np.full(blocks.shape, WATER, dtype=np.uint16)
     else:
         flowing = water_flow[None, :, :] == 1
-        water_ids = np.where(flowing, FLOWING_WATER_LEVEL_1, WATER).astype(np.uint8)
+        water_ids = np.where(flowing, FLOWING_WATER_LEVEL_1, WATER).astype(np.uint16)
     blocks = np.where(water_mask, water_ids, blocks)
     if structure_blocks is not None:
         for local_x, local_z, block_y, block_id in structure_blocks:
@@ -240,6 +374,7 @@ def _write_section(
     water_flow: np.ndarray | None = None,
     solid_spans: np.ndarray | None = None,
     structure_blocks: np.ndarray | None = None,
+    surface_cover_layers: np.ndarray | None = None,
 ) -> None:
     _named(buffer, TAG_BYTE, "Y")
     _byte(buffer, section_y)
@@ -254,6 +389,7 @@ def _write_section(
             water_flow,
             solid_spans,
             structure_blocks,
+            surface_cover_layers,
         ),
     )
     _named(buffer, TAG_COMPOUND, "biomes")
@@ -275,6 +411,7 @@ def _validate_chunk_arrays(
     water_flow: np.ndarray | None = None,
     solid_spans: np.ndarray | None = None,
     structure_blocks: np.ndarray | None = None,
+    surface_cover_layers: np.ndarray | None = None,
 ) -> None:
     expected = (CHUNK_WIDTH, CHUNK_WIDTH)
     for name, values in (
@@ -292,16 +429,30 @@ def _validate_chunk_arrays(
         expected_spans = (*expected, 4, 2)
         if solid_spans.shape != expected_spans:
             raise ValueError(f"solid_spans must have shape {expected_spans}, got {solid_spans.shape}")
+    if surface_cover_layers is not None:
+        expected_cover = (4, *expected)
+        if surface_cover_layers.shape != expected_cover:
+            raise ValueError(
+                f"surface_cover_layers must have shape {expected_cover}, got {surface_cover_layers.shape}"
+            )
+        if not np.issubdtype(surface_cover_layers.dtype, np.integer):
+            raise ValueError("surface_cover_layers must contain integer layer counts")
     if structure_blocks is not None:
         if structure_blocks.ndim != 2 or structure_blocks.shape[1] != 4:
             raise ValueError("structure_blocks must have shape (N, 4): local_x, local_z, y, block_id")
         if len(structure_blocks) and np.any(structure_blocks[:, 3] < 0):
             raise ValueError("structure_blocks contains a negative block id")
+        if len(structure_blocks) and np.any(
+            (structure_blocks[:, 2] < WORLD_MIN_Y)
+            | (structure_blocks[:, 2] >= WORLD_MAX_Y)
+        ):
+            raise ValueError("structure_blocks contains a y coordinate outside the world height")
     if np.any(surface_y < WORLD_MIN_Y) or np.any(surface_y >= WORLD_MAX_Y):
         raise ValueError("surface_y is outside the Minecraft 1.20.1 build range")
     if np.any(water_y >= WORLD_MAX_Y):
         raise ValueError("water_y is outside the Minecraft 1.20.1 build range")
     allowed_surface_blocks = (
+        AIR,
         STONE,
         GRASS_BLOCK,
         COARSE_DIRT,
@@ -312,8 +463,16 @@ def _validate_chunk_arrays(
         SAND,
         CLAY,
         PACKED_MUD,
-        MUD_BRICKS,
-    )
+            MUD_BRICKS,
+            ICE,
+            PACKED_ICE,
+            BLUE_ICE,
+            POWDER_SNOW,
+            ANDESITE,
+            CALCITE,
+            TUFF,
+            DEEPSLATE,
+        )
     if not np.isin(surface_blocks, allowed_surface_blocks).all():
         raise ValueError("surface_blocks contains an unsupported block id")
 
@@ -327,8 +486,9 @@ def encode_chunk_nbt(
     water_flow: np.ndarray | None = None,
     solid_spans: np.ndarray | None = None,
     structure_blocks: np.ndarray | None = None,
+    surface_cover_layers: np.ndarray | None = None,
 ) -> bytes:
-    """Encode one complete 1.20.1 chunk as uncompressed NBT."""
+    """把一个完整的 1.20.1 区块编码为未压缩 NBT。"""
 
     if not isinstance(chunk_x, int) or not isinstance(chunk_z, int):
         raise TypeError("chunk coordinates must be integers")
@@ -339,10 +499,39 @@ def encode_chunk_nbt(
         water_flow,
         solid_spans,
         structure_blocks,
+        surface_cover_layers,
     )
 
     top_y = np.maximum(surface_y, water_y)
-    max_section_y = min(19, int(top_y.max()) // SECTION_HEIGHT)
+    if surface_cover_layers is not None:
+        if solid_spans is None:
+            cover_columns = np.ones(surface_y.shape, dtype=bool)
+        else:
+            cover_columns = solid_spans[:, :, 0, 1] == surface_y
+        cover_top = np.where(
+            cover_columns,
+            np.minimum(
+                surface_y + np.sum(surface_cover_layers, axis=0),
+                WORLD_MAX_Y - 1,
+            ),
+            surface_y,
+        )
+        top_y = np.maximum(top_y, cover_top)
+    if structure_blocks is not None:
+        # section 列表与 WORLD_SURFACE 高度图必须包含建筑最高方块。此前这里只
+        # 看地形、水面和冰雪覆盖，地表 Y=92 时最多写出 80..95 section，
+        # 导致位于 Y=96 以上的屋顶在 Anvil 文件中被整段截断。
+        top_y = top_y.copy()
+        for local_x, local_z, block_y, _ in structure_blocks:
+            if 0 <= local_x < CHUNK_WIDTH and 0 <= local_z < CHUNK_WIDTH:
+                top_y[int(local_z), int(local_x)] = max(
+                    int(top_y[int(local_z), int(local_x)]),
+                    int(block_y),
+                )
+    max_section_y = min(
+        (WORLD_MAX_Y - 1) // SECTION_HEIGHT,
+        int(top_y.max()) // SECTION_HEIGHT,
+    )
     section_ys = range(WORLD_MIN_Y // SECTION_HEIGHT, max_section_y + 1)
 
     buffer = BytesIO()
@@ -370,6 +559,7 @@ def encode_chunk_nbt(
             water_flow,
             solid_spans,
             structure_blocks,
+            surface_cover_layers,
         )
 
     for name in ("block_entities", "block_ticks", "fluid_ticks"):
@@ -402,7 +592,7 @@ def encode_level_dat(
     spawn_y: int,
     spawn_z: int,
 ) -> bytes:
-    """Encode the small level.dat subset BlueMap needs to identify a world."""
+    """编码 BlueMap 识别世界所需的最小 level.dat 子集。"""
 
     buffer = BytesIO()
     _named(buffer, TAG_COMPOUND, "")
@@ -432,7 +622,7 @@ def encode_level_dat(
 
 
 def read_root_compound(data: bytes) -> dict[str, object]:
-    """Read the NBT subset emitted here; intended for validation and tests."""
+    """读取本模块写出的 NBT 子集，用于校验和测试。"""
 
     source = BytesIO(data)
 
@@ -460,6 +650,8 @@ def read_root_compound(data: bytes) -> dict[str, object]:
             TAG_BYTE: read_byte,
             TAG_INT: read_int,
             TAG_LONG: read_long,
+            TAG_FLOAT: lambda: struct.unpack(">f", read_exact(4))[0],
+            TAG_DOUBLE: lambda: struct.unpack(">d", read_exact(8))[0],
             TAG_STRING: read_string,
             TAG_COMPOUND: read_compound,
         }
@@ -468,6 +660,8 @@ def read_root_compound(data: bytes) -> dict[str, object]:
             return [read_payload(element_tag) for _ in range(read_int())]
         if tag == TAG_LONG_ARRAY:
             return [read_long() for _ in range(read_int())]
+        if tag == TAG_INT_ARRAY:
+            return [read_int() for _ in range(read_int())]
         try:
             return readers[tag]()
         except KeyError as error:
@@ -495,6 +689,11 @@ __all__ = [
     "GRASS_BLOCK",
     "GRAVEL",
     "SNOW_BLOCK",
+    "ICE",
+    "PACKED_ICE",
+    "BLUE_ICE",
+    "DEAD_BUSH",
+    "POWDER_SNOW",
     "STONE",
     "WATER",
     "WORLD_MAX_Y",
@@ -502,4 +701,5 @@ __all__ = [
     "encode_chunk_nbt",
     "encode_level_dat",
     "read_root_compound",
+    "register_blockstate",
 ]

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .models import NoiseLayer
+from .terrain_config import NoiseLayer
 
 
 _MANTISSA_MASK = np.uint64((1 << 53) - 1)

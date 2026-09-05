@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="760" viewBox="0 0 1120 760" role="img" aria-labelledby="title desc">
+  <title id="title">BongWorldGen 生成流程</title>
+  <desc id="desc">从 Python 配方到 Heightfield、Minecraft Anvil 和 BlueMap 的地形生成流程。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52606d"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #17202a; }
+      .subtitle { font: 15px sans-serif; fill: #52606d; }
+      .label { font: 700 16px sans-serif; fill: #17202a; }
+      .detail { font: 13px sans-serif; fill: #52606d; }
+      .box { stroke-width: 2; rx: 12; }
+      .arrow { stroke: #52606d; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .group { font: 700 13px sans-serif; fill: #52606d; letter-spacing: 1px; }
+    </style>
+  </defs>
+
+  <rect width="1120" height="760" fill="#f7f9fb"/>
+  <text x="56" y="54" class="title">BongWorldGen 生成流程</text>
+  <text x="56" y="82" class="subtitle">配置与生成逻辑分离，所有阶段最终汇合为可分块读取的 Heightfield。</text>
+
+  <text x="56" y="126" class="group">输入</text>
+  <rect x="56" y="144" width="270" height="88" class="box" fill="#e8f1ff" stroke="#5b8def"/>
+  <text x="78" y="177" class="label">Python 配方与世界数据</text>
+  <text x="78" y="202" class="detail">terrain / underground / world config · seed</text>
+
+  <text x="390" y="126" class="group">基础场</text>
+  <rect x="390" y="144" width="270" height="88" class="box" fill="#edf7ef" stroke="#5aa469"/>
+  <text x="412" y="177" class="label">坐标网格 + Seed Noise</text>
+  <text x="412" y="202" class="detail">高度 · 湿度 · 可复现随机性</text>
+
+  <text x="724" y="126" class="group">地表地貌与气候</text>
+  <rect x="724" y="144" width="340" height="88" class="box" fill="#fff5df" stroke="#d49a35"/>
+  <text x="746" y="177" class="label">气候带 · 山脉 · 汇流山谷 · 冰川 · 峡谷</text>
+  <text x="746" y="202" class="detail">Uplift → D8 汇流/Stream Power · 冰斗/U 型谷</text>
+
+  <path d="M 326 188 L 390 188" class="arrow"/>
+  <path d="M 660 188 L 724 188" class="arrow"/>
+
+  <text x="56" y="288" class="group">地表水体</text>
+  <rect x="56" y="306" width="270" height="94" class="box" fill="#e6f7fb" stroke="#36a3bf"/>
+  <text x="78" y="340" class="label">河流与河床</text>
+  <text x="78" y="365" class="detail">水面剖面 · 半径 + 1 格河床</text>
+  <text x="78" y="384" class="detail">材质 palette · water_level</text>
+
+  <text x="390" y="288" class="group">地下空间</text>
+  <rect x="390" y="306" width="270" height="94" class="box" fill="#f0eafa" stroke="#9068c2"/>
+  <text x="412" y="340" class="label">洞穴 · 地下河 · 裂隙</text>
+  <text x="412" y="365" class="detail">worm / 3D noise / SDF / 水文网络</text>
+  <text x="412" y="384" class="detail">cave_id · fracture_id · water blocks</text>
+
+  <text x="724" y="288" class="group">地下内容</text>
+  <rect x="724" y="306" width="340" height="94" class="box" fill="#fff0e9" stroke="#d9784b"/>
+  <text x="746" y="340" class="label">实心矿脉、洞壁资源与 spans</text>
+  <text x="746" y="365" class="detail">普通矿物替换石头，洞穴内容附着空腔</text>
+  <text x="746" y="384" class="detail">真实占位方块 + resource_id，供 Server 刷新</text>
+
+  <path d="M 861 232 L 861 270 L 191 270 L 191 306" class="arrow"/>
+  <path d="M 861 232 L 526 232 L 526 306" class="arrow"/>
+  <path d="M 660 353 L 724 353" class="arrow"/>
+  <path d="M 526 400 L 526 494" class="arrow"/>
+  <path d="M 894 400 L 894 454 L 660 454 L 660 542" class="arrow"/>
+  <path d="M 191 400 L 191 454 L 390 454 L 390 542" class="arrow"/>
+
+  <text x="390" y="476" class="group">统一数据契约</text>
+  <rect x="390" y="494" width="270" height="96" class="box" fill="#e9eef2" stroke="#697784"/>
+  <text x="412" y="530" class="label">Heightfield</text>
+  <text x="412" y="555" class="detail">height · uplift · moisture · water_level</text>
+  <text x="412" y="574" class="detail">landform · wilderness · caves · underground</text>
+
+  <path d="M 525 590 L 525 626" class="arrow"/>
+
+  <text x="56" y="650" class="group">输出适配层</text>
+  <rect x="56" y="668" width="270" height="58" class="box" fill="#e8f1ff" stroke="#5b8def"/>
+  <text x="78" y="703" class="label">Bong Raster / manifest</text>
+  <rect x="390" y="668" width="270" height="58" class="box" fill="#edf7ef" stroke="#5aa469"/>
+  <text x="412" y="703" class="label">Minecraft Anvil 世界</text>
+  <rect x="724" y="668" width="340" height="58" class="box" fill="#fff5df" stroke="#d49a35"/>
+  <text x="746" y="703" class="label">Rust Server · BlueMap</text>
+
+  <path d="M 525 626 L 191 668" class="arrow"/>
+  <path d="M 525 626 L 525 668" class="arrow"/>
+  <path d="M 525 626 L 894 668" class="arrow"/>
+</svg>

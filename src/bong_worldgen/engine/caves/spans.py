@@ -8,7 +8,42 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..models import SPAN_MAX_SPANS, SPAN_MIN_Y
+from ..constants import SPAN_MAX_SPANS, SPAN_MIN_Y
+
+
+def _coalesce_excess_void_runs(cave_void: np.ndarray) -> None:
+    """为多个地下生成器合并极窄空腔间的实心缝隙。
+
+    普通洞穴单独生成时通常不超过四段实心范围；独立地下河与普通洞穴
+    交叠后，偶尔会产生第五段。服务端合同不能被扩大，因此只把最短的
+    中间实心缝隙并入空腔，保持主洞和河道本身不被删除。
+    """
+
+    max_void_runs = max(SPAN_MAX_SPANS - 1, 1)
+    for z_index in range(cave_void.shape[1]):
+        for x_index in range(cave_void.shape[2]):
+            levels = np.flatnonzero(cave_void[:, z_index, x_index])
+            if levels.size == 0:
+                continue
+            runs: list[tuple[int, int]] = []
+            start = previous = int(levels[0])
+            for level in levels[1:]:
+                level = int(level)
+                if level != previous + 1:
+                    runs.append((start, previous))
+                    start = level
+                previous = level
+            runs.append((start, previous))
+            while len(runs) > max_void_runs:
+                gap_index = min(
+                    range(len(runs) - 1),
+                    key=lambda index: runs[index + 1][0] - runs[index][1] - 1,
+                )
+                fill_start = runs[gap_index][1] + 1
+                fill_end = runs[gap_index + 1][0] - 1
+                cave_void[fill_start : fill_end + 1, z_index, x_index] = True
+                runs[gap_index] = (runs[gap_index][0], runs[gap_index + 1][1])
+                del runs[gap_index + 1]
 
 
 def build_solid_spans(
@@ -36,6 +71,8 @@ def build_solid_spans(
             axis=-1,
         )
         return spans
+
+    _coalesce_excess_void_runs(cave_void)
 
     for z_index in range(height):
         for x_index in range(width):

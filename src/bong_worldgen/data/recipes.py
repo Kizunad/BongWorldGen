@@ -6,20 +6,143 @@ review without mixing configuration with the generator implementation.
 
 from __future__ import annotations
 
-from ..engine.models import (
+from ..engine.terrain_config import (
     Basin,
-    CaveNetwork,
+    Canyon,
+    GlacialSystem,
+    HydraulicErosionSettings,
+    MountainMaterialSettings,
+    MountainPeakSettings,
     MountainRange,
+    NaturalRelief,
     NoiseLayer,
     Point,
+    RidgedMultifractal,
     River,
-    TerrainRecipe,
+    SnowMountainResourceSpec,
+    SpawnPlainSettings,
+    TownSettings,
+    StandaloneStructureSettings,
+    ValleySystem,
 )
+from ..engine.underground_config import (
+    CaveNetwork,
+    SolidOreSpec,
+    UndergroundRiverNetwork,
+)
+from ..engine.world_config import TerrainRecipe
+from ..engine.climate import ClimateWorldBounds, GlobalClimatePlan
+from .world_metadata import WORLD_BOUNDS
 
 
 DEFAULT_RECIPE = TerrainRecipe(
     name="bong_himalayan_baseline",
+    # 总气候框架：北侧寒带，中部温带，南侧热带。坐标边界来自世界数据，
+    # 不在引擎内复制一份地图范围常量。
+    climate=GlobalClimatePlan(),
+    climate_world_bounds=ClimateWorldBounds(
+        north_z=WORLD_BOUNDS.min_z,
+        south_z=WORLD_BOUNDS.max_z,
+    ),
     base_height=68.0,
+    # 从出生区附近的自然场中挑选低坡度候选，再做带边缘渐变的二次整平。
+    spawn_plain=SpawnPlainSettings(
+        center=Point(0.0, 0.0),
+        search_extent_x=1000.0,
+        search_extent_z=1000.0,
+        search_resolution=32.0,
+        candidate_window_radius=160.0,
+        plain_radius_x=560.0,
+        plain_radius_z=560.0,
+        edge_blend=140.0,
+        maximum_mean_slope=0.18,
+        maximum_local_relief=12.0,
+        minimum_elevation_above_sea=3.0,
+        smoothing_strength=0.72,
+        natural_variation=1.8,
+    ),
+    # 城镇布局与出生平原分离：后者只提供落点。核心区在城墙内以增量生长
+    # 保持高密度；外围部落按分簇采样散布在城墙外，不参与围墙边界计算。
+    town=TownSettings(
+        center=Point(0.0, 0.0),
+        radius=520.0,
+        core_radius=180.0,
+        core_house_count=22,
+        outer_house_count=28,
+        outer_min_radius=250.0,
+        outer_cluster_count=5,
+        outer_cluster_spread=92.0,
+        outer_building_gap_min=7,
+        outer_building_gap_max=15,
+        house_min_size=7,
+        house_max_size=11,
+        house_height=4,
+        road_width=3,
+        alley_width=1,
+        attractor_count=3,
+        main_road_count=3,
+        growth_candidate_count=48,
+        building_gap_min=0,
+        building_gap_max=1,
+        core_wall_minimum_utilization=0.80,
+        core_wall_infill_max_buildings=64,
+        core_growth_radius_ratio=0.55,
+        maximum_slope=0.24,
+        maximum_relief=3.0,
+        house_material="minecraft:stone_bricks",
+        road_materials=(
+            "minecraft:dirt",
+            "minecraft:gravel",
+            "minecraft:coarse_dirt",
+        ),
+        road_material_weights=(0.50, 0.28, 0.22),
+        road_wander=0.34,
+        road_search_margin=72.0,
+        road_slope_penalty=10.0,
+        road_max_slope=0.65,
+        road_cliff_penalty=16.0,
+        road_smoothing_passes=1,
+        road_path_step=3,
+        bridge_max_span=24,
+        bridge_clearance=1,
+        house_schematic_directory="assets/structures/houses",
+        tree_schematic_directory="assets/structures/trees",
+        tree_count=8,
+        tree_clearance=4,
+        npc_spawn_radius=8,
+        structure_ground_offset=1,
+        gate_road_material="minecraft:dirt",
+        gate_road_min_width=2,
+        gate_road_max_width=5,
+        gate_structure_sink=1,
+        tower_structure_sink=1,
+        core_wall_margin=2,
+    ),
+    # 大型单体结构与城镇使用不同的刷新层。位置由世界坐标网格和 seed 决定，
+    # 并从城镇外开始选择，避免成为核心墙内的超大“住宅”。
+    standalone_structures=StandaloneStructureSettings(
+        structure_directory="assets/structures/standalone",
+        grid_spacing=2048.0,
+        maximum_slope=0.35,
+        maximum_relief=7.0,
+        exclusion_center=Point(0.0, 0.0),
+        exclusion_radius=640.0,
+        npc_spawn_radius=14,
+        structure_ground_offset=1,
+    ),
+    # 全球连续崎岖场：不预先划分地貌类型，平原、山脊和陡壁由同一套
+    # seed 噪声自然涌现；显式 mountains 只作为额外的可选山脉骨架。
+    natural_relief=NaturalRelief(
+        macro_amplitude=32.0,
+        ridge_amplitude=48.0,
+        ridge_power=2.15,
+        detail_amplitude=11.0,
+        warp_strength=640.0,
+        cliff_noise=NoiseLayer(kind="fbm", scale=180.0, octaves=3, gain=0.56),
+        cliff_threshold=0.02,
+        cliff_sharpness=9.0,
+        cliff_amplitude=30.0,
+    ),
     base_noise=(
         NoiseLayer(kind="fbm", scale=1900.0, amplitude=10.0, octaves=4, gain=0.55),
         NoiseLayer(kind="fbm", scale=420.0, amplitude=5.0, octaves=3, gain=0.52, seed_offset=17),
@@ -47,14 +170,82 @@ DEFAULT_RECIPE = TerrainRecipe(
                 Point(2300.0, -900.0),
                 Point(6400.0, 700.0),
             ),
-            # Slightly wider than the first preview: keep the crest height but
-            # reduce the apparent edge sharpness by roughly three percent.
-            width=927.0,
-            height=135.0,
-            roughness_contrast=0.53,
-            valley_depth=17.5,
-            roughness=NoiseLayer(
-                kind="ridge", scale=380.0, amplitude=1.0, octaves=1, gain=0.5, seed_offset=41
+            # Mountain Spine + Distance Field：收窄横截面形成 60 度以上的
+            # 主坡，三组 Ridged Multifractal 分别控制峰鞍、支脊和岩层褶皱。
+            width=280.0,
+            height=0.0,
+            flank_carving=0.58,
+            # 绝对峰高模式下不在中心线再挖槽，否则会抵消 summit_elevation。
+            valley_depth=0.0,
+            base_elevation=88.0,
+            summit_elevation=424.0,
+            slope_power=1.45,
+            crest_width=18.0,
+            edge_blend=0.16,
+            spine_height_variation=82.0,
+            spine_peak_width=8.0,
+            spine_ridges=RidgedMultifractal(
+                scale=680.0,
+                octaves=4,
+                persistence=0.48,
+                seed_offset=149,
+                warp_scale=1480.0,
+                warp_strength=74.0,
+            ),
+            spine_warp_strength=128.0,
+            spine_warp_noise=NoiseLayer(
+                kind="fbm",
+                scale=1180.0,
+                amplitude=1.0,
+                octaves=3,
+                gain=0.55,
+                seed_offset=163,
+            ),
+            width_variation=0.24,
+            width_noise=NoiseLayer(
+                kind="fbm",
+                scale=540.0,
+                amplitude=1.0,
+                octaves=3,
+                gain=0.55,
+                seed_offset=181,
+            ),
+            flank_ridges=RidgedMultifractal(
+                scale=190.0,
+                octaves=5,
+                persistence=0.52,
+                ridge_gain=2.1,
+                seed_offset=41,
+                warp_scale=780.0,
+                warp_strength=92.0,
+            ),
+            rock_folds=RidgedMultifractal(
+                scale=72.0,
+                octaves=4,
+                lacunarity=2.15,
+                persistence=0.44,
+                ridge_gain=2.2,
+                seed_offset=211,
+                warp_scale=310.0,
+                warp_strength=34.0,
+            ),
+            rock_fold_height=13.0,
+            # 峰点从同一主脊按 seed 选择，沿脊宽、横脊窄；不是四个固定通道
+            # 或脱离山脊的 Gaussian 山包。
+            peaks=MountainPeakSettings(
+                enabled=True,
+                count=7,
+                candidate_spacing=240.0,
+                minimum_spacing=720.0,
+                amplitude=34.0,
+                # 峰沿主脊拉长，避免在两个相邻脊格之间形成孤立椭圆轮廓。
+                along_width=280.0,
+                across_width=76.0,
+                smoothness=7.0,
+                ridge_weight=0.62,
+                curvature_weight=0.23,
+                junction_weight=0.15,
+                seed_offset=251,
             ),
         ),
         MountainRange(
@@ -65,11 +256,203 @@ DEFAULT_RECIPE = TerrainRecipe(
             ),
             width=742.0,
             height=95.0,
-            roughness_contrast=0.53,
+            flank_carving=0.53,
             valley_depth=11.7,
-            roughness=NoiseLayer(
-                kind="ridge", scale=300.0, amplitude=1.0, octaves=1, gain=0.5, seed_offset=73
+            flank_ridges=RidgedMultifractal(
+                scale=300.0,
+                octaves=5,
+                persistence=0.52,
+                seed_offset=73,
+                warp_scale=960.0,
+                warp_strength=88.0,
             ),
+            rock_fold_height=7.0,
+        ),
+    ),
+    valleys=(
+        ValleySystem(
+            name="main_mountain_drainage",
+            # 水文域覆盖两条显式山脉并留出集水区；它是配置数据，不是引擎常量。
+            domain_center=Point(-1050.0, -2700.0),
+            domain_extent_x=8050.0,
+            domain_extent_z=4000.0,
+            planning_resolution=16.0,
+            rainfall_variation=0.30,
+            minimum_drainage_area=12_000.0,
+            reference_drainage_area=600_000.0,
+            minimum_slope=0.002,
+            reference_slope=0.22,
+            area_exponent=0.50,
+            slope_exponent=1.0,
+            erosion_strength=0.82,
+            maximum_depth=58.0,
+            minimum_width=10.0,
+            maximum_width=72.0,
+            width_exponent=0.38,
+            cross_section_power=1.8,
+            minimum_height_above_sea_level=4.0,
+            # Uplift + Stream Power 耦合：山脊抬升越强，河流侵蚀势能越高；
+            # 三轮有限反馈让下切后的坡面重新参与下一轮汇流。
+            uplift_strength=0.45,
+            uplift_reference=128.0,
+            # Watershed Divide：从同一 D8 出口标签边界提取山脊，使用世界单位
+            # 配置宽度，最多只回填谷槽的一小部分，保留 Stream Power 的切割。
+            watershed_divide_strength=14.0,
+            watershed_divide_width=48.0,
+            watershed_divide_valley_fill=0.35,
+            coupling_iterations=3,
+        ),
+    ),
+    glaciers=(
+        GlacialSystem(
+            name="north_cold_glaciers",
+            # 显式冰川域提供局部几何；全局寒带权重在 pipeline 中负责门控。
+            seed_center=Point(0.0, -2500.0),
+            seed_extent=2600.0,
+            cirque_count=4,
+            cirque_radius=118.0,
+            cirque_depth=28.0,
+            cirque_min_elevation=88.0,
+            valley_count=4,
+            valley_segments=18,
+            valley_length=1900.0,
+            valley_turn=0.74,
+            valley_source_width=32.0,
+            valley_floor_width=11.0,
+            valley_depth=42.0,
+            valley_width_growth=2.4,
+            valley_wall_power=4.2,
+            moraine_height=8.0,
+            moraine_width=48.0,
+            moraine_length=160.0,
+            drumlin_count=18,
+            drumlin_length=155.0,
+            drumlin_width=34.0,
+            drumlin_height=5.0,
+            # 局部材质团块的概率：冰块最多，蓝冰较少但会形成可辨识的深色团块。
+            surface_patch_count=52,
+            surface_patch_radius=42.0,
+            surface_material_weights=(0.24, 0.14, 0.31, 0.20, 0.11, 0.0),
+            freeze_thaw_iterations=6,
+            freeze_thaw_strength=0.18,
+            talus_slope_threshold=1.8,
+            surface_protrusion_probability=0.12,
+            # 第一阶段质量平衡：西北风把积雪推向迎风坡和背风雪窝；朝南坡
+            # 消融较强。角度以 +X 为 0 度、+Z 为 90 度。
+            mass_balance_enabled=True,
+            # 风向覆盖使用地表法线点积：迎风面 dot < -0.30 增厚，背风面
+            # dot > 0.50 削薄；阈值和强度均留在配方中，便于后续调参。
+            wind_snow_enabled=True,
+            wind_snow_accumulation_threshold=0.30,
+            wind_snow_erosion_threshold=0.50,
+            wind_snow_max_extra_layers=1,
+            wind_snow_erosion_retention_scale=0.70,
+            prevailing_wind_angle_degrees=55.0,
+            sun_facing_angle_degrees=90.0,
+            equilibrium_line_elevation=72.0,
+            equilibrium_transition=72.0,
+            snowfall_rate=1.10,
+            snowfall_variability=0.38,
+            snowfall_noise=NoiseLayer(
+                kind="fbm",
+                scale=460.0,
+                octaves=3,
+                gain=0.55,
+                seed_offset=1_907,
+            ),
+            windward_accumulation_strength=0.58,
+            leeward_drift_strength=0.28,
+            mass_balance_slope_scale=0.20,
+            ablation_rate=0.50,
+            minimum_ablation=0.08,
+            low_elevation_ablation_strength=0.72,
+            solar_ablation_strength=0.34,
+            transition_ablation_strength=0.58,
+            # 第二阶段流路规划：从积雪极大值出发，沿真实坡面下行；惯性保持
+            # 主干连续，seed 扭曲只负责局部转弯，支流靠近后共享同一主干。
+            flow_planning_resolution=28.0,
+            flow_source_separation=300.0,
+            flow_inertia=0.66,
+            flow_meander_strength=0.24,
+            flow_direction_samples=11,
+            flow_merge_distance=96.0,
+            flow_uphill_tolerance=0.0,
+            flow_min_length=420.0,
+            flow_termination_balance=-0.06,
+            # 冻土是独立地表层：覆盖噪声决定连续斑块，材质权重决定每片
+            # 冻土地表使用的真实 Minecraft 方块。
+            permafrost_enabled=True,
+            permafrost_min_cold_weight=0.18,
+            permafrost_full_cold_weight=0.32,
+            permafrost_coverage=0.64,
+            permafrost_elevation_start=4.0,
+            permafrost_elevation_range=90.0,
+            permafrost_patch_scale=120.0,
+            permafrost_material_scale=42.0,
+            permafrost_material_weights=(
+                0.18,  # powder_snow
+                0.14,  # snow_block
+                0.13,  # ice
+                0.10,  # packed_ice
+                0.17,  # gravel
+                0.12,  # coarse_dirt
+                0.09,  # dirt
+                0.07,  # stone
+            ),
+            climate_fade_scale=180.0,
+            climate_fade_full_weight=0.20,
+            # 覆盖层由过渡带向寒带逐层解锁；每个深度值就是叠加的方块层数。
+            cover_snow_weight=0.24,
+            cover_ice_weight=0.52,
+            cover_blue_ice_weight=0.78,
+            cover_powder_depth=1,
+            cover_snow_depth=1,
+            cover_ice_depth=1,
+            cover_blue_ice_depth=1,
+            cover_elevation_start=18.0,
+            cover_elevation_range=110.0,
+            crevasses_enabled=True,
+            crevasse_spacing=150.0,
+            crevasse_width=1.0,
+            crevasse_probability=0.55,
+            crevasse_jitter=0.35,
+            crevasse_meander=0.55,
+            crevasse_blue_ice_probability=0.18,
+            crevasse_min_cold_weight=0.08,
+            # 雪山生成物：小概率的枯木占位点，Server 按独立资源 ID 刷新真实产物。
+            snow_mountain_resources=(
+                SnowMountainResourceSpec(
+                    name="雪山生成物",
+                    material="minecraft:dead_bush",
+                    resource_id="snow_mountain:dead_bush",
+                    rarity="少",
+                    probability=0.018,
+                    min_mountain_weight=0.22,
+                    min_cold_weight=0.45,
+                ),
+            ),
+        ),
+    ),
+    canyons=(
+        Canyon(
+            name="grand_warped_canyon",
+            # 路径从随机 XZ 起点开始，不检查高度；平原、群山和湖盆都可以
+            # 成为峡谷起点。大尺度 domain warp 让两岸保持连续弯转。
+            seed_center=Point(0.0, 0.0),
+            seed_extent=3400.0,
+            path_count=1,
+            path_segments=20,
+            path_length=8800.0,
+            path_turn=0.78,
+            width=180.0,
+            floor_width=30.0,
+            depth=72.0,
+            bank_width=52.0,
+            wall_power=1.9,
+            terrace_count=7,
+            terrace_strength=0.16,
+            domain_warp_scale=950.0,
+            domain_warp_strength=260.0,
         ),
     ),
     rivers=(
@@ -94,28 +477,127 @@ DEFAULT_RECIPE = TerrainRecipe(
             bed_materials=("dirt", "gravel", "sand"),
         ),
     ),
+    solid_ores=(
+        SolidOreSpec(
+            material="coal_ore",
+            rarity="多",
+            cluster_count=28,
+            min_depth=4.0,
+            max_depth=48.0,
+            vein_length=7,
+        ),
+        SolidOreSpec(
+            material="iron_ore",
+            rarity="中",
+            cluster_count=18,
+            min_depth=10.0,
+            max_depth=42.0,
+            vein_length=5,
+        ),
+        SolidOreSpec(
+            material="copper_ore",
+            rarity="中",
+            cluster_count=12,
+            min_depth=8.0,
+            max_depth=32.0,
+            vein_length=5,
+        ),
+    ),
     caves=(
         CaveNetwork(
             name="shallow_mine_network",
-            paths=(
-                (
-                    Point(-920.0, -2180.0),
-                    Point(-820.0, -2050.0),
-                    Point(-700.0, -2140.0),
-                ),
-                (
-                    Point(-820.0, -2050.0),
-                    Point(-650.0, -1950.0),
-                ),
-                (
-                    Point(-820.0, -2050.0),
-                    Point(-860.0, -1900.0),
-                ),
-            ),
-            width=2.5,
-            height=4,
-            depth=10.0,
+            # 不再写死洞道折线；这里仅定义随机洞网的生成区域。
+            paths=(),
+            # seed_center=(0, 0) 表示启用全世界 seed 网格分布，不是固定生成点。
+            # 每个世界网格会由 seed 派生独立的中心和子 seed。
+            seed_center=Point(0.0, 0.0),
+            seed_extent=180.0,
+            # 默认洞穴密度下调；峡谷作为独立的大尺度地貌承担主要切割。
+            seed_path_count=5,
+            seed_path_segments=16,
+            seed_path_length=520.0,
+            seed_path_turn=0.85,
+            width=3.5,
+            height=6,
+            branch_count=6,
+            # 浅层洞穴中心距地表 56 格；入口仍由独立椭球通道连接到地表。
+            depth=56.0,
         ),
+    ),
+    underground_rivers=(
+        UndergroundRiverNetwork(
+            name="independent_subterranean_river",
+            # seed_center=(0, 0) 表示启用全世界 seed 网格分布，不绑定某个区域。
+            seed_center=Point(0.0, 0.0),
+            seed_extent=220.0,
+            path_count=2,
+            path_segments=16,
+            path_length=520.0,
+            source_depth=42.0,
+            outlet_depth=58.0,
+            width=2.8,
+            height=5,
+            water_depth=2,
+            branch_count=6,
+            branch_segments=6,
+            branch_length=190.0,
+            lake_count=3,
+            lake_radius=11.0,
+            lake_depth=2,
+            # pyKasso 风格：9 个补给入口合并到 1 个下游出口；后续轮次
+            # 复用已有 conduit 代价，生成共享主干和 junction。
+            inlet_count=9,
+            outlet_count=1,
+            network_iterations=3,
+            conduit_cost=0.30,
+            junction_radius=3.0,
+            cost_noise_scale=90.0,
+            cost_noise_strength=0.32,
+            fracture_bias=0.35,
+            # 裂隙是稀疏的窄竖缝，不复用地下河/矿洞的宽度和高度。
+            fracture_width=1.2,
+            fracture_height=28,
+        ),
+    ),
+    # 末端 refinement：只刻画小沟壑、支流和冲积沉积，不替代山脉/主谷算法。
+    hydraulic_erosion=HydraulicErosionSettings(
+        enabled=True,
+        droplet_count=900,
+        max_steps=42,
+        inertia=0.32,
+        gravity=4.0,
+        evaporation=0.028,
+        sediment_capacity=3.4,
+        erosion_rate=0.18,
+        deposition_rate=0.14,
+        minimum_slope=0.008,
+        max_erosion_per_step=1.2,
+        seed_offset=6_417,
+    ),
+    # 群山材质使用 altitude + slope + exposure + temperature + glacier + noise
+    # 的连续场；山脉范围外不写入这些材质。
+    mountain_materials=MountainMaterialSettings(
+        enabled=True,
+        snowline_base_elevation=190.0,
+        snowline_large_amplitude=26.0,
+        snowline_small_amplitude=9.0,
+        snowline_transition=36.0,
+        snow_slope_full_angle=20.0,
+        snow_slope_cutoff_angle=45.0,
+        snow_slope_bonus=0.18,
+        snow_slope_penalty=0.26,
+        exposure_direction_degrees=90.0,
+        exposure_strength=0.14,
+        temperature_strength=0.30,
+        glacier_bonus=0.30,
+        minimum_mountain_weight=0.12,
+        powder_threshold=0.18,
+        snow_threshold=0.36,
+        ice_threshold=0.56,
+        packed_ice_threshold=0.74,
+        blue_ice_threshold=0.89,
+        boundary_noise_strength=0.16,
+        seed_offset=7_231,
     ),
     sea_level=61.0,
 )

@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import urllib.request
+
+import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +23,10 @@ from bong_worldgen.adapters import export_minecraft_world  # noqa: E402
 from bong_worldgen.bluemap_config import BlueMapConfig, write_bluemap_config  # noqa: E402
 from bong_worldgen.data.recipes import DEFAULT_RECIPE  # noqa: E402
 from bong_worldgen.engine import generate_heightfield  # noqa: E402
+from bong_worldgen.engine.pipeline import (  # noqa: E402
+    _generate_pre_glacial_terrain,
+    _select_spawn_plain,
+)
 
 
 BLUEMAP_VERSION = "5.23"
@@ -34,6 +41,97 @@ CONFIG_DIR = RUNTIME_DIR / "config"
 DATA_DIR = RUNTIME_DIR / "data"
 WEB_DIR = RUNTIME_DIR / "web"
 WORLD_DIR = ROOT / "generated" / "bluemap-world"
+
+
+def _default_mountain_window(tile_size: int = 512, seed: int = 812731) -> tuple[int, int]:
+    """扫描默认配方的主山脉，推导包含实际峰值的 BlueMap 窗口。"""
+
+    if tile_size < 16 or tile_size % 16:
+        raise ValueError("BlueMap preview tile size must be a positive multiple of 16")
+    mountains = DEFAULT_RECIPE.mountains
+    if not mountains:
+        return (-704, -3264)
+    # 绝对高度山脉用 summit_elevation 参与选窗；不能因为兼容字段
+    # ``height`` 在该模式下为 0，就误选到较小的相对山脊。
+    mountain = max(
+        mountains,
+        key=lambda item: (
+            item.summit_elevation
+            if item.summit_elevation is not None
+            else item.base_elevation
+            if item.base_elevation is not None
+            else item.height
+        ),
+    )
+    points = mountain.path
+    minimum_x = math.floor(min(point.x for point in points) / 32.0) * 32.0
+    maximum_x = math.ceil(max(point.x for point in points) / 32.0) * 32.0
+    minimum_z = math.floor(min(point.z for point in points) / 32.0) * 32.0
+    maximum_z = math.ceil(max(point.z for point in points) / 32.0) * 32.0
+    step = 32.0
+    sample_x, sample_z = np.meshgrid(
+        np.arange(minimum_x, maximum_x + step, step, dtype=np.float64),
+        np.arange(minimum_z, maximum_z + step, step, dtype=np.float64),
+        indexing="xy",
+    )
+    sample_height = _generate_pre_glacial_terrain(
+        DEFAULT_RECIPE,
+        sample_x,
+        sample_z,
+        seed,
+    )
+    # 绝对高度模式下，沿整条山脊可能有很多同高的峰。只取全局最高点
+    # 会把窗口吸到路径端点，导致看不到山脚；改为在候选峰附近选择
+    # ``窗口内最大高差`` 最大的位置，保证预览同时包含山脚和峰顶。
+    summit = mountain.summit_elevation
+    if summit is None:
+        summit = float(np.max(sample_height))
+    candidate_mask = sample_height >= summit - max(8.0, abs(summit) * 0.04)
+    candidates = np.argwhere(candidate_mask)
+    half = tile_size * 0.5
+    valid_candidates: list[tuple[float, float, float, float]] = []
+    for candidate_z, candidate_x in candidates:
+        anchor_x = float(sample_x[candidate_z, candidate_x])
+        anchor_z = float(sample_z[candidate_z, candidate_x])
+        if not (
+            minimum_x + half <= anchor_x <= maximum_x - half
+            and minimum_z + half <= anchor_z <= maximum_z - half
+        ):
+            continue
+        window = (
+            (np.abs(sample_x - anchor_x) <= half)
+            & (np.abs(sample_z - anchor_z) <= half)
+        )
+        values = sample_height[window]
+        if values.size:
+            valid_candidates.append(
+                (float(values.max() - values.min()), float(values.max()), anchor_x, anchor_z)
+            )
+    if valid_candidates:
+        _, _, anchor_x, anchor_z = max(valid_candidates)
+    else:
+        peak = np.unravel_index(np.argmax(sample_height), sample_height.shape)
+        anchor_x = float(sample_x[peak])
+        anchor_z = float(sample_z[peak])
+    # 用一个采样步长留出边缘余量，保证峰顶附近的山壁也在窗口内。
+    half += step
+    return (
+        math.floor((anchor_x - half) / 16.0) * 16,
+        math.floor((anchor_z - half) / 16.0) * 16,
+    )
+
+
+def _default_spawn_window(tile_size: int = 1024, seed: int = 812731) -> tuple[int, int]:
+    """返回围绕 seed 实际出生平原锚点的 BlueMap 窗口左上角。"""
+
+    if tile_size < 16 or tile_size % 16:
+        raise ValueError("BlueMap preview tile size must be a positive multiple of 16")
+    selection = _select_spawn_plain(DEFAULT_RECIPE, seed)
+    half = tile_size * 0.5
+    return (
+        math.floor((selection.center_x - half) / 16.0) * 16,
+        math.floor((selection.center_z - half) / 16.0) * 16,
+    )
 
 
 def _sha256(path: Path) -> str:
@@ -140,7 +238,9 @@ def render(args: argparse.Namespace) -> None:
         sea_level=DEFAULT_RECIPE.sea_level,
         seed=args.seed,
         world_name=DEFAULT_RECIPE.name,
+        preview_npc_spawns=True,
     )
+    start_y = max(160, int(math.ceil(float(np.percentile(field.height, 99.0)) + 36.0)))
     write_bluemap_config(
         BlueMapConfig(
             config_dir=CONFIG_DIR,
@@ -153,6 +253,7 @@ def render(args: argparse.Namespace) -> None:
             max_z=args.origin_z + args.height - 1,
             start_x=args.origin_x + args.width // 2,
             start_z=args.origin_z + args.height // 2,
+            start_y=start_y,
             port=args.port,
             accept_download=True,
         )
@@ -161,6 +262,12 @@ def render(args: argparse.Namespace) -> None:
         f"Generated {result.chunks_written} chunks in {result.regions_written} regions at "
         f"{WORLD_DIR}"
     )
+    print(f"Placed {result.preview_villagers_written} preview villagers at NPC spawn points")
+    bridge_decks = [block for block in field.settlement_blocks if block.kind == "bridge_deck"]
+    print(f"Placed {len(bridge_decks)} bridge deck blocks")
+    if bridge_decks:
+        block = bridge_decks[len(bridge_decks) // 2]
+        print(f"Bridge preview position: {block.x} {block.y + 1} {block.z}")
     _run_bluemap("--generate-webapp", "--render", "--force-render", "--generate-websettings")
 
 
@@ -179,10 +286,18 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser("setup", help="download and verify the pinned BlueMap CLI")
 
     render_parser = commands.add_parser("render", help="replace and render one preview world")
-    render_parser.add_argument("--width", type=int, default=512)
-    render_parser.add_argument("--height", type=int, default=512)
-    render_parser.add_argument("--origin-x", type=int, default=-960)
-    render_parser.add_argument("--origin-z", type=int, default=-2272)
+    default_width = 1024
+    default_height = 1024
+    render_parser.add_argument("--width", type=int, default=default_width)
+    render_parser.add_argument("--height", type=int, default=default_height)
+    # 默认窗口围绕默认 seed 实际选中的出生平原；命令行仍可以覆盖到任意
+    # 世界窗口。坐标按 16 格对齐，便于 Anvil 导出。
+    default_origin_x, default_origin_z = _default_spawn_window(
+        tile_size=default_width,
+        seed=812731,
+    )
+    render_parser.add_argument("--origin-x", type=int, default=default_origin_x)
+    render_parser.add_argument("--origin-z", type=int, default=default_origin_z)
     render_parser.add_argument("--seed", type=int, default=812731)
     render_parser.add_argument("--port", type=int, default=8100)
     render_parser.add_argument("--accept-minecraft-eula", action="store_true")
