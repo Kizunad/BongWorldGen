@@ -18,6 +18,7 @@ import numpy as np
 from .randomness import stable_text_seed, unit_interval
 from .structures import SchematicStructure
 from .terrain_config import Point, TownSettings
+from .town_footprints import WallFootprint, dry_footprint
 
 
 @dataclass(frozen=True)
@@ -51,11 +52,12 @@ def building_footprint_bounds(
 
     if not buildings:
         return None
+    footprints = [_footprint(item.center, item.size_x, item.size_z) for item in buildings]
     return (
-        min(int(round(item.center.x)) - item.size_x // 2 for item in buildings) - margin,
-        max(int(round(item.center.x)) + item.size_x // 2 for item in buildings) + margin,
-        min(int(round(item.center.z)) - item.size_z // 2 for item in buildings) - margin,
-        max(int(round(item.center.z)) + item.size_z // 2 for item in buildings) + margin,
+        min(bounds[0] for bounds in footprints) - margin,
+        max(bounds[1] for bounds in footprints) + margin,
+        min(bounds[2] for bounds in footprints) - margin,
+        max(bounds[3] for bounds in footprints) + margin,
     )
 
 
@@ -231,21 +233,16 @@ def _suitable(
     buildings: list[GrowthBuilding],
 ) -> tuple[bool, int, float]:
     left, right, top, bottom = _footprint(center, size_x, size_z)
+    if not dry_footprint(water, x_axis, z_axis, (left, right, top, bottom)):
+        return False, 0, -math.inf
     sample_x = np.arange(left, right + 1, dtype=np.float64)
     sample_z = np.arange(top, bottom + 1, dtype=np.float64)
-    if (
-        sample_x[0] < x_axis[0]
-        or sample_x[-1] > x_axis[-1]
-        or sample_z[0] < z_axis[0]
-        or sample_z[-1] > z_axis[-1]
-    ):
-        return False, 0, -math.inf
     step_x = float(x_axis[1] - x_axis[0]) if x_axis.size > 1 else 1.0
     step_z = float(z_axis[1] - z_axis[0]) if z_axis.size > 1 else 1.0
     columns = np.clip(np.rint((sample_x - x_axis[0]) / step_x), 0, x_axis.size - 1).astype(int)
     rows = np.clip(np.rint((sample_z - z_axis[0]) / step_z), 0, z_axis.size - 1).astype(int)
     heights = terrain[np.ix_(rows, columns)]
-    if np.any(water[np.ix_(rows, columns)] >= 0.0):
+    if not np.all(np.isfinite(heights)):
         return False, 0, -math.inf
     relief = float(np.ptp(heights))
     if relief > settings.maximum_relief:
@@ -280,6 +277,28 @@ def _projected_utilization(
     return wall_utilization([*buildings, candidate])
 
 
+def _fits_walls(
+    water: np.ndarray,
+    x_axis: np.ndarray,
+    z_axis: np.ndarray,
+    buildings: list[GrowthBuilding],
+    center: Point,
+    size_x: int,
+    size_z: int,
+    walls: WallFootprint | None,
+) -> bool:
+    """核心候选还必须为对齐后的围墙、城门和角塔留出完整干地。"""
+
+    if walls is None:
+        return True
+    candidate = GrowthBuilding(center, size_x, size_z, 0, None, 0, "core")
+    bounds = building_footprint_bounds([*buildings, candidate])
+    return all(
+        dry_footprint(water, x_axis, z_axis, footprint)
+        for footprint in walls.footprints(bounds)
+    )
+
+
 def _choose_dense_infill_candidate(
     *,
     terrain: np.ndarray,
@@ -292,6 +311,7 @@ def _choose_dense_infill_candidate(
     size_z: int,
     seed: int,
     index: int,
+    walls: WallFootprint | None = None,
 ) -> tuple[Point, int] | None:
     """在既有核心边界内填补空位，不能扩大城墙投影。"""
 
@@ -306,26 +326,50 @@ def _choose_dense_infill_candidate(
     if low_x > high_x or low_z > high_z:
         return None
 
-    best: tuple[Point, int, float] | None = None
     attempts = settings.growth_candidate_count * 4
-    for attempt in range(attempts):
-        offset = 80_000 + index * 193 + attempt * 7
-        center = Point(
-            float(low_x + int(unit_interval(seed, offset) * (high_x - low_x + 1))),
-            float(low_z + int(unit_interval(seed, offset + 1) * (high_z - low_z + 1))),
+    base_offset = 80_000 + index * 193
+    random_centers = (
+        Point(
+            float(low_x + int(unit_interval(seed, base_offset + attempt * 7)
+                              * (high_x - low_x + 1))),
+            float(low_z + int(unit_interval(seed, base_offset + attempt * 7 + 1)
+                              * (high_z - low_z + 1))),
         )
-        if _overlaps(center, size_x, size_z, buildings, 0):
-            continue
-        suitable, ground, terrain_score = _suitable(
-            terrain, water, x_axis, z_axis, center, size_x, size_z, settings, buildings
+        for attempt in range(attempts)
+    )
+    # 窄空隙可能只剩一个合法中心，随机抽点很容易全部漏过。后备候选贴齐
+    # 既有建筑边缘或核心边界，仍使用同一套碰撞、干地、坡度和围墙检查。
+    edge_x = {low_x, high_x}
+    edge_z = {low_z, high_z}
+    for building in buildings:
+        left, right, top, bottom = _footprint(
+            building.center, building.size_x, building.size_z
         )
-        if not suitable:
-            continue
-        # 随机势场只负责打破同样平坦候选的平局；候选均不扩大围墙。
-        score = terrain_score + unit_interval(seed, offset + 2)
-        if best is None or score > best[2]:
-            best = (center, ground, score)
-    return None if best is None else (best[0], best[1])
+        edge_x.update((left - (size_x + 1) // 2, right + 1 + size_x // 2))
+        edge_z.update((top - (size_z + 1) // 2, bottom + 1 + size_z // 2))
+    xs = sorted(value for value in edge_x if low_x <= value <= high_x)
+    zs = sorted(value for value in edge_z if low_z <= value <= high_z)
+    boundary_centers = (Point(float(cx), float(cz)) for cz in zs for cx in xs)
+
+    for candidates in (random_centers, boundary_centers):
+        best: tuple[Point, int, float] | None = None
+        for attempt, center in enumerate(candidates):
+            if _overlaps(center, size_x, size_z, buildings, 0):
+                continue
+            suitable, ground, terrain_score = _suitable(
+                terrain, water, x_axis, z_axis, center, size_x, size_z, settings, buildings
+            )
+            if not suitable:
+                continue
+            if not _fits_walls(water, x_axis, z_axis, buildings, center, size_x, size_z, walls):
+                continue
+            # 随机势场只负责打破同样平坦候选的平局；候选均不扩大围墙。
+            score = terrain_score + unit_interval(seed, base_offset + attempt * 7 + 2)
+            if best is None or score > best[2]:
+                best = (center, ground, score)
+        if best is not None:
+            return best[0], best[1]
+    return None
 
 
 def _choose_compact_candidate(
@@ -343,6 +387,7 @@ def _choose_compact_candidate(
     index: int,
     attempts: int,
     maximum_radius: float,
+    walls: WallFootprint | None = None,
 ) -> tuple[Point, int] | None:
     """在已有建筑边缘提出候选，并选择最紧凑且地形合格的一处。"""
 
@@ -383,6 +428,10 @@ def _choose_compact_candidate(
                 terrain, water, x_axis, z_axis, candidate, size_x, size_z, settings, buildings
             )
             if not suitable:
+                continue
+            if not _fits_walls(
+                water, x_axis, z_axis, buildings, candidate, size_x, size_z, walls
+            ):
                 continue
             compactness = _projected_utilization(
                 buildings, candidate, size_x, size_z
@@ -436,6 +485,10 @@ def _choose_compact_candidate(
             terrain, water, x_axis, z_axis, candidate, size_x, size_z, settings, buildings
         )
         if not suitable:
+            continue
+        if not _fits_walls(
+            water, x_axis, z_axis, buildings, candidate, size_x, size_z, walls
+        ):
             continue
         compactness = _projected_utilization(
             buildings,
@@ -595,6 +648,7 @@ def generate_town_layout(
     house_schematics: tuple[SchematicStructure, ...],
     tree_schematics: tuple[SchematicStructure, ...],
     core_schematics: tuple[SchematicStructure, ...] = (),
+    walls: WallFootprint | None = None,
 ) -> GrowthLayout:
     """生成核心城区、外围部落、吸引点和树木位置。"""
 
@@ -604,16 +658,21 @@ def generate_town_layout(
     core, core_rotation = _choose_core_schematic(core_schematics, base_seed)
     if core is not None:
         rotated_core = core.rotated(core_rotation)
-        core_cell = _nearest_cell(x_axis, z_axis, anchor.x, anchor.z)
+        suitable, core_ground, _ = _suitable(
+            terrain, water, x_axis, z_axis, anchor,
+            rotated_core.width, rotated_core.length, settings, [],
+        )
         # Spawn 模板必须能完整落在核心区内。小型测试城镇与窄小配置不能被
         # 一栋大型模板占满，否则普通住宅没有可用的生长空间。
         core_extent = math.hypot(rotated_core.width / 2.0, rotated_core.length / 2.0)
         if (
-            core_cell is not None
-            and water[core_cell] < 0.0
+            suitable
             and core_extent <= settings.core_radius - settings.core_wall_margin
+            and _fits_walls(
+                water, x_axis, z_axis, [], anchor,
+                rotated_core.width, rotated_core.length, walls,
+            )
         ):
-            core_ground = int(round(float(terrain[core_cell])))
             # 核心模板先占位，普通住宅的 footprint 检查会自动避让它。
             core_buildings.append(
                 GrowthBuilding(
@@ -647,6 +706,7 @@ def generate_town_layout(
             index=index,
             attempts=settings.growth_candidate_count,
             maximum_radius=settings.core_radius,
+            walls=walls,
         )
         if best is None:
             continue
@@ -679,6 +739,7 @@ def generate_town_layout(
             size_z=size_z,
             seed=base_seed,
             index=10_000 + index,
+            walls=walls,
         )
         if candidate is None:
             continue
