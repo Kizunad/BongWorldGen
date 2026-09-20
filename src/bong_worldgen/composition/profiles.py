@@ -11,7 +11,7 @@ import math
 from types import MappingProxyType
 
 from ..data.world import ZoneDefinition
-from ..engine import Basin, MountainRange, NoiseLayer, Point, TerrainRecipe
+from ..engine import Basin, MountainRange, NoiseLayer, Plateau, Point, TerrainRecipe
 
 
 def _ring(radius: float) -> tuple[Point, ...]:
@@ -94,6 +94,48 @@ PROFILE_RECIPES = MappingProxyType({
             roughness=NoiseLayer(kind="ridge", scale=80, seed_offset=89),
         ),),
     ),
+    "ancient_battlefield": TerrainRecipe(
+        name="ancient_battlefield", base_height=78, sea_level=61,
+        base_noise=(
+            NoiseLayer(scale=230, amplitude=9, octaves=3, seed_offset=97),
+            NoiseLayer(scale=48, amplitude=2, octaves=2, seed_offset=101),
+        ),
+        basins=(
+            Basin(Point(-0.2, -0.14), radius_x=0.075, radius_z=0.09, depth=10),
+            Basin(Point(0.17, 0.12), radius_x=0.09, radius_z=0.065, depth=8),
+            Basin(Point(0.05, -0.27), radius_x=0.05, radius_z=0.06, depth=6),
+        ),
+        mountains=(MountainRange(
+            path=(Point(-0.26, 0.26), Point(-0.08, 0.16)), width=0.06, height=9,
+            roughness_contrast=0.2,
+        ),),
+    ),
+    "jiu_zong_ruin": TerrainRecipe(
+        name="jiu_zong_ruin", base_height=76, sea_level=61,
+        base_noise=(NoiseLayer(scale=95, amplitude=6, octaves=3, seed_offset=103),),
+        plateaus=(
+            Plateau(Point(0, 0), radius_x=0.25, radius_z=0.23, height=96, edge_width=0.07),
+            Plateau(Point(-0.28, -0.18), radius_x=0.10, radius_z=0.10, height=84, edge_width=0.035),
+            Plateau(Point(0.27, 0.23), radius_x=0.12, radius_z=0.10, height=83, edge_width=0.035),
+        ),
+    ),
+    "dan_zong_yi_yuan": TerrainRecipe(
+        name="dan_zong_yi_yuan", base_height=78, sea_level=61,
+        base_noise=(NoiseLayer(scale=240, amplitude=4, octaves=3, seed_offset=107),),
+        plateaus=(
+            Plateau(Point(0, -0.23), radius_x=0.33, radius_z=0.14, height=92, edge_width=0.045),
+            Plateau(Point(0, 0), radius_x=0.34, radius_z=0.14, height=86, edge_width=0.045),
+            Plateau(Point(0, 0.23), radius_x=0.33, radius_z=0.14, height=80, edge_width=0.045),
+        ),
+    ),
+    "wangyintai": TerrainRecipe(
+        name="wangyintai", base_height=78, sea_level=61,
+        base_noise=(NoiseLayer(scale=180, amplitude=2, octaves=2, seed_offset=109),),
+        plateaus=(
+            Plateau(Point(0, 0), radius_x=0.35, radius_z=0.35, height=91, edge_width=0.06),
+            Plateau(Point(0, 0), radius_x=0.18, radius_z=0.18, height=104, edge_width=0.055),
+        ),
+    ),
 })
 
 
@@ -119,6 +161,10 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
             basin, center=point(basin.center), radius_x=basin.radius_x * zone.size_x,
             radius_z=basin.radius_z * zone.size_z,
         ) for basin in template.basins),
+        plateaus=tuple(replace(
+            plateau, center=point(plateau.center), radius_x=plateau.radius_x * zone.size_x,
+            radius_z=plateau.radius_z * zone.size_z, edge_width=plateau.edge_width * scale,
+        ) for plateau in template.plateaus),
         mountains=tuple(replace(
             mountain, path=tuple(point(p) for p in mountain.path), width=mountain.width * scale,
         ) for mountain in template.mountains),

@@ -285,6 +285,13 @@ def sample_surface(
         terrain += layer.amplitude * sample_noise(x, z, layer, seed)
     terrain = _apply_basins(terrain, x, z, recipe)
     terrain = _apply_mountains(terrain, x, z, recipe, seed)
+    for plateau in recipe.plateaus:
+        radius = np.hypot((x - plateau.center.x) / plateau.radius_x,
+                          (z - plateau.center.z) / plateau.radius_z)
+        distance = (1.0 - radius) * min(plateau.radius_x, plateau.radius_z)
+        t = np.clip(distance / plateau.edge_width, 0.0, 1.0)
+        weight = t**3 * (t * (t * 6.0 - 15.0) + 10.0)
+        terrain = terrain * (1.0 - weight) + plateau.height * weight
     moisture = sample_noise(x, z, recipe.moisture_noise, seed + 100_003)
     return terrain, np.clip((moisture + 1.0) * 0.5, 0.0, 1.0)
 

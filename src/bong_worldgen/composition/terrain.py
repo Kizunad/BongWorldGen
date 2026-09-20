@@ -15,8 +15,7 @@ from .profiles import PROFILE_RECIPES, recipe_for_zone
 # Explicit staging list: only these known profiles may temporarily use the
 # background while the remaining implementation steps land. Typos fail early.
 PENDING_PROFILES = frozenset((
-    "cave_network", "abyssal_maze", "sky_isle", "ancient_battlefield", "jiu_zong_ruin",
-    "dan_zong_yi_yuan", "wangyintai",
+    "cave_network", "abyssal_maze", "sky_isle",
 ))
 
 

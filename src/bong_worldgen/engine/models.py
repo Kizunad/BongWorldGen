@@ -202,6 +202,24 @@ class Basin:
 
 
 @dataclass(frozen=True)
+class Plateau:
+    """A level elliptical shelf with a continuous transition at its perimeter."""
+
+    center: Point
+    radius_x: float
+    radius_z: float
+    height: float
+    edge_width: float
+
+    def __post_init__(self) -> None:
+        if self.radius_x <= 0 or self.radius_z <= 0 or self.edge_width <= 0:
+            raise ValueError("plateau radii and edge width must be positive")
+        if not np.isfinite((self.center.x, self.center.z, self.radius_x,
+                            self.radius_z, self.height, self.edge_width)).all():
+            raise ValueError("plateau parameters must be finite")
+
+
+@dataclass(frozen=True)
 class TerrainRecipe:
     """Project data only: the engine interprets this recipe without mutation."""
 
@@ -216,6 +234,7 @@ class TerrainRecipe:
     moisture_noise: NoiseLayer = field(
         default_factory=lambda: NoiseLayer(scale=1800.0, amplitude=1.0, octaves=3)
     )
+    plateaus: tuple[Plateau, ...] = ()
 
 
 @dataclass(frozen=True)

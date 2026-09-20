@@ -50,3 +50,38 @@ def test_ash_land_has_eroded_relief_and_is_different_from_background():
     assert field.height.std() > 3.0
     assert np.ptp(field.height) > 20
     assert (field.water_level < 0).mean() > 0.9
+
+
+def test_battlefield_has_low_relief_and_multiple_depressions():
+    zone, composer = _composer("zhanhun_plain")
+    field = composer.generate(width=100, height=100, origin_x=zone.center_x - 500,
+                              origin_z=zone.center_z - 500, cell_size=10)
+    assert 2 < field.height.std() < 10
+    assert np.quantile(field.height, 0.05) < 73
+    assert np.quantile(field.height, 0.95) > 79
+
+
+@pytest.mark.parametrize("name", [name for name in ZONE_BY_NAME if name.startswith("jiuzong_")])
+def test_sect_ruins_have_a_level_raised_central_platform(name):
+    zone, composer = _composer(name)
+    field = composer.generate(width=32, height=32, origin_x=zone.center_x - 16,
+                              origin_z=zone.center_z - 16)
+    assert np.ptp(field.height) < 0.01
+    outer, _ = composer.sample_surface(np.array([zone.center_x + zone.size_x * 0.35]),
+                                      np.array([zone.center_z]))
+    assert field.height.mean() - outer[0] > 12
+
+
+def test_garden_has_three_descending_cultivation_terraces():
+    zone, composer = _composer("dan_zong_yi_yuan")
+    heights, _ = composer.sample_surface(np.full(3, zone.center_x),
+                                        zone.center_z + np.array([-0.23, 0, 0.23]) * zone.size_z)
+    np.testing.assert_allclose(heights, [92, 86, 80])
+
+
+def test_wangyintai_has_two_level_concentric_platforms():
+    zone, composer = _composer("wangyintai")
+    heights, _ = composer.sample_surface(zone.center_x + np.array([0, 70, 230, 270, 420]),
+                                        np.full(5, zone.center_z))
+    np.testing.assert_allclose(heights[:4], [104, 104, 91, 91])
+    assert heights[4] < 81
