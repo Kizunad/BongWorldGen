@@ -9,7 +9,7 @@ import numpy as np
 
 from .adapters import to_bong_tile
 from .data.recipes import DEFAULT_RECIPE
-from .engine import generate_heightfield
+from .composition import ZoneTerrain
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,11 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    field = generate_heightfield(
-        DEFAULT_RECIPE,
+    field = ZoneTerrain(seed=args.seed).generate(
         width=args.width,
         height=args.height,
-        seed=args.seed,
         origin_x=args.origin_x,
         origin_z=args.origin_z,
         cell_size=args.cell_size,

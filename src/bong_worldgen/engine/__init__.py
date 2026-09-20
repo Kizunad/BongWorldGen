@@ -16,7 +16,7 @@ from .models import (
     TerrainRecipe,
     UndergroundBlock,
 )
-from .pipeline import generate_heightfield
+from .pipeline import finish_heightfield, generate_heightfield, sample_surface
 
 __all__ = [
     "Basin",
@@ -30,4 +30,6 @@ __all__ = [
     "TerrainRecipe",
     "UndergroundBlock",
     "generate_heightfield",
+    "sample_surface",
+    "finish_heightfield",
 ]

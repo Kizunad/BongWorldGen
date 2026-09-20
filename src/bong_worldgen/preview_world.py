@@ -10,11 +10,12 @@ import numpy as np
 
 from .adapters import to_bong_tile, write_bong_raster
 from .adapters.bong_raster import BASE_SURFACE_PALETTE
-from .data.world import PoiDefinition, ZoneDefinition
+from .composition import ZoneTerrain
+from .data.world import PoiDefinition, WorldDefinition, ZoneDefinition
 from .data.world_definition import WORLD
 from .data.recipes import DEFAULT_RECIPE
 from .data.wilderness import wilderness_palette_manifest
-from .engine import TerrainRecipe, generate_heightfield
+from .engine import TerrainRecipe
 
 
 SPAN_ENCODING = {
@@ -72,6 +73,7 @@ def export_preview_world(
     output_dir: Path,
     *,
     recipe: TerrainRecipe = DEFAULT_RECIPE,
+    world: WorldDefinition = WORLD,
     seed: int = 812731,
     min_x: int = -4096,
     max_x: int = 4095,
@@ -85,6 +87,7 @@ def export_preview_world(
         raise ValueError("tile_size must be a positive power of two")
     if min_x > max_x or min_z > max_z:
         raise ValueError("world bounds must be ordered")
+    composer = ZoneTerrain(world, background=recipe, seed=seed)
     rasters_dir = output_dir / "rasters"
     rasters_dir.mkdir(parents=True, exist_ok=True)
     tile_entries: list[dict[str, object]] = []
@@ -98,11 +101,9 @@ def export_preview_world(
         for tile_x in _tile_range(min_x, max_x, tile_size):
             origin_x = tile_x * tile_size
             origin_z = tile_z * tile_size
-            field = generate_heightfield(
-                recipe,
+            field = composer.generate(
                 width=tile_size,
                 height=tile_size,
-                seed=seed,
                 origin_x=origin_x,
                 origin_z=origin_z,
             )
@@ -132,7 +133,10 @@ def export_preview_world(
                     "tile_x": tile_x,
                     "tile_z": tile_z,
                     "dir": f"tile_{tile_x}_{tile_z}",
-                    "zones": ["procedural_world"],
+                    "zones": [part.zone.name for part in composer.index.query(
+                        origin_x + np.arange(tile_size)[None, :],
+                        origin_z + np.arange(tile_size)[:, None],
+                    ).contributions] or ["procedural_world"],
                     "layers": [
                         "surface_id",
                         "subsurface_id",
@@ -165,6 +169,7 @@ def export_preview_world(
     manifest = {
         "version": 2,
         "backend": "raster",
+        "generation": {"composer": "zone_terrain", "seed": seed, "pending_profiles": composer.pending_profiles},
         "world_name": recipe.name,
         "tile_size": tile_size,
         "spans_encoding": SPAN_ENCODING,
@@ -193,7 +198,7 @@ def export_preview_world(
         "tiles": tile_entries,
         "pois": [
             _poi_manifest(zone.name, poi)
-            for zone in WORLD.zones
+            for zone in world.zones
             for poi in zone.pois
         ],
         "poi_connections": [],
@@ -206,7 +211,7 @@ def export_preview_world(
                 "danger_level": 2,
                 "worldgen": {"generator": "bong_worldgen", "seed": seed},
             },
-            *(_zone_manifest(zone) for zone in WORLD.zones),
+            *(_zone_manifest(zone) for zone in world.zones),
         ],
         "semantic_layers": ["cave_id"],
         "vertical_layers": ["spans"],

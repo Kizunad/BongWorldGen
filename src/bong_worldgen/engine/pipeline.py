@@ -262,6 +262,61 @@ def _apply_rivers(
     return output_height, output_water, output_riverbed
 
 
+def sample_surface(
+    recipe: TerrainRecipe,
+    x: np.ndarray,
+    z: np.ndarray,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Sample dry terrain and moisture at arbitrary world-coordinate arrays.
+
+    Layout composition can mix these continuous fields before rivers and
+    underground geometry are evaluated. No world layout is known here.
+    """
+
+    x, z = np.broadcast_arrays(np.asarray(x, dtype=np.float64), np.asarray(z, dtype=np.float64))
+    terrain = np.full(x.shape, recipe.base_height, dtype=np.float64)
+    for layer in recipe.base_noise:
+        terrain += layer.amplitude * sample_noise(x, z, layer, seed)
+    terrain = _apply_basins(terrain, x, z, recipe)
+    terrain = _apply_mountains(terrain, x, z, recipe, seed)
+    moisture = sample_noise(x, z, recipe.moisture_noise, seed + 100_003)
+    return terrain, np.clip((moisture + 1.0) * 0.5, 0.0, 1.0)
+
+
+def finish_heightfield(
+    recipe: TerrainRecipe,
+    terrain: np.ndarray,
+    moisture: np.ndarray,
+    x: np.ndarray,
+    z: np.ndarray,
+    seed: int,
+) -> Heightfield:
+    """Apply water and underground geometry to an already composed surface."""
+
+    water = np.where(terrain < recipe.sea_level, recipe.sea_level, -1.0)
+    riverbed_palette = tuple(
+        dict.fromkeys(material for river in recipe.rivers for material in river.bed_materials)
+    )
+    riverbed = np.full(terrain.shape, -1, dtype=np.int16)
+    terrain, water, riverbed = _apply_rivers(
+        terrain, water, x, z, recipe, seed, riverbed, riverbed_palette,
+    )
+    water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
+    underground = generate_underground(terrain, x, z, recipe, seed)
+    return Heightfield(
+        height=np.ascontiguousarray(terrain, dtype=np.float32),
+        moisture=np.ascontiguousarray(moisture, dtype=np.float32),
+        water_level=np.ascontiguousarray(water, dtype=np.float32),
+        riverbed_id=np.ascontiguousarray(riverbed, dtype=np.int16),
+        riverbed_palette=riverbed_palette,
+        solid_spans=np.ascontiguousarray(underground.solid_spans, dtype=np.int16),
+        underground_blocks=underground.blocks,
+        cave_id=np.ascontiguousarray(underground.cave_id, dtype=np.uint8),
+        cave_palette=underground.cave_palette,
+    )
+
+
 def generate_heightfield(
     recipe: TerrainRecipe,
     *,
@@ -275,40 +330,5 @@ def generate_heightfield(
     """将一份配方计算为连续存储的 float32 标量场。"""
 
     x, z = _coordinate_grid(width, height, origin_x, origin_z, cell_size)
-    terrain = np.full(x.shape, recipe.base_height, dtype=np.float64)
-    for layer in recipe.base_noise:
-        terrain += layer.amplitude * sample_noise(x, z, layer, seed)
-    terrain = _apply_basins(terrain, x, z, recipe)
-    terrain = _apply_mountains(terrain, x, z, recipe, seed)
-
-    moisture = sample_noise(x, z, recipe.moisture_noise, seed + 100_003)
-    moisture = np.clip((moisture + 1.0) * 0.5, 0.0, 1.0)
-    water = np.where(terrain < recipe.sea_level, recipe.sea_level, -1.0)
-    riverbed_palette = tuple(
-        dict.fromkeys(material for river in recipe.rivers for material in river.bed_materials)
-    )
-    riverbed = np.full(terrain.shape, -1, dtype=np.int16)
-    terrain, water, riverbed = _apply_rivers(
-        terrain,
-        water,
-        x,
-        z,
-        recipe,
-        seed,
-        riverbed,
-        riverbed_palette,
-    )
-    water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
-    underground = generate_underground(terrain, x, z, recipe, seed)
-
-    return Heightfield(
-        height=np.ascontiguousarray(terrain, dtype=np.float32),
-        moisture=np.ascontiguousarray(moisture, dtype=np.float32),
-        water_level=np.ascontiguousarray(water, dtype=np.float32),
-        riverbed_id=np.ascontiguousarray(riverbed, dtype=np.int16),
-        riverbed_palette=riverbed_palette,
-        solid_spans=np.ascontiguousarray(underground.solid_spans, dtype=np.int16),
-        underground_blocks=underground.blocks,
-        cave_id=np.ascontiguousarray(underground.cave_id, dtype=np.uint8),
-        cave_palette=underground.cave_palette,
-    )
+    terrain, moisture = sample_surface(recipe, x, z, seed)
+    return finish_heightfield(recipe, terrain, moisture, x, z, seed)

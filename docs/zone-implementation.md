@@ -35,3 +35,12 @@
 负坐标、完整直径、嵌套小区优先、权重守恒、源顺序无关，以及三个 seed 下
 残峰高度标准差超过初醒原 8 倍、北荒平均高度高出 40 方块且起伏小于 15 方块。
 此步查询先采用精确轮廓，边界带在第三步实现；尚未接入生产入口。
+
+第一步验证：`.venv/bin/pytest -q` → **59 passed**。
+
+第二步：新增 `ZoneTerrain`，preview、CLI、BlueMap 共用合成结果。引擎只增加
+`sample_surface` / `finish_heightfield` 两个通用阶段；地表先混合，水体与洞穴后处理。
+未实现的 12 个已知 profile 暂用背景，并在 manifest 的 `generation.pending_profiles`
+显式列出；未知名字报错。生成入口契约检查真实高度和实心段，导出契约从
+`spans.bin` 读回出生区高度 66–74（测试背景设为 180），排除只更新元数据的假实现。
+验证：`.venv/bin/pytest -q` → **62 passed**。

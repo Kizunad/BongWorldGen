@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from bong_worldgen.adapters import export_minecraft_world  # noqa: E402
 from bong_worldgen.bluemap_config import BlueMapConfig, write_bluemap_config  # noqa: E402
 from bong_worldgen.data.recipes import DEFAULT_RECIPE  # noqa: E402
-from bong_worldgen.engine import generate_heightfield  # noqa: E402
+from bong_worldgen.composition import ZoneTerrain  # noqa: E402
 
 
 BLUEMAP_VERSION = "5.23"
@@ -123,11 +123,9 @@ def render(args: argparse.Namespace) -> None:
     _replace_directory(WORLD_DIR)
     _replace_directory(WEB_DIR)
     _replace_directory(CONFIG_DIR)
-    field = generate_heightfield(
-        DEFAULT_RECIPE,
+    field = ZoneTerrain(seed=args.seed).generate(
         width=args.width,
         height=args.height,
-        seed=args.seed,
         origin_x=args.origin_x,
         origin_z=args.origin_z,
         cell_size=1.0,
