@@ -10,6 +10,7 @@ from .caves import generate_underground
 from .geometry import polyline_distance_and_progress
 from .models import Heightfield, NoiseLayer, Point, River, TerrainRecipe
 from .noise import sample_noise
+from .solids import add_floating_islands
 
 
 SurfaceSampler = Callable[[np.ndarray, np.ndarray], np.ndarray]
@@ -318,7 +319,7 @@ def finish_heightfield(
     )
     water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
     underground = generate_underground(terrain, x, z, recipe, seed)
-    return Heightfield(
+    field = Heightfield(
         height=np.ascontiguousarray(terrain, dtype=np.float32),
         moisture=np.ascontiguousarray(moisture, dtype=np.float32),
         water_level=np.ascontiguousarray(water, dtype=np.float32),
@@ -329,6 +330,7 @@ def finish_heightfield(
         cave_id=np.ascontiguousarray(underground.cave_id, dtype=np.uint8),
         cave_palette=underground.cave_palette,
     )
+    return add_floating_islands(field, x, z, recipe, seed)
 
 
 def generate_heightfield(

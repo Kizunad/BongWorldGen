@@ -177,7 +177,7 @@ def export_preview_world(
     manifest = {
         "version": 2,
         "backend": "raster",
-        "generation": {"composer": "zone_terrain", "seed": seed, "pending_profiles": composer.pending_profiles},
+        "generation": {"composer": "zone_terrain", "seed": seed, "pending_profiles": []},
         "world_name": recipe.name,
         "tile_size": tile_size,
         "spans_encoding": SPAN_ENCODING,

@@ -222,6 +222,22 @@ class Plateau:
 
 
 @dataclass(frozen=True)
+class FloatingIsland:
+    """A detached ellipsoidal solid cap above the existing ground."""
+
+    center: Point
+    radius_x: float
+    radius_z: float
+    height: float = 270.0
+    relief: float = 24.0
+    thickness: float = 38.0
+
+    def __post_init__(self) -> None:
+        if min(self.radius_x, self.radius_z, self.thickness) <= 0 or self.relief < 0:
+            raise ValueError("island radii/thickness must be positive and relief non-negative")
+
+
+@dataclass(frozen=True)
 class TerrainRecipe:
     """Project data only: the engine interprets this recipe without mutation."""
 
@@ -237,6 +253,7 @@ class TerrainRecipe:
         default_factory=lambda: NoiseLayer(scale=1800.0, amplitude=1.0, octaves=3)
     )
     plateaus: tuple[Plateau, ...] = ()
+    floating_islands: tuple[FloatingIsland, ...] = ()
 
 
 @dataclass(frozen=True)

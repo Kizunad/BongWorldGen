@@ -11,7 +11,7 @@ import math
 from types import MappingProxyType
 
 from ..data.world import ZoneDefinition
-from ..engine import Basin, MountainRange, NoiseLayer, Plateau, Point, TerrainRecipe
+from ..engine import Basin, FloatingIsland, MountainRange, NoiseLayer, Plateau, Point, TerrainRecipe
 from .caves import caves_for_zone
 
 
@@ -147,6 +147,17 @@ PROFILE_RECIPES = MappingProxyType({
         base_noise=(NoiseLayer(kind="ridge", scale=190, amplitude=12, seed_offset=127),),
         basins=(Basin(Point(0, 0), radius_x=0.23, radius_z=0.31, depth=14),),
     ),
+    "sky_isle": TerrainRecipe(
+        name="sky_isle", base_height=72, sea_level=61,
+        base_noise=(NoiseLayer(scale=280, amplitude=4, octaves=3, seed_offset=131),),
+        floating_islands=(
+            FloatingIsland(Point(0, 0), radius_x=0.25, radius_z=0.25),
+            FloatingIsland(Point(0.32, -0.20), radius_x=0.095, radius_z=0.095,
+                           height=244, relief=18, thickness=28),
+            FloatingIsland(Point(-0.32, 0.16), radius_x=0.085, radius_z=0.085,
+                           height=255, relief=16, thickness=25),
+        ),
+    ),
 })
 
 
@@ -169,6 +180,10 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
     return replace(
         template,
         caves=caves_for_zone(zone, template.base_height),
+        floating_islands=tuple(replace(
+            island, center=point(island.center), radius_x=island.radius_x * zone.size_x,
+            radius_z=island.radius_z * zone.size_z,
+        ) for island in template.floating_islands),
         basins=tuple(replace(
             basin, center=point(basin.center), radius_x=basin.radius_x * zone.size_x,
             radius_z=basin.radius_z * zone.size_z,

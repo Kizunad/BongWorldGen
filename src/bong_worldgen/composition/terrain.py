@@ -13,13 +13,6 @@ from .layout import ZoneIndex
 from .profiles import PROFILE_RECIPES, recipe_for_zone
 
 
-# Explicit staging list: only these known profiles may temporarily use the
-# background while the remaining implementation steps land. Typos fail early.
-PENDING_PROFILES = frozenset((
-    "sky_isle",
-))
-
-
 class ZoneTerrain:
     """A reusable, seeded world sampler shared by raster, CLI and BlueMap."""
 
@@ -31,17 +24,17 @@ class ZoneTerrain:
         seed: int = 812731,
     ) -> None:
         self.world, self.background, self.seed = world, background, seed
-        ZoneIndex(world.zones)  # Validate even temporarily unimplemented footprints.
-        unknown = {zone.terrain_profile for zone in world.zones} - PROFILE_RECIPES.keys() - PENDING_PROFILES
+        self.index = ZoneIndex(world.zones)
+        unknown = {zone.terrain_profile for zone in world.zones} - PROFILE_RECIPES.keys()
         if unknown:
             raise ValueError(f"unknown terrain profiles: {sorted(unknown)}")
-        self.pending_profiles = sorted({zone.terrain_profile for zone in world.zones} & PENDING_PROFILES)
-        active = tuple(zone for zone in world.zones if zone.terrain_profile in PROFILE_RECIPES)
-        self.index = ZoneIndex(active)
         self.recipes = {zone.name: recipe_for_zone(zone) for zone in self.index.zones}
         self.feature_recipe = replace(
             background,
             caves=background.caves + tuple(cave for recipe in self.recipes.values() for cave in recipe.caves),
+            floating_islands=background.floating_islands + tuple(
+                island for recipe in self.recipes.values() for island in recipe.floating_islands
+            ),
         )
 
     def sample_surface(self, x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
