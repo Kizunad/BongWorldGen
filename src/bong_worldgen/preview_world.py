@@ -200,7 +200,7 @@ def export_preview_world(
         },
         "surface_palette": surface_palette,
         "riverbed_palette": riverbed_palette,
-        "cave_palette": [network.name for network in recipe.caves],
+        "cave_palette": [network.name for network in composer.feature_recipe.caves],
         "biome_palette": ["minecraft:plains", "minecraft:river"],
         "wilderness_palette": wilderness_palette_manifest(),
         "tiles": tile_entries,

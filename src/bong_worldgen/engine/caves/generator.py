@@ -151,7 +151,7 @@ def generate_underground(
                 math.ceil(-network.depth + radius + 1.0),
             )
         )
-        if network.entrance_count:
+        if network.entrance_count or network.entrance_points:
             feature_bounds.append(
                 (
                     math.floor(-network.depth - radius - 1.0),

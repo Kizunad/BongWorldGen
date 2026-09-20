@@ -12,6 +12,7 @@ from types import MappingProxyType
 
 from ..data.world import ZoneDefinition
 from ..engine import Basin, MountainRange, NoiseLayer, Plateau, Point, TerrainRecipe
+from .caves import caves_for_zone
 
 
 def _ring(radius: float) -> tuple[Point, ...]:
@@ -136,6 +137,16 @@ PROFILE_RECIPES = MappingProxyType({
             Plateau(Point(0, 0), radius_x=0.18, radius_z=0.18, height=104, edge_width=0.055),
         ),
     ),
+    "cave_network": TerrainRecipe(
+        name="cave_network", base_height=84, sea_level=61,
+        base_noise=(NoiseLayer(scale=170, amplitude=8, octaves=3, seed_offset=113),),
+        basins=(Basin(Point(0, 0), radius_x=0.25, radius_z=0.25, depth=6),),
+    ),
+    "abyssal_maze": TerrainRecipe(
+        name="abyssal_maze", base_height=90, sea_level=61,
+        base_noise=(NoiseLayer(kind="ridge", scale=190, amplitude=12, seed_offset=127),),
+        basins=(Basin(Point(0, 0), radius_x=0.23, radius_z=0.31, depth=14),),
+    ),
 })
 
 
@@ -157,6 +168,7 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
 
     return replace(
         template,
+        caves=caves_for_zone(zone, template.base_height),
         basins=tuple(replace(
             basin, center=point(basin.center), radius_x=basin.radius_x * zone.size_x,
             radius_z=basin.radius_z * zone.size_z,

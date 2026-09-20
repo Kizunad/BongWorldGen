@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from dataclasses import replace
 
 from ..data.recipes import DEFAULT_RECIPE
 from ..data.world import WorldDefinition
@@ -15,7 +16,7 @@ from .profiles import PROFILE_RECIPES, recipe_for_zone
 # Explicit staging list: only these known profiles may temporarily use the
 # background while the remaining implementation steps land. Typos fail early.
 PENDING_PROFILES = frozenset((
-    "cave_network", "abyssal_maze", "sky_isle",
+    "sky_isle",
 ))
 
 
@@ -38,6 +39,10 @@ class ZoneTerrain:
         active = tuple(zone for zone in world.zones if zone.terrain_profile in PROFILE_RECIPES)
         self.index = ZoneIndex(active)
         self.recipes = {zone.name: recipe_for_zone(zone) for zone in self.index.zones}
+        self.feature_recipe = replace(
+            background,
+            caves=background.caves + tuple(cave for recipe in self.recipes.values() for cave in recipe.caves),
+        )
 
     def sample_surface(self, x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         blend = self.index.query(x, z)
@@ -69,6 +74,6 @@ class ZoneTerrain:
         )
         terrain, moisture = self.sample_surface(x, z)
         return finish_heightfield(
-            self.background, terrain, moisture, x, z, self.seed,
+            self.feature_recipe, terrain, moisture, x, z, self.seed,
             surface_sampler=lambda sx, sz: self.sample_surface(sx, sz)[0],
         )

@@ -138,6 +138,8 @@ class CaveNetwork:
     smooth_union: float = 0.8
     entrance_count: int = 1
     entrance_radius: float = 2.4
+    chamber_centers: tuple[Point, ...] = ()
+    entrance_points: tuple[Point, ...] = ()
     worm_noise: NoiseLayer = field(
         default_factory=lambda: NoiseLayer(kind="fbm", scale=150.0, octaves=2, gain=0.55)
     )

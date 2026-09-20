@@ -99,7 +99,7 @@ def generate_cave_topology(network: CaveNetwork, seed: int) -> CaveTopology:
         branch_endpoints.append(points[-1])
 
     chamber_candidates = anchors + branch_endpoints
-    chambers: list[Point] = []
+    chambers: list[Point] = list(network.chamber_centers)
     for index in range(network.chamber_count):
         if not chamber_candidates:
             break
@@ -110,7 +110,7 @@ def generate_cave_topology(network: CaveNetwork, seed: int) -> CaveTopology:
         chambers.append(candidate)
 
     entrance_candidates = anchors + branch_endpoints
-    entrances: list[Point] = []
+    entrances: list[Point] = list(network.entrance_points)
     for index in range(network.entrance_count):
         if not entrance_candidates:
             break
