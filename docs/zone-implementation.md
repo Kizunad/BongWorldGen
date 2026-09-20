@@ -81,3 +81,11 @@ Minecraft 1.20.1 的高度范围。方块契约验证 y=160–175 全为空气�
 当前 Heightfield 水层只能表示最高地表上方的一层水，因此浮岛下方的地面水不会输出；
 本组主岛地面高于海平面。该限制不影响实心体、洞穴与 POI 的垂直范围。
 验证：`.venv/bin/pytest -q` → **100 passed**。
+
+第五步：78 个 POI 保持原始 X/Z，按导出的实心段选择脚部 Y = 支撑块顶 Y + 1。
+地下点选最接近原始 Y 且有净空的洞底；浮岛点使用岛面，带 ground 标签的遗迹保留
+地面定位；井口柱已被挖通则使用实际入口底面，水下点标为 underwater_surface。
+输入 dataclass 不变，manifest 增加 `authored_pos_xyz` 和 `placement`。分数负坐标
+按 floor 选 Minecraft 列，不能用四舍五入跨到另一列。
+78 点逐一验证脚下实心、头顶两格为空、X/Z 不变；raster 回读验证与 POI Y 相符。
+验证：`.venv/bin/pytest -q` → **103 passed**。

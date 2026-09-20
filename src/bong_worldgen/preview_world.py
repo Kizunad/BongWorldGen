@@ -12,7 +12,8 @@ import numpy as np
 from .adapters import to_bong_tile, write_bong_raster
 from .adapters.bong_raster import BASE_SURFACE_PALETTE
 from .composition import ZoneTerrain
-from .data.world import PoiDefinition, WorldDefinition, ZoneDefinition
+from .composition.pois import resolve_world_pois
+from .data.world import WorldDefinition, ZoneDefinition
 from .data.world_definition import WORLD
 from .data.recipes import DEFAULT_RECIPE
 from .data.wilderness import wilderness_palette_manifest
@@ -48,19 +49,6 @@ def _zone_manifest(zone: ZoneDefinition) -> dict[str, object]:
             "boundary": {"mode": zone.boundary_mode, "width": zone.boundary_width},
             "source": "authored_zone_data",
         },
-    }
-
-
-def _poi_manifest(zone_name: str, poi: PoiDefinition) -> dict[str, object]:
-    return {
-        "zone": zone_name,
-        "kind": poi.kind,
-        "name": poi.name,
-        "pos_xyz": list(poi.pos_xyz),
-        "tags": list(poi.tags),
-        "unlock": poi.unlock,
-        "qi_affinity": poi.qi_affinity,
-        "danger_bias": poi.danger_bias,
     }
 
 
@@ -204,11 +192,7 @@ def export_preview_world(
         "biome_palette": ["minecraft:plains", "minecraft:river"],
         "wilderness_palette": wilderness_palette_manifest(),
         "tiles": tile_entries,
-        "pois": [
-            _poi_manifest(zone.name, poi)
-            for zone in world.zones
-            for poi in zone.pois
-        ],
+        "pois": [poi.manifest() for poi in resolve_world_pois(composer)],
         "poi_connections": [],
         "zones": [
             {
