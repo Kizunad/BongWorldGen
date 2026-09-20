@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -108,6 +109,16 @@ def export_preview_world(
                 origin_z=origin_z,
             )
             tile = to_bong_tile(field, sea_level=recipe.sea_level)
+            blend = composer.index.query(
+                origin_x + np.arange(tile_size)[None, :],
+                origin_z + np.arange(tile_size)[:, None],
+            )
+            # One minus the dominant contribution exposes the actual blend
+            # band, including transitions between overlapping authored zones.
+            dominant = blend.background.copy()
+            for part in blend.contributions:
+                dominant = np.maximum(dominant, part.weight)
+            tile = replace(tile, boundary_weight=(1.0 - dominant).astype(np.float32))
             for local_z in range(0, tile_size, OVERVIEW_STRIDE):
                 world_z = origin_z + local_z
                 oz = (world_z - min_z) // OVERVIEW_STRIDE
@@ -133,10 +144,7 @@ def export_preview_world(
                     "tile_x": tile_x,
                     "tile_z": tile_z,
                     "dir": f"tile_{tile_x}_{tile_z}",
-                    "zones": [part.zone.name for part in composer.index.query(
-                        origin_x + np.arange(tile_size)[None, :],
-                        origin_z + np.arange(tile_size)[:, None],
-                    ).contributions] or ["procedural_world"],
+                    "zones": [part.zone.name for part in blend.contributions] or ["procedural_world"],
                     "layers": [
                         "surface_id",
                         "subsurface_id",

@@ -20,6 +20,21 @@ SHAPES = frozenset((
     "rotated_rift", "subterranean_cluster", "plateau",
 ))
 BOUNDARY_MODES = frozenset(("soft", "semi_hard", "hard"))
+BOUNDARY_SCALE = {"soft": 1.0, "semi_hard": 0.75, "hard": 0.5}
+
+
+def boundary_alpha(zone: ZoneDefinition, distance: np.ndarray) -> np.ndarray:
+    """A C2 transition centered on the footprint; zero width is a true step.
+
+    Hard terrain uses half the authored transition width, semi-hard uses 3/4.
+    All nonzero widths have zero endpoint derivatives to avoid cut-off walls.
+    """
+
+    width = zone.boundary_width * BOUNDARY_SCALE[zone.boundary_mode]
+    if width == 0:
+        return (distance >= 0).astype(np.float64)
+    t = np.clip(0.5 + distance / width, 0.0, 1.0)
+    return t**3 * (t * (t * 6.0 - 15.0) + 10.0)
 
 
 def boundary_distance(zone: ZoneDefinition, x: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -98,11 +113,11 @@ class ZoneIndex:
         remaining = np.ones_like(x)
         contributions: list[ZoneContribution] = []
         for zone in self.zones:
-            inside = boundary_distance(zone, x, z) >= 0.0
-            weight = remaining * inside
+            alpha = boundary_alpha(zone, boundary_distance(zone, x, z))
+            weight = remaining * alpha
             if np.any(weight):
                 contributions.append(ZoneContribution(zone, weight))
-            remaining = remaining * ~inside
+            remaining = remaining * (1.0 - alpha)
         return ZoneBlend(tuple(contributions), remaining)
 
     def zone_at(self, x: float, z: float) -> ZoneDefinition | None:

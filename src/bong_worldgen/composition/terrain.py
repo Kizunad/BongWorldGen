@@ -70,4 +70,7 @@ class ZoneTerrain:
             origin_z + np.arange(height, dtype=np.float64) * cell_size,
         )
         terrain, moisture = self.sample_surface(x, z)
-        return finish_heightfield(self.background, terrain, moisture, x, z, self.seed)
+        return finish_heightfield(
+            self.background, terrain, moisture, x, z, self.seed,
+            surface_sampler=lambda sx, sz: self.sample_surface(sx, sz)[0],
+        )

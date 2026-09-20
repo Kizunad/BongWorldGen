@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 
 from .caves import generate_underground
 from .geometry import polyline_distance_and_progress
 from .models import Heightfield, NoiseLayer, Point, River, TerrainRecipe
 from .noise import sample_noise
+
+
+SurfaceSampler = Callable[[np.ndarray, np.ndarray], np.ndarray]
 
 
 def _coordinate_grid(
@@ -132,6 +137,7 @@ def _river_surface_profile(
     grid_z: np.ndarray,
     river: River,
     cell_size: float,
+    surface_sampler: SurfaceSampler | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """沿一条手工河流构建单调下降的水面和两岸上限。"""
 
@@ -139,7 +145,11 @@ def _river_surface_profile(
         float(np.hypot(end.x - start.x, end.z - start.z))
         for start, end in zip(river.path, river.path[1:])
     )
-    station_count = max(32, min(256, int(total_length / max(cell_size * 4.0, 1.0)) + 1))
+    station_count = (
+        max(32, min(4096, int(total_length / 8.0) + 1))
+        if surface_sampler is not None
+        else max(32, min(256, int(total_length / max(cell_size * 4.0, 1.0)) + 1))
+    )
     station_t, station_x, station_z = _polyline_stations(river.path, station_count)
     tangent_x = np.gradient(station_x)
     tangent_z = np.gradient(station_z)
@@ -147,26 +157,19 @@ def _river_surface_profile(
     normal_x = -tangent_z / tangent_length
     normal_z = tangent_x / tangent_length
     width_profile = river.width * (1.0 + (river.widening - 1.0) * station_t)
-    terrain_profile = _sample_regular_grid(
-        terrain,
-        grid_x,
-        grid_z,
-        station_x,
-        station_z,
-    )
+    def sample(sample_x: np.ndarray, sample_z: np.ndarray) -> np.ndarray:
+        if surface_sampler is not None:
+            return surface_sampler(sample_x, sample_z)
+        return _sample_regular_grid(terrain, grid_x, grid_z, sample_x, sample_z)
+
+    terrain_profile = sample(station_x, station_z)
     center_profile = _smooth_profile(terrain_profile)
     bank_offset = width_profile * 1.2
-    left_bank = _sample_regular_grid(
-        terrain,
-        grid_x,
-        grid_z,
+    left_bank = sample(
         station_x + normal_x * bank_offset,
         station_z + normal_z * bank_offset,
     )
-    right_bank = _sample_regular_grid(
-        terrain,
-        grid_x,
-        grid_z,
+    right_bank = sample(
         station_x - normal_x * bank_offset,
         station_z - normal_z * bank_offset,
     )
@@ -194,6 +197,7 @@ def _apply_rivers(
     seed: int,
     riverbed_id: np.ndarray,
     riverbed_palette: tuple[str, ...],
+    surface_sampler: SurfaceSampler | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     output_height = terrain
     output_water = water
@@ -204,13 +208,14 @@ def _apply_rivers(
         width = river.width * (1.0 + (river.widening - 1.0) * progress)
         channel_mask = distance <= width
         cell_size = float(x[0, 1] - x[0, 0]) if x.shape[1] > 1 else 1.0
-        riverbed_mask = distance <= width + cell_size
+        riverbed_mask = distance <= width + (1.0 if surface_sampler is not None else cell_size)
         station_t, water_profile, bank_profile = _river_surface_profile(
             output_height,
             x,
             z,
             river,
             cell_size=cell_size,
+            surface_sampler=surface_sampler,
         )
         water_surface = np.floor(np.interp(progress, station_t, water_profile))
         bank_cap = np.floor(np.interp(progress, station_t, bank_profile))
@@ -291,6 +296,8 @@ def finish_heightfield(
     x: np.ndarray,
     z: np.ndarray,
     seed: int,
+    *,
+    surface_sampler: SurfaceSampler | None = None,
 ) -> Heightfield:
     """Apply water and underground geometry to an already composed surface."""
 
@@ -300,7 +307,7 @@ def finish_heightfield(
     )
     riverbed = np.full(terrain.shape, -1, dtype=np.int16)
     terrain, water, riverbed = _apply_rivers(
-        terrain, water, x, z, recipe, seed, riverbed, riverbed_palette,
+        terrain, water, x, z, recipe, seed, riverbed, riverbed_palette, surface_sampler,
     )
     water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
     underground = generate_underground(terrain, x, z, recipe, seed)
