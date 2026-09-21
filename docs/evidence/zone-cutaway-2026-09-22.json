@@ -1,0 +1,104 @@
+{
+  "seed": 812731,
+  "bounds": {
+    "x": [
+      5568,
+      5631
+    ],
+    "z": [
+      2048,
+      2111
+    ],
+    "y": [
+      -64,
+      -42
+    ]
+  },
+  "hires_tiles": 9,
+  "png_tiles": [
+    {
+      "path": "1/x1/0/z4.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "e54a2cdacbee30287e80a369d8ebbdc6f2d9f84e47f1bfcacc43c27c787cfeeb"
+    },
+    {
+      "path": "1/x1/0/z5.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "2d2f010aa787acaa358416ab7ff9c319f6f66845b64737da168d22712bfe8aa4"
+    },
+    {
+      "path": "1/x1/1/z4.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "1af46cefb14e739937a4a4a5375db0316ed74b7ff097f984864fb6d98ffbffec"
+    },
+    {
+      "path": "1/x1/1/z5.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "183e07a7818c05f9c666936eadae8aa2cbffaccfb661d833d333511d656f8945"
+    },
+    {
+      "path": "2/x1/z0.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "2a635f7b1513ef85ea13b41502f9519cb9896f3324c8a3f1c5b0c4d9762bc17e"
+    },
+    {
+      "path": "2/x1/z1.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "5ceb3ca734e8cca52a7801cecc629e519fdfdcff38a4119b61dd6966b071103d"
+    },
+    {
+      "path": "2/x2/z0.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "823c91f5afbf806fec33f5c75f92eaa1edc09d4b0213704260532097f0184e1b"
+    },
+    {
+      "path": "2/x2/z1.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "818c40c621116e65631e027a3bdb2cd967070de86fa4b1f9e7b7dd8901270f72"
+    },
+    {
+      "path": "3/x0/z-1.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "6da2889976b203ddf5b14ae9a74e30c65e8d2471217ad5c80440de3f1f3c7c80"
+    },
+    {
+      "path": "3/x0/z0.png",
+      "size": [
+        501,
+        1002
+      ],
+      "sha256": "c9c7c85df0ab739aeeadc7bd78e6d7ab69cfd1ba58aed7ddec80c4d549adfb2a"
+    }
+  ],
+  "cutaway": {
+    "rgba_colors": 2,
+    "visible_pixels": 262144
+  }
+}

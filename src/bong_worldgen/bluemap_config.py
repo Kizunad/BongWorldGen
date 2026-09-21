@@ -23,12 +23,16 @@ class BlueMapConfig:
     accept_download: bool = False
     marker_sets: dict[str, object] = field(default_factory=dict)
     remove_caves_below_y: int = 55
+    min_y: int | None = None
+    max_y: int | None = None
 
     def __post_init__(self) -> None:
         if self.min_x > self.max_x or self.min_z > self.max_z:
             raise ValueError("BlueMap bounds must be ordered")
         if not 1 <= self.port <= 65535:
             raise ValueError("BlueMap web port must be in [1, 65535]")
+        if self.min_y is not None and self.max_y is not None and self.min_y > self.max_y:
+            raise ValueError("BlueMap vertical bounds must be ordered")
 
 
 def _quoted(path: Path) -> str:
@@ -125,6 +129,8 @@ def write_bluemap_config(config: BlueMapConfig) -> None:
                 f"    max-x: {config.max_x}",
                 f"    min-z: {config.min_z}",
                 f"    max-z: {config.max_z}",
+                *((f"    min-y: {config.min_y}",) if config.min_y is not None else ()),
+                *((f"    max-y: {config.max_y}",) if config.max_y is not None else ()),
                 "  }",
                 "]",
                 "render-edges: true",

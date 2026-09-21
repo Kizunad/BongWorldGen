@@ -90,13 +90,13 @@ def _replace_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def _run_bluemap(*args: str) -> None:
+def _run_bluemap(*args: str, config_dir: Path = CONFIG_DIR) -> None:
     command = [
         str(java_path()),
         "-jar",
         str(ensure_bluemap()),
         "--config",
-        str(CONFIG_DIR),
+        str(config_dir.resolve()),
         "--mc-version",
         "1.20.1",
         *args,
@@ -113,6 +113,8 @@ def _validate_render_args(args: argparse.Namespace) -> None:
         raise SystemExit("--width and --height must be multiples of 16")
     if args.origin_x % 16 or args.origin_z % 16:
         raise SystemExit("--origin-x and --origin-z must be multiples of 16")
+    if args.min_y is not None and args.max_y is not None and args.min_y > args.max_y:
+        raise SystemExit("--min-y must not exceed --max-y")
 
 
 def render(args: argparse.Namespace) -> None:
@@ -124,9 +126,12 @@ def render(args: argparse.Namespace) -> None:
         )
 
     ensure_bluemap()
-    _replace_directory(WORLD_DIR)
-    _replace_directory(WEB_DIR)
-    _replace_directory(CONFIG_DIR)
+    world_dir = args.output / "world" if args.output else WORLD_DIR
+    web_dir = args.output / "web" if args.output else WEB_DIR
+    config_dir = args.output / "config" if args.output else CONFIG_DIR
+    _replace_directory(world_dir)
+    _replace_directory(web_dir)
+    _replace_directory(config_dir)
     composer = ZoneTerrain(seed=args.seed)
     patches = [("preview", args.origin_x, args.origin_z)]
     if args.zone_gallery:
@@ -141,7 +146,7 @@ def render(args: argparse.Namespace) -> None:
         print(f"Generating {name}: ({origin_x}, {origin_z}), {args.width} x {args.height}", flush=True)
         field = composer.generate(width=args.width, height=args.height, origin_x=origin_x, origin_z=origin_z)
         result = export_minecraft_world(
-            field, WORLD_DIR, origin_x=origin_x, origin_z=origin_z,
+            field, world_dir, origin_x=origin_x, origin_z=origin_z,
             sea_level=DEFAULT_RECIPE.sea_level, seed=args.seed, world_name=WORLD.name, append=True,
         )
         total_chunks += result.chunks_written
@@ -154,17 +159,18 @@ def render(args: argparse.Namespace) -> None:
             continue
         markers[f"poi-{index}"] = {"type": "poi", "label": poi.poi.name,
                                    "position": {"x": x, "y": y, "z": z}}
-    (WORLD_DIR / "zone-preview.json").write_text(json.dumps({
+    (world_dir / "zone-preview.json").write_text(json.dumps({
         "seed": args.seed, "width": args.width, "height": args.height,
         "patches": [{"zone": n, "origin_x": x, "origin_z": z} for n, x, z in patches],
         "note": "Sparse gallery at original world coordinates." if args.zone_gallery else "Contiguous preview.",
+        "render_y_bounds": {"min": args.min_y, "max": args.max_y},
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     write_bluemap_config(
         BlueMapConfig(
-            config_dir=CONFIG_DIR,
+            config_dir=config_dir,
             data_dir=DATA_DIR,
-            web_dir=WEB_DIR,
-            world_dir=WORLD_DIR,
+            web_dir=web_dir,
+            world_dir=world_dir,
             min_x=min_x,
             max_x=max_x,
             min_z=min_z,
@@ -174,14 +180,16 @@ def render(args: argparse.Namespace) -> None:
             port=args.port,
             accept_download=True,
             marker_sets={"landmarks": {"label": "兴趣点", "toggleable": True, "markers": markers}},
-            remove_caves_below_y=-64 if args.zone_gallery else 55,
+            remove_caves_below_y=-64 if args.zone_gallery or args.min_y is not None or args.max_y is not None else 55,
+            min_y=args.min_y,
+            max_y=args.max_y,
         )
     )
     print(
         f"Generated {total_chunks} chunks in {len(patches)} patches at "
-        f"{WORLD_DIR}"
+        f"{world_dir}"
     )
-    _run_bluemap("--generate-webapp", "--render", "--force-render", "--generate-websettings")
+    _run_bluemap("--generate-webapp", "--render", "--force-render", "--generate-websettings", config_dir=config_dir)
 
 
 def serve(args: argparse.Namespace) -> None:
@@ -206,6 +214,10 @@ def build_parser() -> argparse.ArgumentParser:
     render_parser.add_argument("--seed", type=int, default=812731)
     render_parser.add_argument("--port", type=int, default=8100)
     render_parser.add_argument("--accept-minecraft-eula", action="store_true")
+    render_parser.add_argument("--output", type=Path,
+                               help="keep this preview's world, config and web output in a separate directory")
+    render_parser.add_argument("--min-y", type=int, help="lower BlueMap render mask, without changing world blocks")
+    render_parser.add_argument("--max-y", type=int, help="upper BlueMap render mask for underground cutaways")
     render_parser.add_argument("--zone-gallery", action="store_true",
                                help="render one patch per terrain profile at its real world coordinates")
 

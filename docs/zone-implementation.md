@@ -224,3 +224,27 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 .venv/bin/python tools/benchmark_zone_surface.py --repeat 3
 ```
 验证：`.venv/bin/pytest -q` → **124 passed**；compileall 和基准工具小网格运行通过。
+
+第十七步：BlueMap 支持独立目录和地下剖面。`--output` 将此预览的世界、配置、
+网页放在各自子目录，`--min-y` / `--max-y` 仅限制渲染范围，不裁掉 Anvil 方块。
+剖面保留洞穴，倒置的高度范围在清理输出前报错。原 gallery 保留在 `.bluemap/web`。
+
+```bash
+.venv/bin/python tools/bluemap.py render --accept-minecraft-eula \
+  --output generated/cave-connection-bluemap \
+  --origin-x 5568 --origin-z 2048 --width 64 --height 64 \
+  --min-y -64 --max-y -42 > generated/cave-connection-render.log 2>&1
+```
+
+2026-09-22 验证：Python **126 passed**。本次生成 16 chunks；Java 25 / BlueMap 5.23
+日志正常完成并退出，产出 **9 个 hires 网格、10 个 PNG 瓦片**。版本信息查询被沙箱
+拒绝，已缓存的 Minecraft 资源正常加载，不影响渲染完成。
+最细 PNG 位于 `generated/cave-connection-bluemap/web/maps/bong/tiles/1/x1/1/z4.png`。
+PNG 上半幅是颜色、下半幅是高度编码；在颜色半幅裁剪 `(68, 48, 132, 112)`，
+对应世界 X=5568..5631、Z=2048..2111。瓦片尺寸和 SHA-256 存于该输出根目录
+`evidence.json`，裁剪图为 `cutaway.png`。
+本次测量记录同时提交在 `docs/evidence/zone-cutaway-2026-09-22.json`。
+
+图片工具返回了图像数据，但本会话未显示图像；本步只确认产物与数据契约，
+不宣称完成新的肉眼验收。坠井连通性的可证伪依据仍是第十二步三 seed 体素测试。
+未启动 webserver。
