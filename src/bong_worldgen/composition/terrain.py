@@ -40,14 +40,24 @@ class ZoneTerrain:
         )
 
     def sample_surface(self, x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        x, z = np.broadcast_arrays(np.asarray(x, dtype=np.float64), np.asarray(z, dtype=np.float64))
         blend = self.index.query(x, z)
-        terrain, moisture = sample_surface(self.background, x, z, self.seed)
-        terrain *= blend.background
-        moisture *= blend.background
-        for part in blend.contributions:
-            local_height, local_moisture = sample_surface(self.recipes[part.zone.name], x, z, self.seed)
-            terrain += part.weight * local_height
-            moisture += part.weight * local_moisture
+        terrain = np.zeros(x.shape, dtype=np.float64)
+        moisture = np.zeros(x.shape, dtype=np.float64)
+        recipes = [(self.background, blend.background)] + [
+            (self.recipes[part.zone.name], part.weight) for part in blend.contributions
+        ]
+        for recipe, weight in recipes:
+            active = weight > 0
+            if not np.any(active):
+                continue
+            # Engine samplers accept arbitrary coordinate arrays. Dense zones
+            # keep their fast contiguous path; partial zones sample only the
+            # contributing columns, preserving world coordinates and order.
+            selection = Ellipsis if np.all(active) else active
+            local_height, local_moisture = sample_surface(recipe, x[selection], z[selection], self.seed)
+            terrain[selection] += weight[selection] * local_height
+            moisture[selection] += weight[selection] * local_moisture
         return terrain, moisture
 
     @cached_property

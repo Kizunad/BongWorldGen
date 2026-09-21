@@ -209,3 +209,18 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 颜色规则，palette 排序变化不改变区域色。验证使用已有颜色、overview/详细 tile
 一致性测试与 production build。
 验证结果：控制台 **66 passed**，production build 通过。
+
+第十六步：区域合成只计算非零权重列。原来任何一个 zone 触及窗口，都会在整个
+窗口采样其配方；世界背景也会在已被完全覆盖的区域计算。现在先广播世界坐标，
+保留完整覆盖窗口的连续数组快速路径，部分覆盖时仅将有效坐标传给通用引擎采样器。
+不改变配方、seed、混合顺序或 engine 分层。
+
+完整世界边界上的 401×409 网格：配方采样量从 **4,592,252** 降为 **166,463**。
+优化前后高度/湿度逐字节相同；标量和广播查询也相同。本次同机采样从 19.48 秒降至
+2.96 秒（约 6.59 倍），耗时会随机器负载变化。可复现脚本保留原先的全列加权求和
+作为参照，每次运行都先检验字节一致性再记录时间：
+
+```bash
+.venv/bin/python tools/benchmark_zone_surface.py --repeat 3
+```
+验证：`.venv/bin/pytest -q` → **124 passed**；compileall 和基准工具小网格运行通过。
