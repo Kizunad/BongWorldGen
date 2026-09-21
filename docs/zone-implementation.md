@@ -192,3 +192,14 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 .venv/bin/bong-worldgen --width 32 --height 48 --origin-x 5576 --origin-z 2060 \
   --cell-size 1 --output generated/zone-evidence-cave-connection/well.npz
 ```
+
+第十四步：消除荒野分类的 tile 接缝。原来坡度使用 tile 内的 `np.gradient`，窗口
+边缘改成单边差分，单列则一律当成平地；南荒余烬 64×64 样区左右切块有 2 列分类
+不一致。zone adapter 现在多生成一圈邻列，中心差分后裁剪，CLI 与完整 raster
+共用这一入口。坡度除以实际 `cell_size`，语义层保持相同采样步长下的分块一致性；
+不同步长的坡度是不同尺度的近似。引擎、几何高度和实心段规则没有改变。
+新增契约覆盖步长 1/4、单列/单行、负坐标、32/64 tile raster 与 overview 一致性。
+定向复现：`.venv/bin/pytest -q tests/test_zone_wilderness.py`。
+验证：`.venv/bin/pytest -q` → **124 passed**，compileall 通过；
+`generated/zone-evidence-cave-connection/wilderness-split.json` 记录默认 seed 下
+(-1232, 7968) 起始 64×64 样区左右分块的荒野分类差异为 **0**。

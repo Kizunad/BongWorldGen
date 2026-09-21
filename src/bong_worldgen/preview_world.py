@@ -10,7 +10,7 @@ import numpy as np
 
 from .adapters import write_bong_raster
 from .adapters.bong_raster import BASE_SURFACE_PALETTE, ZONE_NONE_ID
-from .adapters.zone_raster import to_zone_tile
+from .adapters.zone_raster import generate_zone_tile
 from .composition import ZoneTerrain
 from .composition.pois import resolve_world_pois
 from .data.world import WorldDefinition, ZoneDefinition
@@ -96,7 +96,8 @@ def export_preview_world(
         for tile_x in _tile_range(min_x, max_x, tile_size):
             origin_x = tile_x * tile_size
             origin_z = tile_z * tile_size
-            field = composer.generate(
+            _, tile = generate_zone_tile(
+                composer,
                 width=tile_size,
                 height=tile_size,
                 origin_x=origin_x,
@@ -105,12 +106,6 @@ def export_preview_world(
             blend = composer.index.query(
                 origin_x + np.arange(tile_size)[None, :],
                 origin_z + np.arange(tile_size)[:, None],
-            )
-            tile = to_zone_tile(
-                field,
-                blend,
-                sea_level=recipe.sea_level,
-                zone_palette=zone_palette,
             )
             # Sample the coordinates declared by overview.origin and cell_size.
             # Tile-local stride loops shift samples at unaligned world bounds

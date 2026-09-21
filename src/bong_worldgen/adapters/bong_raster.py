@@ -101,6 +101,7 @@ def to_bong_tile(
     land_biome_id: int = 0,
     zone_id: np.ndarray | None = None,
     zone_palette: tuple[str, ...] = (),
+    surface_slope: np.ndarray | None = None,
 ) -> BongTile:
     """Apply a small, explicit palette policy to a generated heightfield."""
 
@@ -121,7 +122,9 @@ def to_bong_tile(
         0.0,
         1.0,
     ).astype(np.float32)
-    wilderness_id = classify_wilderness(field.height, field.water_level, sea_level=sea_level)
+    wilderness_id = classify_wilderness(
+        field.height, field.water_level, sea_level=sea_level, surface_slope=surface_slope,
+    )
     normalized_zone_id = None
     if zone_id is not None:
         raw_zone_id = np.asarray(zone_id)

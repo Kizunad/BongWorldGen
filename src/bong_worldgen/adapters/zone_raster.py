@@ -5,6 +5,7 @@ from dataclasses import replace
 import numpy as np
 
 from ..composition.layout import ZoneBlend
+from ..composition.terrain import ZoneTerrain
 from ..engine import Heightfield
 from .bong_raster import BongTile, ZONE_NONE_ID, to_bong_tile
 
@@ -15,6 +16,7 @@ def to_zone_tile(
     *,
     sea_level: float,
     zone_palette: tuple[str, ...],
+    surface_slope: np.ndarray | None = None,
 ) -> BongTile:
     if len(zone_palette) > ZONE_NONE_ID:
         raise ValueError("zone_palette must contain at most 255 entries")
@@ -30,5 +32,54 @@ def to_zone_tile(
     except KeyError as exc:
         raise ValueError(f"zone_palette is missing contributing zone {exc.args[0]!r}") from exc
     indices, weights = blend.dominant()
-    tile = to_bong_tile(field, sea_level=sea_level, zone_id=lookup[indices], zone_palette=zone_palette)
+    tile = to_bong_tile(field, sea_level=sea_level, zone_id=lookup[indices],
+                        zone_palette=zone_palette, surface_slope=surface_slope)
     return replace(tile, boundary_weight=(1.0 - weights).astype(np.float32))
+
+
+def generate_zone_tile(
+    composer: ZoneTerrain,
+    *,
+    width: int,
+    height: int,
+    origin_x: float = 0,
+    origin_z: float = 0,
+    cell_size: float = 1,
+) -> tuple[Heightfield, BongTile]:
+    """Generate one tile with neighboring heights for crop-independent slope.
+
+    A one-sample halo makes every requested column an interior sample, including
+    single-column tiles. Slopes are measured in height units per world block;
+    coarser grids still approximate them at their declared sampling distance.
+    """
+
+    if width < 1 or height < 1:
+        raise ValueError("heightfield dimensions must be positive")
+    padded = composer.generate(
+        width=width + 2, height=height + 2,
+        origin_x=origin_x - cell_size, origin_z=origin_z - cell_size, cell_size=cell_size,
+    )
+    elevations = padded.height.astype(np.float64)
+    slope = np.hypot(
+        (elevations[1:-1, 2:] - elevations[1:-1, :-2]) / (2 * cell_size),
+        (elevations[2:, 1:-1] - elevations[:-2, 1:-1]) / (2 * cell_size),
+    )
+    field = replace(
+        padded,
+        **{name: np.ascontiguousarray(getattr(padded, name)[1:-1, 1:-1]) for name in (
+            "height", "moisture", "water_level", "riverbed_id", "solid_spans", "cave_id",
+        )},
+        underground_blocks=tuple(
+            replace(block, x=block.x - 1, z=block.z - 1) for block in padded.underground_blocks
+            if 1 <= block.x <= width and 1 <= block.z <= height
+        ),
+    )
+    blend = composer.index.query(
+        origin_x + np.arange(width)[None, :] * cell_size,
+        origin_z + np.arange(height)[:, None] * cell_size,
+    )
+    tile = to_zone_tile(
+        field, blend, sea_level=composer.background.sea_level,
+        zone_palette=tuple(sorted(zone.name for zone in composer.index.zones)), surface_slope=slope,
+    )
+    return field, tile

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .adapters import ZONE_NONE_ID, to_zone_tile
+from .adapters import ZONE_NONE_ID, generate_zone_tile
 from .data.recipes import DEFAULT_RECIPE
 from .composition import ZoneTerrain
 
@@ -27,20 +27,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     composer = ZoneTerrain(seed=args.seed)
-    field = composer.generate(
+    field, tile = generate_zone_tile(
+        composer,
         width=args.width,
         height=args.height,
         origin_x=args.origin_x,
         origin_z=args.origin_z,
         cell_size=args.cell_size,
-    )
-    blend = composer.index.query(
-        args.origin_x + np.arange(args.width)[None, :] * args.cell_size,
-        args.origin_z + np.arange(args.height)[:, None] * args.cell_size,
-    )
-    tile = to_zone_tile(
-        field, blend, sea_level=DEFAULT_RECIPE.sea_level,
-        zone_palette=tuple(sorted(zone.name for zone in composer.index.zones)),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(

@@ -56,6 +56,7 @@ def classify_wilderness(
     water_level: np.ndarray,
     *,
     sea_level: float,
+    surface_slope: np.ndarray | None = None,
 ) -> np.ndarray:
     """Classify each heightfield column into a stable wilderness category.
 
@@ -63,6 +64,9 @@ def classify_wilderness(
     sea level is a lake/low-water body; raised channel water is a river.  Land
     above the high relief threshold, or with a steep high-altitude slope, is
     mountains.  Everything else is grassland.
+
+    Callers with world-coordinate neighbors supply surface_slope to keep tile
+    edges consistent. Without it, standalone arrays use local grid gradients.
     """
 
     if height.shape != water_level.shape or height.ndim != 2:
@@ -77,7 +81,11 @@ def classify_wilderness(
     river = wet & (water_level > sea_level + 1.0e-3)
     lake = wet & ~river
 
-    if height.shape[0] < 2 or height.shape[1] < 2:
+    if surface_slope is not None:
+        slope = np.asarray(surface_slope)
+        if slope.shape != height.shape or not np.isfinite(slope).all() or np.any(slope < 0):
+            raise ValueError("surface_slope must be finite, nonnegative and match height")
+    elif height.shape[0] < 2 or height.shape[1] < 2:
         slope = np.zeros(height.shape, dtype=np.float64)
     else:
         dz, dx = np.gradient(height.astype(np.float64, copy=False))

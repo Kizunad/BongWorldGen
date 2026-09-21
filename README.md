@@ -70,6 +70,9 @@ CLI 的 NPZ 包含 `solid_spans`（每列最多 4 段实心体）、`zone_id`、
 `origin` 保存 `[world_x, world_z]`，`cell_size` 保存采样步长，坐标为
 `origin + [column, row] * cell_size`；`zone_none_id=255` 代表背景。
 `recipe` 标识背景配方，`composer=zone_terrain` 标识区域合成。
+CLI 和完整世界 raster 使用 `generate_zone_tile()` 生成一圈邻列再裁剪，荒野分类的
+坡度因此不会随 tile 边缘或单列窗口变化；坡度按 `cell_size` 换算成每世界方块的高度差。
+步长大于 1 时仍是该步长上的差分近似。
 
 如果需要给现有 Rust loader 做本地 smoke test，可以调用转换层写出单 tile v2 raster：
 
