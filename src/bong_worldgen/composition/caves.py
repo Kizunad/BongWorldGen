@@ -17,9 +17,10 @@ def caves_for_zone(zone: ZoneDefinition, surface_height: float) -> tuple[CaveNet
                       if poi.kind == "cave_mouth" or "bottomless" in poi.tags)
     rooms = tuple(poi for poi in zone.pois if poi.kind != "cave_mouth" and "bottomless" not in poi.tags)
     centers = tuple(Point(poi.pos_xyz[0], poi.pos_xyz[2]) for poi in rooms)
-    # Authored points anchor real rooms, and radial arms keep the network useful
-    # even for a region with no POIs. All dimensions below are world units.
-    targets = (*centers, Point(center.x - scale * 0.28, center.z - scale * 0.12),
+    # Rooms and authored entrances both connect to the main network. A shaft
+    # alone can otherwise end in solid rock far from all horizontal passages.
+    # Radial arms also serve regions with no POIs. Dimensions are world units.
+    targets = (*centers, *entrances, Point(center.x - scale * 0.28, center.z - scale * 0.12),
                Point(center.x + scale * 0.27, center.z + scale * 0.15))
     paths = tuple((center, target) for target in targets if target != center)
     if zone.terrain_profile == "abyssal_maze":

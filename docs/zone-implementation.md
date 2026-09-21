@@ -167,3 +167,15 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
   generated/zone-overview-evidence/rasters/manifest.json \
   --output generated/zone-overview-evidence/zone-overview.png
 ```
+
+第十二步：把非中心洞口接入主洞路径。无垠深渊的坠渊井 (5600, 2100) 原先距最近
+主路径约 304.63 方块，仅生成孤立竖井。合成层现在将洞口与洞室一起编译成各层的
+路径端点，引擎仍只接收通用洞穴参数。真实 32×48 体素样区排除地表空气，按脚部
+与头部两格净空构建六邻接通路，从深井底检查向主洞方向 40 方块外的浅/中/深三层
+开口均可达。seed=7/812731/2026 在修复前全部失败，修复后全部通过；该证据验证
+井口附近三层连接，不等同于验证整个深渊所有洞室的可达性。
+
+验证：`.venv/bin/pytest -q` → **116 passed**；
+`.venv/bin/python tools/zone_evidence.py --output generated/zone-evidence-cave-connection`
+重算 27 zones / 15 profiles / 78 POI，全部 split_equal=true，最大实心段数仍为 4。
+定向复现：`.venv/bin/pytest -q tests/test_zone_cave_connections.py`。
