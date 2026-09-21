@@ -106,3 +106,41 @@ def test_zone_raster_matches_point_queries_and_background_across_tile_sizes(tmp_
                  for x in (-1, 0)]
         actual = np.concatenate(parts, axis=1)[:32, tile_size - 32:tile_size + 32]
         np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("tile_size", (16, 64))
+def test_overview_samples_declared_coordinates_and_matches_tile_zone_ids(tmp_path, tile_size):
+    first = replace(SPAWN, name="first", center_x=-13, center_z=11,
+                    size_x=48, size_z=48, boundary_width=8, pois=())
+    second = replace(QINGYUN_PEAKS, name="second", center_x=51, center_z=43,
+                     size_x=40, size_z=40, boundary_width=8, pois=())
+    background = TerrainRecipe(name="background")
+    world = replace(WORLD, zones=(first, second))
+    manifest_path = export_preview_world(
+        tmp_path, world=world, recipe=background, min_x=-45, max_x=51,
+        min_z=-21, max_z=43, tile_size=tile_size,
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    overview = manifest["overview"]
+    assert (overview["origin_x"], overview["origin_z"], overview["cell_size"]) == (-45, -21, 32)
+    assert (overview["width"], overview["height"]) == (4, 3)
+    raster_dir = manifest_path.parent
+    zone_ids = np.fromfile(raster_dir / overview["zone_file"], dtype=np.uint8).reshape(3, 4)
+    assert set(np.unique(zone_ids)) == {0, 1, 255}
+    for oz in range(3):
+        for ox in range(4):
+            x, z = -45 + ox * 32, -21 + oz * 32
+            tile_x, local_x = divmod(x, tile_size)
+            tile_z, local_z = divmod(z, tile_size)
+            layer = np.fromfile(raster_dir / f"tile_{tile_x}_{tile_z}/zone_id.bin",
+                                dtype=np.uint8).reshape(tile_size, tile_size)
+            assert zone_ids[oz, ox] == layer[local_z, local_x]
+
+    composer = ZoneTerrain(world, background=background)
+    field = composer.generate(width=4, height=3, origin_x=-45, origin_z=-21, cell_size=32)
+    expected = to_bong_tile(field, sea_level=background.sea_level)
+    for key, values, dtype in (("height_file", field.height, "<f4"),
+                               ("surface_file", expected.surface_id, "u1"),
+                               ("wilderness_file", expected.wilderness_id, "u1")):
+        actual = np.fromfile(raster_dir / overview[key], dtype=dtype).reshape(3, 4)
+        np.testing.assert_array_equal(actual, values)

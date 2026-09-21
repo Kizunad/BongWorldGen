@@ -5,9 +5,9 @@
 import * as THREE from "three";
 import { spansToVoxelGeometry, surfaceY, type ColorMode } from "./decode";
 import { buildFloraPoints, buildPoiMarkers } from "./decorations";
-import { LIGHT_DIR, surfaceColorForId } from "./palette";
+import { LIGHT_DIR } from "./palette";
 import type { DecodedTile, Manifest } from "./types";
-import type { OverviewData } from "./overview";
+import { overviewColors, type OverviewData } from "./overview";
 
 const WILDERNESS_HIGHLIGHT_COLOR = 0xffd166;
 
@@ -122,6 +122,7 @@ export class Viewer {
   private readonly zoneGroup = new THREE.Group();
   private readonly overviewTerrainGroup = new THREE.Group();
   private readonly overviewWildernessGroup = new THREE.Group();
+  private readonly overviewZoneGroup = new THREE.Group();
   private readonly waterGroup = new THREE.Group();
   private readonly qiGroup = new THREE.Group();
   private readonly decorGroup = new THREE.Group();
@@ -193,6 +194,7 @@ export class Viewer {
       this.zoneGroup,
       this.overviewTerrainGroup,
       this.overviewWildernessGroup,
+      this.overviewZoneGroup,
       this.waterGroup,
       this.qiGroup,
       this.decorGroup,
@@ -222,11 +224,13 @@ export class Viewer {
     data: OverviewData,
     surfacePalette: string[],
     wildernessPalette: Manifest["wilderness_palette"],
+    zonePalette: string[] = [],
   ): void {
     for (const child of [...this.overviewTerrainGroup.children]) disposeObject3D(child);
+    for (const child of [...this.overviewZoneGroup.children]) disposeObject3D(child);
     const vertexCount = data.width * data.height;
     const positions = new Float32Array(vertexCount * 3);
-    const colors = new Float32Array(vertexCount * 3);
+    const colors = overviewColors(data, surfacePalette);
     const indexCount = (data.width - 1) * (data.height - 1) * 6;
     const indices = new Uint32Array(indexCount);
     for (let z = 0; z < data.height; z += 1) {
@@ -236,10 +240,6 @@ export class Viewer {
         positions[offset] = data.originX + x * data.cellSize;
         positions[offset + 1] = data.elevation[index] - 2.0;
         positions[offset + 2] = data.originZ + z * data.cellSize;
-        const [r, g, b] = surfaceColorForId(data.surfaceId[index], surfacePalette);
-        colors[offset] = r / 255;
-        colors[offset + 1] = g / 255;
-        colors[offset + 2] = b / 255;
       }
     }
     let cursor = 0;
@@ -260,6 +260,21 @@ export class Viewer {
     geometry.computeVertexNormals();
     const mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ vertexColors: true }));
     this.overviewTerrainGroup.add(mesh);
+    if (data.zoneId && zonePalette.length > 0) {
+      const zoneGeometry = geometry.clone();
+      zoneGeometry.setAttribute("color", new THREE.BufferAttribute(
+        overviewColors(data, surfacePalette, zonePalette), 3,
+      ));
+      const zoneMaterial = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.82,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+      });
+      this.overviewZoneGroup.add(new THREE.Mesh(zoneGeometry, zoneMaterial));
+    }
     this.overviewData = { data, surfacePalette, wildernessPalette };
     this.rebuildOverviewHighlight();
 
@@ -343,6 +358,7 @@ export class Viewer {
     this.zoneGroup.visible = this.layers.zone;
     this.overviewTerrainGroup.visible = this.layers.terrain;
     this.overviewWildernessGroup.visible = this.layers.wilderness;
+    this.overviewZoneGroup.visible = this.layers.zone;
     this.waterGroup.visible = this.layers.water;
     this.qiGroup.visible = this.layers.qi;
     this.decorGroup.visible = this.layers.decorations;

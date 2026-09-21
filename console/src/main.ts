@@ -53,7 +53,7 @@ function buildLayerToggles(): void {
   const defs: { key: keyof ViewerLayers; label: string }[] = [
     { key: "terrain", label: "地形" },
     { key: "wilderness", label: "荒野类型（wilderness_id）" },
-    { key: "zone", label: "区域归属（zone_id）" },
+    { key: "zone", label: "区域归属" },
     { key: "water", label: "水体" },
     { key: "qi", label: "灵气热力 (qi_density)" },
     { key: "decorations", label: "装饰点位" },
@@ -303,7 +303,12 @@ async function main(): Promise<void> {
 
   try {
     const overview = await loadOverview(manifest);
-    viewer.setOverview(overview, manifest.surface_palette, manifest.wilderness_palette);
+    viewer.setOverview(
+      overview,
+      manifest.surface_palette,
+      manifest.wilderness_palette,
+      manifest.zone_palette ?? [],
+    );
     setStatus("全图地形概览已显示，正在加载详细 tiles…");
   } catch (err) {
     console.error("overview 加载失败", err);

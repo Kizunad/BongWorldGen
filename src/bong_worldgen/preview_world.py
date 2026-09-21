@@ -89,6 +89,9 @@ def export_preview_world(
     overview_elevation = np.full((overview_height, overview_width), np.nan, dtype=np.float32)
     overview_surface = np.zeros((overview_height, overview_width), dtype=np.uint8)
     overview_wilderness = np.zeros((overview_height, overview_width), dtype=np.uint8)
+    overview_zone = np.full((overview_height, overview_width), ZONE_NONE_ID, dtype=np.uint8)
+    overview_x = min_x + np.arange(overview_width) * OVERVIEW_STRIDE
+    overview_z = min_z + np.arange(overview_height) * OVERVIEW_STRIDE
 
     for tile_z in _tile_range(min_z, max_z, tile_size):
         for tile_x in _tile_range(min_x, max_x, tile_size):
@@ -122,18 +125,17 @@ def export_preview_world(
             # One minus the dominant contribution exposes the actual blend
             # band, including transitions between overlapping authored zones.
             tile = replace(tile, boundary_weight=(1.0 - dominant_weight).astype(np.float32))
-            for local_z in range(0, tile_size, OVERVIEW_STRIDE):
-                world_z = origin_z + local_z
-                oz = (world_z - min_z) // OVERVIEW_STRIDE
-                if oz < 0 or oz >= overview_height:
-                    continue
-                for local_x in range(0, tile_size, OVERVIEW_STRIDE):
-                    world_x = origin_x + local_x
-                    ox = (world_x - min_x) // OVERVIEW_STRIDE
-                    if 0 <= ox < overview_width:
-                        overview_elevation[oz, ox] = tile.height[local_z, local_x]
-                        overview_surface[oz, ox] = tile.surface_id[local_z, local_x]
-                        overview_wilderness[oz, ox] = tile.wilderness_id[local_z, local_x]
+            # Sample the coordinates declared by overview.origin and cell_size.
+            # Tile-local stride loops shift samples at unaligned world bounds
+            # and overwrite them when tile_size is smaller than the stride.
+            ox = np.flatnonzero((overview_x >= origin_x) & (overview_x < origin_x + tile_size))
+            oz = np.flatnonzero((overview_z >= origin_z) & (overview_z < origin_z + tile_size))
+            target = np.ix_(oz, ox)
+            source = np.ix_(overview_z[oz] - origin_z, overview_x[ox] - origin_x)
+            overview_elevation[target] = tile.height[source]
+            overview_surface[target] = tile.surface_id[source]
+            overview_wilderness[target] = tile.wilderness_id[source]
+            overview_zone[target] = tile.zone_id[source]
             write_bong_raster(
                 tile,
                 rasters_dir,
@@ -165,10 +167,11 @@ def export_preview_world(
             )
 
     if not np.isfinite(overview_elevation).all():
-        raise ValueError("overview sampling left uncovered cells; choose aligned world bounds")
+        raise ValueError("overview sampling left uncovered cells")
     overview_elevation.tofile(rasters_dir / "overview_height.bin")
     overview_surface.tofile(rasters_dir / "overview_surface_id.bin")
     overview_wilderness.tofile(rasters_dir / "overview_wilderness_id.bin")
+    overview_zone.tofile(rasters_dir / "overview_zone_id.bin")
 
     surface_palette = list(BASE_SURFACE_PALETTE)
     riverbed_palette = list(
@@ -200,6 +203,7 @@ def export_preview_world(
             "height_file": "overview_height.bin",
             "surface_file": "overview_surface_id.bin",
             "wilderness_file": "overview_wilderness_id.bin",
+            "zone_file": "overview_zone_id.bin",
             "note": "Display-only overview; full-resolution tile rasters remain authoritative.",
         },
         "surface_palette": surface_palette,

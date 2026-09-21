@@ -38,6 +38,8 @@ export interface OverviewManifest {
   height_file: string;
   surface_file: string;
   wilderness_file: string;
+  /** Optional in older exports; shares the full-resolution zone_palette. */
+  zone_file?: string;
 }
 
 export interface WildernessType {

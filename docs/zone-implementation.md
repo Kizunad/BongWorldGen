@@ -143,3 +143,27 @@ zone、边界竞争、背景哨兵和 palette 范围。验证：`.venv/bin/pytes
 同一最大权重。负坐标、两个重叠 zone 和背景构成的 64×32 样区逐列对照查询结果，
 分别按 32 和 64 大小导出 tile，结果完全一致。此回归在修复前有 1443/2048 列错误。
 复现：`.venv/bin/pytest -q tests/test_zone_raster.py -k matches_point_queries`。
+验证：`.venv/bin/pytest -q` → **111 passed**。
+
+第十一步：全图 overview 新增 `overview_zone_id.bin`，与详细 tile 共用 `zone_palette`。
+修复原有 tile 原点采样造成的偏移与覆盖：所有 overview 层现在按 manifest 的世界
+坐标取值。未对齐负坐标样区在 tile_size=16/64 时，与逐列生成及详细 raster 相等。
+控制台区域开关同时控制 overview 叠加；旧 manifest 不请求未声明的区域文件，声明
+但缺失或截断的文件报错，overview 与详细 tile 使用相同配色。overview 的线性颜色
+插值仅供定位，精确区域边界以详细 tile 为准。
+
+验证：Python **113 passed**；控制台 **66 passed**；`npm run build` 通过。
+离线证据工具直接拼接导出的 `zone_id.bin` 并逐点核对 overview，真实血谷渊口
+576×576 样区（非对齐边界）**324/324** 采样点一致，输出对照 PNG：
+
+```bash
+.venv/bin/python - <<'PY'
+from pathlib import Path
+from bong_worldgen.preview_world import export_preview_world
+export_preview_world(Path('generated/zone-overview-evidence'), min_x=2917, max_x=3492,
+                     min_z=-3075, max_z=-2500, tile_size=64)
+PY
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
+  generated/zone-overview-evidence/rasters/manifest.json \
+  --output generated/zone-overview-evidence/zone-overview.png
+```
