@@ -37,6 +37,7 @@ function disposeObject3D(root: THREE.Object3D): void {
 export interface ViewerLayers {
   terrain: boolean;
   wilderness: boolean;
+  zone: boolean;
   water: boolean;
   qi: boolean;
   decorations: boolean;
@@ -118,6 +119,7 @@ export class Viewer {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly terrainGroup = new THREE.Group();
   private readonly wildernessGroup = new THREE.Group();
+  private readonly zoneGroup = new THREE.Group();
   private readonly overviewTerrainGroup = new THREE.Group();
   private readonly overviewWildernessGroup = new THREE.Group();
   private readonly waterGroup = new THREE.Group();
@@ -128,7 +130,12 @@ export class Viewer {
   /** Decoded tile cache lets layer toggles rebuild without refetching bytes. */
   private readonly tileData = new Map<
     string,
-    { tile: DecodedTile; surfacePalette: string[]; wildernessPalette: Manifest["wilderness_palette"] }
+    {
+      tile: DecodedTile;
+      surfacePalette: string[];
+      wildernessPalette: Manifest["wilderness_palette"];
+      zonePalette: string[];
+    }
   >();
   private overviewData: {
     data: OverviewData;
@@ -140,6 +147,7 @@ export class Viewer {
   private layers: ViewerLayers = {
     terrain: true,
     wilderness: false,
+    zone: false,
     water: false,
     qi: false,
     decorations: false,
@@ -182,6 +190,7 @@ export class Viewer {
     this.scene.add(
       this.terrainGroup,
       this.wildernessGroup,
+      this.zoneGroup,
       this.overviewTerrainGroup,
       this.overviewWildernessGroup,
       this.waterGroup,
@@ -331,6 +340,7 @@ export class Viewer {
   private applyLayerVisibility(): void {
     this.terrainGroup.visible = this.layers.terrain;
     this.wildernessGroup.visible = this.layers.wilderness;
+    this.zoneGroup.visible = this.layers.zone;
     this.overviewTerrainGroup.visible = this.layers.terrain;
     this.overviewWildernessGroup.visible = this.layers.wilderness;
     this.waterGroup.visible = this.layers.water;
@@ -339,15 +349,20 @@ export class Viewer {
   }
 
   /** Build (or rebuild) all renderables for one decoded tile. */
-  setTile(tile: DecodedTile, surfacePalette: string[], wildernessPalette: Manifest["wilderness_palette"]): void {
+  setTile(
+    tile: DecodedTile,
+    surfacePalette: string[],
+    wildernessPalette: Manifest["wilderness_palette"],
+    zonePalette: string[] = [],
+  ): void {
     const key = `tile_${tile.tileX}_${tile.tileZ}`;
-    this.tileData.set(key, { tile, surfacePalette, wildernessPalette });
-    this.rebuildTile(tile, surfacePalette, wildernessPalette);
+    this.tileData.set(key, { tile, surfacePalette, wildernessPalette, zonePalette });
+    this.rebuildTile(tile, surfacePalette, wildernessPalette, zonePalette);
   }
 
   private rebuildAllTiles(): void {
     for (const entry of this.tileData.values()) {
-      this.rebuildTile(entry.tile, entry.surfacePalette, entry.wildernessPalette);
+      this.rebuildTile(entry.tile, entry.surfacePalette, entry.wildernessPalette, entry.zonePalette);
     }
   }
 
@@ -355,6 +370,7 @@ export class Viewer {
     tile: DecodedTile,
     surfacePalette: string[],
     wildernessPalette: Manifest["wilderness_palette"],
+    zonePalette: string[],
   ): void {
     this.disposeTile(tile);
     const stride = lodStrideFor(tile.tileX, tile.tileZ);
@@ -379,6 +395,19 @@ export class Viewer {
       );
       this.wildernessGroup.add(wilderness);
       meshes.push(wilderness);
+    }
+    if (this.layers.zone && tile.zoneId && zonePalette.length > 0) {
+      const zone = this.buildTerrainMesh(
+        tile,
+        surfacePalette,
+        stride,
+        "zone",
+        wildernessPalette,
+        undefined,
+        zonePalette,
+      );
+      this.zoneGroup.add(zone);
+      meshes.push(zone);
     }
     // Only build the qi heatmap mesh when the tile actually carries qi_density;
     // without it the mesher falls back to surface_id == 0 and paints a flat
@@ -422,12 +451,14 @@ export class Viewer {
     colorMode: ColorMode,
     wildernessPalette: Manifest["wilderness_palette"],
     highlightWildernessId?: number,
+    zonePalette: string[] = [],
   ): THREE.Mesh {
     const geo = spansToVoxelGeometry(tile, surfacePalette, {
       stride,
       colorMode,
       wildernessPalette,
       highlightWildernessId,
+      zonePalette,
       cullTileEdges: true,
     });
     const bg = new THREE.BufferGeometry();
@@ -445,7 +476,16 @@ export class Viewer {
             polygonOffset: true,
             polygonOffsetFactor: -1,
           })
-        : new THREE.MeshLambertMaterial({ vertexColors: true });
+        : colorMode === "zone"
+          ? new THREE.MeshBasicMaterial({
+              vertexColors: true,
+              transparent: true,
+              opacity: 0.82,
+              depthWrite: false,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+            })
+          : new THREE.MeshLambertMaterial({ vertexColors: true });
     const mesh = new THREE.Mesh(bg, mat);
     if (colorMode === "terrain") this.terrainGroup.add(mesh);
     return mesh;

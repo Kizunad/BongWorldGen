@@ -10,7 +10,7 @@
 //   surface = span[0].ceiling_y (the walkable top — §8.1 #2).
 
 import type { ColumnSpans, DecodedTile, Span, WildernessType } from "./types";
-import { qiHeatColor, surfaceColorForId, type RGB } from "./palette";
+import { qiHeatColor, surfaceColorForId, zoneColorForId, type RGB } from "./palette";
 
 export const MAX_SPANS = 4;
 export const SPAN_SENTINEL = 32767;
@@ -137,14 +137,16 @@ export function surfaceY(column: ColumnSpans): number | null {
   return column.length === 0 ? null : column[0].ceilingY;
 }
 
-export type ColorMode = "terrain" | "qi" | "wilderness";
+export type ColorMode = "terrain" | "qi" | "wilderness" | "zone";
 
 export interface MeshParams {
   /** Sampling stride for LOD: 1 = full res, 2/4/8 = downsample. */
   stride?: number;
-  /** terrain (surface palette) or qi (qi_density heatmap). */
+  /** terrain, qi (qi_density heatmap), wilderness, or authored zone colors. */
   colorMode?: ColorMode;
   wildernessPalette?: WildernessType[];
+  /** Canonical zone names indexed by zone_id; 255 falls back to terrain color. */
+  zonePalette?: string[];
   /** When set, wilderness mode emits only matching surface tops as a highlight. */
   highlightWildernessId?: number;
   /** Hide tile-edge side walls when adjacent tiles are rendered separately. */
@@ -226,6 +228,10 @@ export function spansToVoxelGeometry(
         const value = Number.parseInt(hex, 16);
         return [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff];
       }
+    }
+    if (colorMode === "zone" && tile.zoneId && params.zonePalette) {
+      const zone = zoneColorForId(tile.zoneId[colIdx], params.zonePalette);
+      if (zone) return zone;
     }
     const sid = tile.surfaceId ? tile.surfaceId[colIdx] : 0;
     return surfaceColorForId(sid, manifestSurfacePalette);

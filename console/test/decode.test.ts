@@ -15,6 +15,7 @@ import {
   surfaceY,
 } from "../src/decode";
 import { encodeColumns, fillColumns, type SpanTuple } from "./fixtures";
+import { hashSwatchColor } from "../src/palette";
 
 const PALETTE = ["stone", "grass_block", "dirt", "water"];
 
@@ -223,6 +224,35 @@ describe("spansToVoxelGeometry — single ground column (1x1 tile)", () => {
     // qiHeatColor(1) = (0.95, 0.55, 0.15); the orange channel dominates.
     expect(geo.colors[0]).toBeGreaterThan(geo.colors[2]);
     expect(geo.colors[0]).toBeCloseTo(0.95, 2);
+  });
+
+  it("zone color mode maps the canonical zone_id palette and falls back for 255", () => {
+    const zoneTile = tileFrom(1, [[[-64, 71]]], {
+      surfaceId: new Uint8Array([1]),
+      zoneId: new Uint8Array([0]),
+    });
+    const zoneGeo = spansToVoxelGeometry(zoneTile, PALETTE, {
+      colorMode: "zone",
+      zonePalette: ["first"],
+      cullTileEdges: true,
+    });
+    const expected = hashSwatchColor("first").map((value) => value / 255);
+    expect(zoneGeo.colors[0]).toBeCloseTo(expected[0], 5);
+    expect(zoneGeo.colors[1]).toBeCloseTo(expected[1], 5);
+    expect(zoneGeo.colors[2]).toBeCloseTo(expected[2], 5);
+
+    const backgroundTile = tileFrom(1, [[[-64, 71]]], {
+      surfaceId: new Uint8Array([1]),
+      zoneId: new Uint8Array([255]),
+    });
+    const backgroundGeo = spansToVoxelGeometry(backgroundTile, PALETTE, {
+      colorMode: "zone",
+      zonePalette: ["first"],
+      cullTileEdges: true,
+    });
+    expect(backgroundGeo.colors[0]).toBeCloseTo(93 / 255, 5);
+    expect(backgroundGeo.colors[1]).toBeCloseTo(136 / 255, 5);
+    expect(backgroundGeo.colors[2]).toBeCloseTo(82 / 255, 5);
   });
 
   it("wilderness highlight emits only matching walkable tops", () => {

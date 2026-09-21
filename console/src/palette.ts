@@ -74,6 +74,12 @@ export function hashSwatchColor(name: string): RGB {
   return hslToRgb(hue / 360, 0.5, 0.6);
 }
 
+/** Map a raster zone_id through the canonical manifest palette. */
+export function zoneColorForId(id: number, palette: string[]): RGB | undefined {
+  const name = palette[id];
+  return name === undefined ? undefined : hashSwatchColor(name);
+}
+
 /** HSL (0..1 each) -> RGB (0..255). Small local helper for hashSwatchColor. */
 function hslToRgb(h: number, s: number, l: number): RGB {
   if (s === 0) {

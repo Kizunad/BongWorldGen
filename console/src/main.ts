@@ -25,6 +25,7 @@ function setStatus(msg: string): void {
 const layers: ViewerLayers = {
   terrain: true,
   wilderness: false,
+  zone: false,
   water: false,
   qi: false,
   decorations: false,
@@ -52,6 +53,7 @@ function buildLayerToggles(): void {
   const defs: { key: keyof ViewerLayers; label: string }[] = [
     { key: "terrain", label: "地形" },
     { key: "wilderness", label: "荒野类型（wilderness_id）" },
+    { key: "zone", label: "区域归属（zone_id）" },
     { key: "water", label: "水体" },
     { key: "qi", label: "灵气热力 (qi_density)" },
     { key: "decorations", label: "装饰点位" },
@@ -193,7 +195,12 @@ async function loadTilesAroundSpawn(): Promise<void> {
       const tile = ordered[cursor++];
       try {
         const decoded = await loadTile(manifest, tile);
-        viewer.setTile(decoded, manifest.surface_palette, manifest.wilderness_palette);
+        viewer.setTile(
+          decoded,
+          manifest.surface_palette,
+          manifest.wilderness_palette,
+          manifest.zone_palette ?? [],
+        );
         loaded += 1;
         setStatus(`已加载 ${loaded}/${ordered.length} tiles…`);
       } catch (err) {
@@ -215,7 +222,12 @@ async function reloadTiles(tileDirs: string[]): Promise<void> {
     if (!tile) continue;
     try {
       const decoded = await loadTile(manifest, tile);
-      viewer.setTile(decoded, manifest.surface_palette, manifest.wilderness_palette);
+      viewer.setTile(
+        decoded,
+        manifest.surface_palette,
+        manifest.wilderness_palette,
+        manifest.zone_palette ?? [],
+      );
     } catch (err) {
       console.error(`regen 后重载 tile ${dir} 失败`, err);
     }
