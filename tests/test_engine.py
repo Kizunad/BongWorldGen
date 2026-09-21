@@ -378,6 +378,7 @@ def test_bong_raster_writer_emits_v2_core_files(tmp_path) -> None:
     assert (tile_dir / "wilderness_id.bin").stat().st_size == 16 * 16
     assert (tile_dir / "riverbed_id.bin").stat().st_size == 16 * 16
     assert (tile_dir / "cave_id.bin").stat().st_size == 16 * 16
+    assert (tile_dir / "zone_id.bin").stat().st_size == 16 * 16
     assert '"wilderness_palette"' in manifest
     assert '"riverbed_palette"' in manifest
     assert '"cave_palette"' in manifest

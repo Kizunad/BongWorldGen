@@ -118,3 +118,9 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py gene
 完成渲染，资源下载和 map update 日志均到 100%；证据图经人工查看，平原、残峰、
 高原、湿地、裂谷、遗址台地、洞穴和悬空岛在同一高度标尺下有可见差异，岛体下方
 保持空气层。gallery 是稀疏真实坐标样区，空白区域是未生成区，不代表背景地貌。
+
+第七步：把 dominant zone 归属写进 raster 契约。每列新增 `zone_id.bin`，manifest
+声明稳定的 `zone_palette` 和 `zone_encoding.none = 255`；边界带内按实际最大权重
+选择 dominant zone，仍保留 `boundary_weight.bin` 供下游识别过渡区。Three.js 解码器
+按 tile layers 声明加载 `zone_id`，不改变现有地形网格行为。测试覆盖跨 tile 的两个
+zone、边界竞争、背景哨兵和 palette 范围。验证：`.venv/bin/pytest -q` → **108 passed**。

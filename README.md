@@ -10,7 +10,7 @@ Bong 的独立程序化地形生成器。项目只保留一条清晰的数据流
             ↓
     Bong raster 转换层
             ↓
-    height / surface_id / water_level / biome_id / feature_mask / wilderness_id / riverbed_id
+    height / surface_id / water_level / biome_id / feature_mask / wilderness_id / riverbed_id / zone_id
 
 fork/ 下的仓库只用于算法对照，不参与运行时导入，也不会提交到本仓库。当前参考
 仓库为 Kizunad/Procedural-Maps，其上游没有声明许可证，因此核心实现采用独立代码，
@@ -29,6 +29,30 @@ src/bong_worldgen/data/ 是类型化输入数据，不是生成器实现：
 修改单个区域时只改对应的 zones/<zone>.py；修改世界范围时改
 world_metadata.py。重新从 Bong JSON 同步时运行导入工具即可重新生成这些 Python
 数据文件。
+
+## Zone 地形生成
+
+`src/bong_worldgen/composition/` 是位于通用 engine 之上的区域合成层。它读取
+`data/zones/*.py` 的中心、完整尺寸、形状、边界模式和 `terrain_profile`，在世界坐标
+中得到每列的 dominant zone 与权重，再混合普通高度场。`engine/` 只接受纯
+`TerrainRecipe` 和坐标采样，不导入 zone、POI 或 raster 类型。
+
+当前 27 个 zone 覆盖 15 种 profile：平原、残峰、高原、湿地、裂谷、灰烬地、渊口、
+劫坑、战场、宗门遗址、药园、王印台、洞穴、深渊和浮岛。边界用 `soft`、`semi_hard`
+或 `hard` 的连续权重带混合；非零 `boundary_width` 的过渡端点没有高度断崖。
+洞穴和浮岛在混合地表之后生成，因此 `spans.bin` 仍然是实际可行走的垂直实体范围。
+
+`export_preview_world()` 额外写出 `zone_id.bin` 和 manifest 的 `zone_palette`：每列
+使用 dominant zone 的稳定 ID，`255` 表示背景；`boundary_weight.bin` 保留该列的
+混合强度。下游可以同时读取高度、zone 归属和边界权重，不需要从图像颜色反推区域。
+
+生成区域画廊和验收报告：
+
+```bash
+.venv/bin/python tools/bluemap.py render --accept-minecraft-eula --zone-gallery --width 256 --height 256
+.venv/bin/python tools/zone_evidence.py
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py generated/zone-evidence
+```
 
 ## 开发
 
@@ -156,8 +180,8 @@ npm run dev
 ```
 
 默认读取 `../generated/console-world/rasters`；可以用 `BONG_WORLD_DIR` 指向另一份
-已生成 raster。当前阶段只建立 wilderness 数据契约和控制台迁移，zones 的重新设计
-暂不在此变更中处理。
+已生成 raster。控制台按 manifest 的 `zone_id` 层加载实际 dominant zone 归属，
+不把 zone 名称或高度颜色当作生成结果的替代品。
 
 ## BlueMap 地图
 

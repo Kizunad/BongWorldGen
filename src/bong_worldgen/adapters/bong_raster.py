@@ -18,6 +18,7 @@ from ..engine.models import Heightfield
 
 BASE_SURFACE_PALETTE = ("stone", "coarse_dirt", "gravel", "grass_block")
 RIVERBED_NONE_ID = 255
+ZONE_NONE_ID = 255
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,8 @@ class BongTile:
     solid_spans: np.ndarray | None = None
     cave_id: np.ndarray | None = None
     cave_palette: tuple[str, ...] = ()
+    zone_id: np.ndarray | None = None
+    zone_palette: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         shape = self.height.shape
@@ -62,10 +65,19 @@ class BongTile:
             object.__setattr__(self, "cave_id", np.zeros(shape, dtype=np.uint8))
         elif self.cave_id.shape != shape:
             raise ValueError("Bong tile cave_id shape mismatch")
+        if self.zone_id is None:
+            object.__setattr__(self, "zone_id", np.full(shape, ZONE_NONE_ID, dtype=np.uint8))
+        elif self.zone_id.shape != shape:
+            raise ValueError("Bong tile zone_id shape mismatch")
         if not np.issubdtype(self.cave_id.dtype, np.integer):
             raise ValueError("Bong tile cave_id must contain integer palette ids")
         if np.any(self.cave_id > len(self.cave_palette)):
             raise ValueError("Bong tile cave_id contains an unknown palette id")
+        if not np.issubdtype(self.zone_id.dtype, np.integer):
+            raise ValueError("Bong tile zone_id must contain integer palette ids")
+        valid_zone = (self.zone_id == ZONE_NONE_ID) | (self.zone_id < len(self.zone_palette))
+        if not np.all(valid_zone):
+            raise ValueError("Bong tile zone_id contains an unknown palette id")
         if self.solid_spans is not None:
             expected = (*shape, 4, 2)
             if self.solid_spans.shape != expected:
@@ -83,6 +95,8 @@ def to_bong_tile(
     # (0=plains, 1=river); keep the default id aligned with that contract.
     river_biome_id: int = 1,
     land_biome_id: int = 0,
+    zone_id: np.ndarray | None = None,
+    zone_palette: tuple[str, ...] = (),
 ) -> BongTile:
     """Apply a small, explicit palette policy to a generated heightfield."""
 
@@ -122,6 +136,8 @@ def to_bong_tile(
         solid_spans=field.solid_spans,
         cave_id=np.ascontiguousarray(field.cave_id, dtype=np.uint8),
         cave_palette=field.cave_palette,
+        zone_id=None if zone_id is None else np.ascontiguousarray(zone_id, dtype=np.uint8),
+        zone_palette=tuple(zone_palette),
     )
 
 
@@ -173,6 +189,7 @@ def write_bong_raster(
         "wilderness_id.bin": tile.wilderness_id.astype(np.uint8, copy=False),
         "riverbed_id.bin": tile.riverbed_id.astype(np.uint8, copy=False),
         "cave_id.bin": tile.cave_id.astype(np.uint8, copy=False),
+        "zone_id.bin": tile.zone_id.astype(np.uint8, copy=False),
     }
     for filename, values in binary_layers.items():
         values.tofile(tile_dir / filename)
@@ -193,6 +210,8 @@ def write_bong_raster(
         "riverbed_encoding": {"none": RIVERBED_NONE_ID, "dtype": "u8"},
         "cave_palette": list(tile.cave_palette),
         "cave_encoding": {"none": 0, "dtype": "u8", "vertical_range": "spans.bin"},
+        "zone_palette": list(tile.zone_palette),
+        "zone_encoding": {"none": ZONE_NONE_ID, "dtype": "u8"},
         "biome_palette": ["minecraft:plains", "minecraft:river"],
         "wilderness_palette": wilderness_palette_manifest(),
         "tiles": [
@@ -210,6 +229,7 @@ def write_bong_raster(
                     "wilderness_id",
                     "riverbed_id",
                     "cave_id",
+                    "zone_id",
                 ],
                 "spans": True,
             }

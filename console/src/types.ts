@@ -85,6 +85,8 @@ export interface Manifest {
   riverbed_palette?: string[];
   /** Cave network names; IDs are stored in cave_id.bin (0 = no cave). */
   cave_palette?: string[];
+  /** Authored zone names; 255 in zone_id.bin means background. */
+  zone_palette?: string[];
   tiles: ManifestTile[];
   pois: ManifestPoi[];
   zones: ManifestZone[];
@@ -119,6 +121,8 @@ export interface DecodedTile {
   riverbedId?: Uint8Array;
   /** Optional cave network id per column; 0 means no underground feature. */
   caveId?: Uint8Array;
+  /** Optional dominant authored zone id per column; 255 means background. */
+  zoneId?: Uint8Array;
   /** Optional qi_density per column (float32), clamped [0,1]. */
   qiDensity?: Float32Array;
   /** Optional flora_variant_id per column (uint8); 0 = no flora. */

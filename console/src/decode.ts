@@ -28,6 +28,7 @@ export interface DecodeParams {
   wildernessId?: Uint8Array;
   riverbedId?: Uint8Array;
   caveId?: Uint8Array;
+  zoneId?: Uint8Array;
   qiDensity?: Float32Array;
   floraVariantId?: Uint8Array;
   tileX?: number;
@@ -107,6 +108,7 @@ export function decodeTile(p: DecodeParams): DecodedTile {
   checkLayer("wilderness_id", p.wildernessId);
   checkLayer("riverbed_id", p.riverbedId);
   checkLayer("cave_id", p.caveId);
+  checkLayer("zone_id", p.zoneId);
   checkLayer("qi_density", p.qiDensity);
   checkLayer("flora_variant_id", p.floraVariantId);
 
@@ -124,6 +126,7 @@ export function decodeTile(p: DecodeParams): DecodedTile {
     wildernessId: p.wildernessId,
     riverbedId: p.riverbedId,
     caveId: p.caveId,
+    zoneId: p.zoneId,
     qiDensity: p.qiDensity,
     floraVariantId: p.floraVariantId,
   };

@@ -12,7 +12,7 @@ const SPANS = "spans.bin";
 /**
  * Load + decode a single tile. Spans are mandatory (every tile carries them in
  * P0); surface_id / water_level / qi_density / flora_variant_id / wilderness_id /
- * riverbed_id / cave_id are optional and
+ * riverbed_id / cave_id / zone_id are optional and
  * are fetched ONLY when `tile.layers` declares the tile actually wrote them.
  *
  * The manifest already tells us which optional layers each tile carries, so
@@ -44,6 +44,7 @@ export async function loadTile(
     wildernessBuf,
     riverbedBuf,
     caveBuf,
+    zoneBuf,
   ] = await Promise.all([
     fetchTileLayer(tile.tile_x, tile.tile_z, SPANS_COUNT),
     fetchTileLayer(tile.tile_x, tile.tile_z, SPANS),
@@ -54,6 +55,7 @@ export async function loadTile(
     fetchIf("wilderness_id"),
     fetchIf("riverbed_id"),
     fetchIf("cave_id"),
+    fetchIf("zone_id"),
   ]);
 
   if (!countBuf || !spansBuf) {
@@ -76,6 +78,7 @@ export async function loadTile(
     wildernessId: wildernessBuf ? new Uint8Array(wildernessBuf) : undefined,
     riverbedId: riverbedBuf ? new Uint8Array(riverbedBuf) : undefined,
     caveId: caveBuf ? new Uint8Array(caveBuf) : undefined,
+    zoneId: zoneBuf ? new Uint8Array(zoneBuf) : undefined,
   });
 }
 

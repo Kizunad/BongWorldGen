@@ -21,6 +21,7 @@ const PALETTE = ["stone", "grass_block", "dirt", "water"];
 function tileFrom(tileSize: number, columns: SpanTuple[][], extra: Partial<{
   surfaceId: Uint8Array;
   wildernessId: Uint8Array;
+  zoneId: Uint8Array;
   qiDensity: Float32Array;
   waterLevel: Float32Array;
 }> = {}) {
@@ -164,10 +165,12 @@ describe("decodeTile validates buffer sizes", () => {
       qiDensity: new Float32Array(4),
       floraVariantId: new Uint8Array(4),
       riverbedId: new Uint8Array(4),
+      zoneId: new Uint8Array(4),
     });
     expect(tile.surfaceId?.length).toBe(4);
     expect(tile.qiDensity?.length).toBe(4);
     expect(tile.riverbedId?.length).toBe(4);
+    expect(tile.zoneId?.length).toBe(4);
   });
 });
 
