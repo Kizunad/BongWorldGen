@@ -75,7 +75,11 @@ class BongTile:
             raise ValueError("Bong tile cave_id contains an unknown palette id")
         if not np.issubdtype(self.zone_id.dtype, np.integer):
             raise ValueError("Bong tile zone_id must contain integer palette ids")
-        valid_zone = (self.zone_id == ZONE_NONE_ID) | (self.zone_id < len(self.zone_palette))
+        if len(self.zone_palette) > ZONE_NONE_ID:
+            raise ValueError("Bong tile zone_palette must contain at most 255 entries")
+        valid_zone = (self.zone_id == ZONE_NONE_ID) | (
+            (self.zone_id >= 0) & (self.zone_id < len(self.zone_palette))
+        )
         if not np.all(valid_zone):
             raise ValueError("Bong tile zone_id contains an unknown palette id")
         if self.solid_spans is not None:
@@ -118,6 +122,14 @@ def to_bong_tile(
         1.0,
     ).astype(np.float32)
     wilderness_id = classify_wilderness(field.height, field.water_level, sea_level=sea_level)
+    normalized_zone_id = None
+    if zone_id is not None:
+        raw_zone_id = np.asarray(zone_id)
+        if not np.issubdtype(raw_zone_id.dtype, np.integer):
+            raise ValueError("Bong tile zone_id must contain integer palette ids")
+        if np.any(raw_zone_id < 0) or np.any(raw_zone_id > ZONE_NONE_ID):
+            raise ValueError("Bong tile zone_id must fit in uint8")
+        normalized_zone_id = np.ascontiguousarray(raw_zone_id, dtype=np.uint8)
     return BongTile(
         height=np.ascontiguousarray(field.height, dtype=np.float32),
         surface_id=surface_id,
@@ -136,7 +148,7 @@ def to_bong_tile(
         solid_spans=field.solid_spans,
         cave_id=np.ascontiguousarray(field.cave_id, dtype=np.uint8),
         cave_palette=field.cave_palette,
-        zone_id=None if zone_id is None else np.ascontiguousarray(zone_id, dtype=np.uint8),
+        zone_id=normalized_zone_id,
         zone_palette=tuple(zone_palette),
     )
 

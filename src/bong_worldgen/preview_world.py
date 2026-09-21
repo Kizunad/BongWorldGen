@@ -80,7 +80,9 @@ def export_preview_world(
     rasters_dir = output_dir / "rasters"
     rasters_dir.mkdir(parents=True, exist_ok=True)
     tile_entries: list[dict[str, object]] = []
-    zone_palette = tuple(zone.name for zone in world.zones)
+    # Palette IDs must not depend on the order in which generated zone modules
+    # happen to be assembled. Names are already unique by ZoneIndex validation.
+    zone_palette = tuple(sorted(zone.name for zone in world.zones))
     zone_ids_by_name = {name: index for index, name in enumerate(zone_palette)}
     overview_width = (max_x - min_x + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE
     overview_height = (max_z - min_z + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE

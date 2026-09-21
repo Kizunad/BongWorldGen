@@ -124,3 +124,8 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py gene
 选择 dominant zone，仍保留 `boundary_weight.bin` 供下游识别过渡区。Three.js 解码器
 按 tile layers 声明加载 `zone_id`，不改变现有地形网格行为。测试覆盖跨 tile 的两个
 zone、边界竞争、背景哨兵和 palette 范围。验证：`.venv/bin/pytest -q` → **108 passed**。
+
+第八步：固定 `zone_palette` 的规范顺序。导出时按 zone 名称排序，因而生成模块的
+装配顺序变化不会重新编号已存在区域；`255` 继续专用于背景，最多允许 255 个区域。
+适配器在转换前拒绝负值和超出 `u8` 范围的区域 ID。反向输入顺序的两个导出结果逐 tile
+比较 `zone_id.bin` 完全一致。
