@@ -11,14 +11,18 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+import hashlib
 import json
 import math
 from pathlib import Path
 import sys
+import time
+from zipfile import BadZipFile
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
 from bong_worldgen.composition import ZoneTerrain
 from bong_worldgen.composition.pois import resolve_poi
@@ -68,7 +72,46 @@ def connected_intervals(lower: np.ndarray, upper: np.ndarray,
     return seen
 
 
-def check_zone(composer: ZoneTerrain, zone, output: Path, tile_size: int) -> dict:
+def generation_fingerprint(composer: ZoneTerrain, tile_size: int) -> str:
+    """Invalidate checkpoints when inputs, generator sources or NumPy change."""
+
+    digest = hashlib.sha256(repr((composer.seed, tile_size, composer.world,
+        composer.background, composer.feature_recipe, tuple(composer.recipes.items()),
+        sys.version, np.__version__)).encode())
+    for path in [Path(__file__), *sorted((ROOT / "src/bong_worldgen").rglob("*.py"))]:
+        digest.update(str(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path.name).encode())
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def tile_intervals(composer: ZoneTerrain, x: int, z: int, tile_size: int,
+                   cache: Path | None) -> tuple[np.ndarray, np.ndarray, bool]:
+    path = cache / f"{x}_{z}.npz" if cache is not None else None
+    if path is not None and path.is_file():
+        try:
+            with np.load(path, allow_pickle=False) as data:
+                lower, upper = data["lower"], data["upper"]
+                valid = (lower.shape == upper.shape == (tile_size, tile_size, 4)
+                         and lower.dtype == upper.dtype == np.dtype("int16")
+                         and np.array_equal(data["origin"], (x, z)))
+                if valid:
+                    return lower, upper, True
+        except (OSError, ValueError, KeyError, EOFError, BadZipFile):
+            pass  # An interrupted or damaged checkpoint must be regenerated.
+    field = composer.generate(width=tile_size, height=tile_size, origin_x=x, origin_z=z)
+    lower, upper = air_intervals(field.height, field.solid_spans)
+    if path is not None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        partial = path.with_suffix(".npz.partial")
+        with partial.open("wb") as stream:
+            np.savez_compressed(stream, lower=lower, upper=upper, origin=[x, z])
+        partial.replace(path)
+    return lower, upper, False
+
+
+def check_zone(composer: ZoneTerrain, zone, output: Path, tile_size: int,
+               cache_key: str | None = None) -> dict:
+    start = time.perf_counter()
     networks = composer.recipes[zone.name].caves
     paths, points = [], []
     margin = 0.0
@@ -95,18 +138,20 @@ def check_zone(composer: ZoneTerrain, zone, output: Path, tile_size: int) -> dic
     lower = np.full((max_z - min_z, max_x - min_x, 4), 32767, dtype=np.int16)
     upper = np.full_like(lower, -32768)
     tiles = list(zip(xs[active].tolist(), zs[active].tolist()))
+    cache = output / "tile-cache" / cache_key / zone.name if cache_key else None
+    reused_tiles = 0
     for index, (x, z) in enumerate(tiles):
         try:
-            field = composer.generate(width=tile_size, height=tile_size, origin_x=x, origin_z=z)
+            lo, hi, reused = tile_intervals(composer, x, z, tile_size, cache)
         except ValueError as error:
             error.add_note(f"seed={composer.seed}, zone={zone.name}, tile origin=({x}, {z}), "
                            f"size={tile_size}, tile {index + 1}/{len(tiles)}")
             raise
-        lo, hi = air_intervals(field.height, field.solid_spans)
+        reused_tiles += int(reused)
         rows, columns = slice(z - min_z, z - min_z + tile_size), slice(x - min_x, x - min_x + tile_size)
         lower[rows, columns], upper[rows, columns] = lo, hi
         if (index + 1) % 16 == 0 or index + 1 == len(tiles):
-            print(f"{zone.name}: generated {index + 1}/{len(tiles)} tiles", flush=True)
+            print(f"{zone.name}: read {index + 1}/{len(tiles)} tiles ({reused_tiles} reused)", flush=True)
 
     entrance = next((poi for poi in zone.pois if poi.kind == "cave_mouth"), None)
     if entrance is not None:
@@ -130,6 +175,8 @@ def check_zone(composer: ZoneTerrain, zone, output: Path, tile_size: int) -> dic
                         connected=connected, origin=[min_x, min_z], tiles=tiles)
     return {"zone": zone.name, "source": [sx, sy, sz], "tiles": len(tiles),
             "sampled_columns": len(tiles) * tile_size**2,
+            "cache_key": cache_key, "reused_tiles": reused_tiles,
+            "generated_tiles": len(tiles) - reused_tiles, "seconds": time.perf_counter() - start,
             "connected_intervals": int(connected.sum()), "pois": rows,
             "all_pois_reachable": all(row["reachable"] for row in rows)}
 
@@ -139,6 +186,8 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=812731)
     parser.add_argument("--tile-size", type=int, default=64)
     parser.add_argument("--zone", action="append", help="only these zone names (repeatable)")
+    parser.add_argument("--resume", action="store_true",
+                        help="save and reuse complete tiles with matching generator and world inputs")
     parser.add_argument("--output", type=Path, default=Path("generated/zone-cave-evidence"))
     args = parser.parse_args()
     if args.tile_size < 1:
@@ -151,12 +200,13 @@ def main() -> int:
             parser.error(f"unknown cave zones: {sorted(unknown)}")
         zones = [zone for zone in zones if zone.name in args.zone]
     args.output.mkdir(parents=True, exist_ok=True)
+    cache_key = generation_fingerprint(composer, args.tile_size) if args.resume else None
     report = {"seed": args.seed, "tile_size": args.tile_size,
               "scope": "All authored and generated cave paths; six-neighbor air with two-block clearance; "
                        "surface air excluded. Does not prove walking, climbing, or game unlock rules.",
               "zones": []}
     for zone in zones:
-        row = check_zone(composer, zone, args.output, args.tile_size)
+        row = check_zone(composer, zone, args.output, args.tile_size, cache_key)
         report["zones"].append(row)
         (args.output / "report.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

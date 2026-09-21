@@ -1,0 +1,37 @@
+{
+  "zone": "baolongwang_cavern_deep",
+  "seed": 812731,
+  "tiles": 15,
+  "cold_seconds": 7.317802275996655,
+  "resume_seconds": 0.9620175970485434,
+  "generated_on_resume": 0,
+  "reused_tiles": 15,
+  "geometry_arrays_byte_identical": true,
+  "geometry_sha256": {
+    "lower": "9a745fb210edf3c8a520a34d13b1255b2ffd6299abe9fb7d229e0754b7e2fd0c",
+    "upper": "e5f104250f619542671f7c20919f06627486f3ff4ceebc3b5243b441b22b887c",
+    "connected": "d62487e01ec4333cbb0542af396e39420eb411cd379321f560c86aabac000585",
+    "origin": "1f200e30ea889dbf4e16ea48ca8de474953210d586e959e6eaaa9c3663cf1a6a",
+    "tiles": "5e712b5badd330585dede856b36753018442d1598896e115571dba1eff0ff889"
+  },
+  "pois": [
+    {
+      "name": "暴龙王丹炉",
+      "pos_xyz": [
+        1750.0,
+        -51.0,
+        -5100.0
+      ],
+      "reachable": true
+    },
+    {
+      "name": "暴龙王",
+      "pos_xyz": [
+        1750.0,
+        -51.0,
+        -5200.0
+      ],
+      "reachable": true
+    }
+  ]
+}

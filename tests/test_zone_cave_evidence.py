@@ -1,6 +1,7 @@
 """Guard the evidence tool against falsely certifying disconnected cavities."""
 
 from collections import deque
+from dataclasses import replace
 from pathlib import Path
 import sys
 
@@ -8,7 +9,11 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "tools"))
-from zone_cave_evidence import air_intervals, connected_intervals  # noqa: E402
+import zone_cave_evidence as evidence  # noqa: E402
+from zone_cave_evidence import air_intervals, connected_intervals, tile_intervals  # noqa: E402
+from bong_worldgen.composition import ZoneTerrain
+from bong_worldgen.engine import CaveNetwork, Point, TerrainRecipe
+from bong_worldgen.data.world_definition import WORLD
 
 
 @pytest.mark.parametrize("gate,reachable", (((2, 3), True), ((2, 2), False), ((3, 4), False)))
@@ -49,3 +54,38 @@ def test_interval_evidence_agrees_with_six_neighbor_voxels(gate, reachable):
     expanded = np.any(connected[None, ...] & (y[:-1, ..., None] >= lower[None, ...])
                       & (y[:-1, ..., None] <= upper[None, ...]), axis=-1)
     np.testing.assert_array_equal(expanded, visited)
+
+
+def test_checkpoint_reuses_geometry_and_recovers_from_interrupted_tiles(tmp_path):
+    cave = CaveNetwork(name="test", paths=((Point(-20, 0), Point(20, 0)),),
+                       depth=30, width=8, height=8, noise_strength=0,
+                       branch_count=0, chamber_count=0, entrance_count=0)
+    composer = ZoneTerrain(replace(WORLD, zones=()),
+                           background=TerrainRecipe(name="test", caves=(cave,)))
+    cache = tmp_path / evidence.generation_fingerprint(composer, 8)
+    expected = tile_intervals(composer, -4, -4, 8, None)
+    assert np.any(expected[0] <= expected[1])  # Actual cave air, not an empty tile.
+    for reused in (False, True):
+        actual = tile_intervals(composer, -4, -4, 8, cache)
+        np.testing.assert_array_equal(actual[:2], expected[:2])
+        assert actual[2] is reused
+    (cache / "-4_-4.npz").write_bytes(b"truncated checkpoint")
+    actual = tile_intervals(composer, -4, -4, 8, cache)
+    np.testing.assert_array_equal(actual[:2], expected[:2])
+    assert actual[2] is False
+    assert tile_intervals(composer, -4, -4, 8, cache)[2] is True
+
+
+def test_checkpoint_identity_changes_with_world_seed_grid_and_generator(tmp_path, monkeypatch):
+    # Simulate a code update without editing the repository's actual generator.
+    monkeypatch.setattr(evidence, "ROOT", tmp_path)
+    source = tmp_path / "src/bong_worldgen/engine.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("version one\n")
+    first = ZoneTerrain(seed=7)
+    key = evidence.generation_fingerprint(first, 8)
+    assert key != evidence.generation_fingerprint(ZoneTerrain(seed=8), 8)
+    assert key != evidence.generation_fingerprint(first, 16)
+    assert key != evidence.generation_fingerprint(ZoneTerrain(replace(WORLD, zones=()), seed=7), 8)
+    source.write_text("version two\n")
+    assert key != evidence.generation_fingerprint(first, 8)

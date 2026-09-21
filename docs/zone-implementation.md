@@ -379,3 +379,19 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 ```bash
 .venv/bin/pytest -q tests/test_zone_pois.py -k ground_tag
 ```
+
+第二十五步：地下证据扫描支持 `--resume`。每个完成的 tile 用临时文件写入后原子
+替换；缓存按 seed、网格大小、世界/配方数据、Python/NumPy 版本、生成源码和证据
+工具源码的指纹隔离。重跑可复用同版本已完成的 tile；新代码或新布局不会读到旧几何，
+损坏、截断、尺寸/坐标错误的缓存会重新生成。缓存仍在忽略的 generated 输出目录内。
+
+```bash
+.venv/bin/python tools/zone_cave_evidence.py --seed 812731 --zone baolongwang_cavern_deep \
+  --resume --output generated/zone-cave-checkpoints
+```
+
+同一命令运行两次：真实巢穴第二次 **15/15** tile 复用，无需重新生成这些 tile；
+空气范围、连通数组、原点和 tile 列表逐字节一致，两个 POI 的落点和可达结论一致。
+首次与重放耗时及各数组校验值记录在 `docs/evidence/zone-cave-checkpoints-2026-09-22.json`。
+新增契约验证完整缓存复用、截断恢复，以及 seed、网格、世界和源码变化后的缓存失效。
+验证：Python **148 passed**，compileall 和 diff 检查通过。
