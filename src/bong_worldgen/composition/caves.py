@@ -38,4 +38,5 @@ def caves_for_zone(zone: ZoneDefinition, surface_height: float) -> tuple[CaveNet
         chamber_centers=centers, entrance_count=0,
         entrance_points=entrances or (Point(center.x - scale * 0.28, center.z - scale * 0.12),),
         entrance_radius=4, roof_thickness=4,
+        fill_vertical_gaps=True,
     ) for index, depth in enumerate(depths))

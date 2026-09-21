@@ -293,6 +293,13 @@ def generate_underground(
                 & (world_y <= crop_surface)
                 & (world_y > SPAN_MIN_Y)
             )
+        if network.fill_vertical_gaps:
+            # Close gaps within this network before merging other networks.
+            # Distinct cave layers retain their separating rock, and no void
+            # extends beyond its original lowest/highest sample or roof limit.
+            below = np.logical_or.accumulate(network_void, axis=0)
+            above = np.logical_or.accumulate(network_void[::-1], axis=0)[::-1]
+            network_void = below & above
         cave_void[:, z_slice, x_slice] |= network_void
         network_columns = np.any(network_void, axis=0)
         cave_id[z_slice, x_slice][network_columns] = np.uint8(network_index + 1)

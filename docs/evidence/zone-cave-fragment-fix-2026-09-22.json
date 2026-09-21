@@ -1,0 +1,157 @@
+{
+  "seed": 7,
+  "column": [
+    5054,
+    1079
+  ],
+  "before": {
+    "world_x": 5054,
+    "world_z": 1079,
+    "surface": 88.39911410437423,
+    "void_runs": [
+      [
+        -27,
+        -27
+      ],
+      [
+        -20,
+        -20
+      ],
+      [
+        13,
+        20
+      ],
+      [
+        50,
+        57
+      ]
+    ]
+  },
+  "after": {
+    "solid_spans": [
+      [
+        58,
+        88
+      ],
+      [
+        21,
+        49
+      ],
+      [
+        -19,
+        12
+      ],
+      [
+        -64,
+        -28
+      ]
+    ],
+    "air_intervals": [
+      [
+        50,
+        57
+      ],
+      [
+        13,
+        20
+      ],
+      [
+        -27,
+        -20
+      ]
+    ]
+  },
+  "world_evidence": {
+    "seed": 7,
+    "zone_count": 27,
+    "profile_count": 15,
+    "poi_count": 78,
+    "all_split_equal": true,
+    "max_solid_spans": 4
+  },
+  "bluemap": {
+    "hires_tiles": 4,
+    "png_tiles": [
+      {
+        "path": "1/x1/0/z1.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "0e62349f79ccaa34a273669cf1d88dc07e8984b3a645d969ef1e64532ea0ae54"
+      },
+      {
+        "path": "1/x1/0/z2.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "2fca6213f629d6431c061d6e0ebbfd5ec7a7f863eecb74581bf263b78a7e28c4"
+      },
+      {
+        "path": "1/x1/0/z3.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "0480ce1923ccbf4a7dddcdc751b6e9ac133fdae5e19f58e2a6a65a3e2a34eb10"
+      },
+      {
+        "path": "1/x9/z1.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "42e60ff8b6b8d673adbf43cb667b6c722d9337ef78c2cb23671825022a83322b"
+      },
+      {
+        "path": "1/x9/z2.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "128d120963cf3419cb19e3832f2d9eba7834240729b16b2f2c4eb68347814f5c"
+      },
+      {
+        "path": "1/x9/z3.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "a8d3b73b5bb0d1ffc46fd858542c8e33c89b74640e5c8d91fe5759699fd8d879"
+      },
+      {
+        "path": "2/x1/z0.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "d8081756879b265b4b28c334c763de4651416e74e2f382eaa7d7099571d0537c"
+      },
+      {
+        "path": "2/x2/z0.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "d074ce511e302a1c435c683b9257c7e75571e53edf9066ffdc2c9b111df58616"
+      },
+      {
+        "path": "3/x0/z-1.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "6da2889976b203ddf5b14ae9a74e30c65e8d2471217ad5c80440de3f1f3c7c80"
+      },
+      {
+        "path": "3/x0/z0.png",
+        "size": [
+          501,
+          1002
+        ],
+        "sha256": "5d1f319424a0b6336dcb26dcf6d7aaf653b053b061c3fc87cc14b3cf368052b5"
+      }
+    ]
+  }
+}

@@ -62,3 +62,21 @@ def test_full_preview_cave_walls_and_shafts_fit_the_four_span_contract(name, ori
     assert np.max(counts) <= 4
     assert np.any(counts >= (4 if name == "wuxing_abyss" else 2))
     assert np.all(spans[..., 0, 1] <= np.rint(field.height))
+
+
+def test_abyss_wall_fragments_keep_three_levels_and_fit_the_span_contract():
+    # The complete route scan found two one-block pockets at Y=-27 and -20
+    # in this column. Together with the other levels they required five solids.
+    composer = ZoneTerrain(seed=7)
+    field = composer.generate(width=9, height=9, origin_x=5050, origin_z=1075)
+    column = field.solid_spans[4, 4]  # World (5054, 1079).
+    assert np.count_nonzero(column[:, 0] != 32767) == 4
+    for y in (-24, 16, 54):
+        assert not np.any((column[:, 0] <= y) & (y <= column[:, 1]))
+    for y in (-5, 35, 72):
+        assert np.any((column[:, 0] <= y) & (y <= column[:, 1]))  # Separate levels retain rock.
+    assert column[-1, 0] == -64
+    left = composer.generate(width=4, height=9, origin_x=5050, origin_z=1075)
+    right = composer.generate(width=5, height=9, origin_x=5054, origin_z=1075)
+    np.testing.assert_array_equal(field.solid_spans,
+                                  np.concatenate((left.solid_spans, right.solid_spans), axis=1))

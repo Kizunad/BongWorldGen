@@ -149,6 +149,9 @@ class CaveNetwork:
     roughness: NoiseLayer = field(
         default_factory=lambda: NoiseLayer(kind="value", scale=72.0, amplitude=1.0, octaves=1)
     )
+    # Connect this network's lowest and highest void in each column. Useful
+    # for a single cave layer whose noisy walls must not leave vertical shards.
+    fill_vertical_gaps: bool = False
 
     def __post_init__(self) -> None:
         if not self.paths or any(len(path) < 2 for path in self.paths):

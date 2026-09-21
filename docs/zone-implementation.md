@@ -283,3 +283,28 @@ PNG 上半幅是颜色、下半幅是高度编码；在颜色半幅裁剪 `(68, 
 
 验证：Python **129 passed**（本次 47.89 秒）。该提交保持几何输出，因而第十八步
 发现的噪声碎片溢出仍可复现，随后单独修复。
+
+第二十步：修复深渊洞壁碎片导致的 spans 溢出。seed=7 的 `(5054, 1079)` 列在
+深层只剩 Y=-27、-20 两个单格空腔，加上另外两层就需要五段实心体。
+通用 CaveNetwork 增加默认关闭的 `fill_vertical_gaps`，启用后仅填通该网络同列
+最低/最高空腔之间的间隙；各网络先独立处理再合并，不能把深渊三层之间的岩层挖通。
+zone 合成层为这些单层网络启用该参数，引擎仍不导入 zone 或 POI。
+
+原列现在是三段空腔 `[-27,-20]`、`[13,20]`、`[50,57]`，四段实心体与基岩保持完整。
+新增回归在修复前触发溢出，修复后验证空腔、层间岩层、基岩以及 4/5 列切块相等。
+Python **130 passed**；seed=7 的 27 zones / 15 profiles / 78 POI 全量粗网格报告
+全部 split_equal=true，最大 spans=4。证据记录：
+`docs/evidence/zone-cave-fragment-fix-2026-09-22.json`。
+
+```bash
+.venv/bin/pytest -q tests/test_zone_caves.py -k fragments
+.venv/bin/python tools/zone_evidence.py --seed 7 --output generated/zone-fragment-evidence
+.venv/bin/python tools/bluemap.py render --accept-minecraft-eula \
+  --output generated/cave-fragment-bluemap --seed 7 \
+  --origin-x 5040 --origin-z 1072 --width 32 --height 32 --min-y -40 --max-y -20 \
+  > generated/cave-fragment-render.log 2>&1
+```
+
+BlueMap 的 4 chunks 独立剖面正常渲染并退出，PNG 位于输出目录的
+`web/maps/bong/tiles/1/`，证据 JSON 保存各瓦片校验值。本会话图片显示限制仍在，
+本次不宣称肉眼看图通过。逐块扫描所有地下路径的三 seed 连通性报告随后补齐。
