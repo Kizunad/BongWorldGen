@@ -3,11 +3,13 @@ import json
 import math
 
 import numpy as np
+import pytest
 
 from bong_worldgen.composition import ZoneTerrain
 from bong_worldgen.composition.pois import resolve_poi, resolve_world_pois
 from bong_worldgen.data.world_definition import WORLD
-from bong_worldgen.data.zones import SPAWN
+from bong_worldgen.data.zones import SPAWN, ZONE_BY_NAME
+from bong_worldgen.engine import CaveNetwork, Point, TerrainRecipe
 from bong_worldgen.preview_world import export_preview_world
 
 
@@ -48,3 +50,24 @@ def test_exported_poi_height_matches_raster_and_preserves_original_position(tmp_
     assert result["pos_xyz"][1] == int(spans[7, 4, 0, 1]) + 1
     assert result["authored_pos_xyz"] == [4, 999, 7]
     assert result["placement"] == "surface"
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+def test_ground_tag_below_sky_island_selects_ground_above_a_cave(seed):
+    zone = replace(ZONE_BY_NAME["celestial_isles"], center_x=-1, center_z=-1,
+                   size_x=512, size_z=512, pois=())
+    poi = replace(SPAWN.pois[0], name="ground ruin", pos_xyz=(-0.25, 72, -0.25), tags=("ground",))
+    cave = CaveNetwork(name="under_island", paths=((Point(-1, -65), Point(-1, 63)),),
+                       width=8, height=8, depth=30, branch_count=0, chamber_count=0,
+                       entrance_count=0, noise_strength=0, dead_end_strength=0,
+                       vertical_warp=0, domain_warp_strength=0, smooth_union=0)
+    composer = ZoneTerrain(replace(WORLD, zones=(zone,)), seed=seed,
+                           background=TerrainRecipe(name="ground_with_cave", caves=(cave,)))
+    field = composer.generate(width=1, height=1, origin_x=-1, origin_z=-1)
+    column = field.solid_spans[0, 0]
+    assert np.count_nonzero(column[:, 0] != 32767) == 3  # Island, surface roof, cave base.
+    result = resolve_poi(composer, zone, poi)
+    assert result.pos_xyz == (-0.25, float(column[1, 1] + 1), -0.25)
+    assert result.placement == "ground"
+    assert result.pos_xyz[1] > column[2, 1] + 20
+    assert result.pos_xyz[1] + 1 < column[0, 0]

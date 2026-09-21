@@ -49,7 +49,11 @@ def resolve_poi(composer: ZoneTerrain, zone: ZoneDefinition, poi: PoiDefinition)
         y = min(floors, key=lambda value: (abs(value - authored_y), value))
         placement = "cave_floor"
     elif "ground" in poi.tags and zone.terrain_profile == "sky_isle":
-        y, placement = spans[-1][1] + 1, "ground"
+        # The lowest solid can be a cave floor. Query the same composed world
+        # without island caps so its actual ground roof remains authoritative.
+        ground = composer.generate(width=1, height=1, origin_x=math.floor(x),
+                                   origin_z=math.floor(z), include_floating_islands=False)
+        y, placement = int(ground.solid_spans[0, 0, 0, 1]) + 1, "ground"
     else:
         y = spans[0][1] + 1
         placement = "island_surface" if len(spans) > 1 and zone.terrain_profile == "sky_isle" else "surface"

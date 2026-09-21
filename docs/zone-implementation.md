@@ -365,3 +365,17 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 `docs/evidence/zone-preview-cli-2026-09-22.json`。绘图工具已逐点验证 overview
 与详细区域 raster 相等。新增契约覆盖细长旋转区域的过渡带、负分数坐标、邻区
 归属、显式整数边界和参数互斥；Python **143 passed**，compileall 和 diff 检查通过。
+
+第二十四步：修复浮岛区 `ground` 标签 POI 在地底有洞时误选洞底。原实现取最底层
+实心段作为地面，浮岛、地表屋顶、洞底同时存在时就选错支撑面。合成器新增可选的
+`include_floating_islands=False` 查询，保持同一地表、水体和洞穴，得到浮岛下方
+最高的真实地面；地面 POI 使用这次查询，不改变实际导出的浮岛几何。
+
+三 seed 的负分数坐标样区，原落点 Y=37/36/37，修复后为 **72/71/72**，各提高
+35 格至真实地面。回归同时检查洞底仍在、头顶与浮岛之间有净空；现有 78 个 POI
+支撑面契约继续通过，真实九霄浮岛的地面残基仍落在原地面。
+验证：Python **146 passed**；复现：
+
+```bash
+.venv/bin/pytest -q tests/test_zone_pois.py -k ground_tag
+```

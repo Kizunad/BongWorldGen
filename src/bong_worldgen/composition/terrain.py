@@ -72,7 +72,10 @@ class ZoneTerrain:
         origin_x: float = 0,
         origin_z: float = 0,
         cell_size: float = 1,
+        include_floating_islands: bool = True,
     ) -> Heightfield:
+        """Sample final geometry, optionally exposing ground below island caps."""
+
         if width < 1 or height < 1:
             raise ValueError("heightfield dimensions must be positive")
         if cell_size <= 0 or not np.isfinite((origin_x, origin_z, cell_size)).all():
@@ -82,7 +85,10 @@ class ZoneTerrain:
             origin_z + np.arange(height, dtype=np.float64) * cell_size,
         )
         terrain, moisture = self.sample_surface(x, z)
+        features = self.feature_recipe if include_floating_islands else replace(
+            self.feature_recipe, floating_islands=(),
+        )
         return finish_heightfield(
-            self.feature_recipe, terrain, moisture, x, z, self.seed,
+            features, terrain, moisture, x, z, self.seed,
             river_profiles=self.river_profiles,
         )
