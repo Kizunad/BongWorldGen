@@ -1,0 +1,467 @@
+{
+  "scope": "Six-neighbor air connectivity with two-block clearance below the surface; not walking, climbing, or game unlock rules.",
+  "seeds": [
+    {
+      "seed": 7,
+      "sampled_columns": 729088,
+      "poi_count": 11,
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            82,
+            -5210
+          ],
+          "tiles": 14,
+          "sampled_columns": 57344,
+          "connected_intervals": 8689,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -47.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -50.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/7-surface-fixed/report.json",
+          "geometry_sha256": "a355c9ce942921876807a8cb147f8d9bc5a6eb1eab6e865caf5a2d39b0e18380"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            77,
+            3000
+          ],
+          "tiles": 59,
+          "sampled_columns": 241664,
+          "connected_intervals": 23102,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                6.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                7.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                8.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -2.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/7-surface-fixed/report.json",
+          "geometry_sha256": "cae29550621c761721de1fb0d11ebc3b1ff93ac46eeb1b5d2e2d67d1ccc5ff37"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            83,
+            1400
+          ],
+          "tiles": 105,
+          "sampled_columns": 430080,
+          "connected_intervals": 127831,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -37.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -34.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -31.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                15.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -48.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/7-fixed/report.json",
+          "geometry_sha256": "35315a940c6350bdf32f184f6976d589c2fa58b82cd122965e3398564fe61541"
+        }
+      ]
+    },
+    {
+      "seed": 812731,
+      "sampled_columns": 704512,
+      "poi_count": 11,
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            80,
+            -5210
+          ],
+          "tiles": 15,
+          "sampled_columns": 61440,
+          "connected_intervals": 8613,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -51.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -51.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/812731-fixed/report.json",
+          "geometry_sha256": "76062959d0d3b894f354b3611c4901e5e336deec25ce6df0c2717bd238379d97"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            75,
+            3000
+          ],
+          "tiles": 49,
+          "sampled_columns": 200704,
+          "connected_intervals": 22150,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                4.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                3.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                9.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -1.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/812731-fixed/report.json",
+          "geometry_sha256": "cbfc2733880c9378a2bbe5605d765e99d451442f8f0e6b76f5e11e6ed3ae637c"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            81,
+            1400
+          ],
+          "tiles": 108,
+          "sampled_columns": 442368,
+          "connected_intervals": 128248,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -38.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -33.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -25.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                19.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -47.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/812731-fixed/report.json",
+          "geometry_sha256": "fa42a209ebd2d0c6037ba1f60ad70832141cfcbb4fc7a718baec7f08da5a365a"
+        }
+      ]
+    },
+    {
+      "seed": 2026,
+      "sampled_columns": 729088,
+      "poi_count": 11,
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            78,
+            -5210
+          ],
+          "tiles": 14,
+          "sampled_columns": 57344,
+          "connected_intervals": 7256,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -52.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -54.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/2026-fixed/report.json",
+          "geometry_sha256": "6293d320b3892b214f3b3901b6e9791712f8c08d5589b5285a28f77b35779970"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            75,
+            3000
+          ],
+          "tiles": 54,
+          "sampled_columns": 221184,
+          "connected_intervals": 23353,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                3.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                4.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                8.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -6.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/2026-fixed/report.json",
+          "geometry_sha256": "99caa1877a33d0ef4471c25abd4e94c15dd5076816b561d04d102aa0b39cb2db"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            83,
+            1400
+          ],
+          "tiles": 110,
+          "sampled_columns": 450560,
+          "connected_intervals": 126613,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -33.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -34.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -25.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                15.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -40.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "source_report": "generated/zone-cave-evidence/2026-abyss-fixed/report.json",
+          "geometry_sha256": "9bbe4f902d3cc06867ed089475fec8d9586b419d2c2eeafdd90e40c48b360cad"
+        }
+      ]
+    }
+  ]
+}

@@ -308,3 +308,25 @@ Python **130 passed**；seed=7 的 27 zones / 15 profiles / 78 POI 全量粗网�
 BlueMap 的 4 chunks 独立剖面正常渲染并退出，PNG 位于输出目录的
 `web/maps/bong/tiles/1/`，证据 JSON 保存各瓦片校验值。本会话图片显示限制仍在，
 本次不宣称肉眼看图通过。逐块扫描所有地下路径的三 seed 连通性报告随后补齐。
+
+第二十一步：补齐修复后的三 seed 全网络连通证据。seed=7/812731/2026 分别扫描
+**729,088 / 704,512 / 729,088** 个方块列，覆盖三个地下 zone 的全部手工主路、
+随机支路、洞室和入口附近 tile。三个 seed 各 **11/11** 地下 POI 均从入口连通，
+不再触发四段 spans 溢出。结果、落点和 NPZ 校验值提交在
+`docs/evidence/zone-cave-connectivity-2026-09-22.json`。
+
+这些是从实际空腔计算的两格净空路径；深渊入口仍是竖井，报告不声称角色可以
+徒步走完，也不判定坠落伤害或剧情解锁条件。普通洞穴只有一层，深渊保留三层。
+此前 2026 批量进程在 96/110 个深渊 tile 后被 SIGTERM 终止，单独重跑深渊后
+110/110 完成并返回成功。建议有限命令按 zone 拆分，避免长任务丢失中间进度：
+
+```bash
+.venv/bin/python tools/zone_cave_evidence.py --seed 2026 --zone wuxing_abyss \
+  --output generated/zone-cave-evidence/2026-abyss-fixed
+.venv/bin/python tools/zone_cave_evidence.py --seed 2026 \
+  --zone baolongwang_cavern_deep --zone youan_depths \
+  --output generated/zone-cave-evidence/2026-surface-fixed
+```
+
+把 `--seed` 换成 7 或 812731 可重复另外两组；输出 NPZ 中包含 air lower/upper、
+connected、world origin 和所生成 tile 原点，可离线核查每个连通区间。
