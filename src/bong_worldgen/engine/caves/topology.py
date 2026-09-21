@@ -14,6 +14,7 @@ https://github.com/Zylann/godot_voxel/blob/master/doc/source/procedural_generati
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 import math
 
 from ..models import CaveNetwork, Point
@@ -57,6 +58,7 @@ class CaveTopology:
     entrances: tuple[Point, ...]
 
 
+@lru_cache(maxsize=128)
 def generate_cave_topology(network: CaveNetwork, seed: int) -> CaveTopology:
     """从手工锚点确定性地产生主洞、支洞和洞室节点。"""
 

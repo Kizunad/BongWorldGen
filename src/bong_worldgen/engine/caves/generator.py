@@ -11,7 +11,7 @@ https://github.com/Auburn/FastNoiseLite
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -136,6 +136,20 @@ def generate_underground(
     if not recipe.caves:
         return _empty_underground(terrain)
 
+    active_networks = []
+    for network_index, network in enumerate(recipe.caves):
+        network_seed = seed + network_index * 9_973
+        topology = generate_cave_topology(network, network_seed)
+        min_x, max_x, min_z, max_z = _network_bounds(network, topology)
+        x_slice = _axis_slice(x[0, :], min_x, max_x)
+        z_slice = _axis_slice(z[:, 0], min_z, max_z)
+        if x_slice is not None and z_slice is not None:
+            active_networks.append((network_index, network, topology, x_slice, z_slice))
+    if not active_networks:
+        # Keep global palette IDs while skipping the entire 3D allocation for
+        # tiles outside every cave. Terrain and palette remain crop-independent.
+        return replace(_empty_underground(terrain), cave_palette=tuple(n.name for n in recipe.caves))
+
     feature_bounds: list[tuple[int, int]] = []
     for network in recipe.caves:
         radius = max(
@@ -166,20 +180,8 @@ def generate_underground(
     cave_void = np.zeros((cave_offsets.size, height, width), dtype=bool)
     cave_id = np.zeros((height, width), dtype=np.uint8)
     cave_palette = tuple(network.name for network in recipe.caves)
-    x_axis = x[0, :]
-    z_axis = z[:, 0]
-
-    for network_index, network in enumerate(recipe.caves):
+    for network_index, network, topology, x_slice, z_slice in active_networks:
         network_seed = seed + network_index * 9_973
-        topology = generate_cave_topology(network, network_seed)
-        min_x, max_x, min_z, max_z = _network_bounds(network, topology)
-        x_slice = _axis_slice(x_axis, min_x, max_x)
-        z_slice = _axis_slice(z_axis, min_z, max_z)
-        if x_slice is None or z_slice is None:
-            # 当前 tile 与网络的确定性世界范围没有交集，不做任何 3D
-            # noise/SDF 计算；最终 spans 模块会走全空腔快速路径。
-            continue
-
         crop_x = x[z_slice, x_slice]
         crop_z = z[z_slice, x_slice]
         crop_surface = np.floor(terrain[z_slice, x_slice]).astype(np.int16)
@@ -198,10 +200,19 @@ def generate_underground(
         worm = sample_worm_field(warped_x, warped_z, network, network_seed)
         network_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
         entrance_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
+        path_vertical_limit = (
+            network.vertical_warp
+            + max(network.height * 0.5, 1.0)
+            * math.sqrt(1.0 + (network.noise_strength + len(topology.paths) * network.smooth_union)
+                        / (0.55 * 0.65))
+            + 1.0
+        )
         for path in topology.paths:
             distance, _ = polyline_distance_and_progress(warped_x, warped_z, path)
             vertical_radius = max(network.height * 0.5, 1.0)
             for level_index, offset in enumerate(cave_offsets):
+                if abs(float(offset) + network.depth) > path_vertical_limit:
+                    continue
                 world_y = crop_surface + int(offset)
                 vertical_coordinate = (
                     float(offset) + network.depth - worm.vertical_offset
@@ -221,7 +232,10 @@ def generate_underground(
                     world_y * (network.roughness.scale / network.vertical_scale),
                     warped_z,
                     network.roughness,
-                    network_seed + level_index * 1013 + 40_001,
+                    # A single 3D field must keep the same seed across Y.
+                    # Reseeding each slice creates detached one-block voids
+                    # near walls and can overflow the four-span contract.
+                    network_seed + 40_001,
                 )
                 # 低频阈值调制负责制造死胡同；3D 噪声只扰动洞壁细节，
                 # 不负责凭空创造一条远离拓扑路径的洞道。
@@ -257,17 +271,14 @@ def generate_underground(
                 & (world_y > SPAN_MIN_Y)
             )
 
-            # 洞口是独立的第二阶段：用一个从地表延伸到主洞的椭球通道，
+            # 洞口是独立的第二阶段：用从地表延伸到主洞的胶囊形竖井，
             # 只放宽洞口自身的屋顶限制，不让普通洞道穿出地表。
             for entrance in topology.entrances:
                 entrance_sdf = np.sqrt(
                     ((warped_x - entrance.x) / network.entrance_radius) ** 2
                     + ((warped_z - entrance.z) / network.entrance_radius) ** 2
-                    + (
-                        (float(offset) + network.depth * 0.5)
-                        / max(network.depth * 0.5 + 1.0, 1.0)
-                    )
-                    ** 2
+                    + (max(-network.depth - float(offset), float(offset), 0.0)
+                       / network.entrance_radius) ** 2
                 ) - 1.0
                 entrance_density[level_index] = _smooth_max(
                     entrance_density[level_index],

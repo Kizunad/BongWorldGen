@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import numpy as np
 from dataclasses import replace
+from functools import cached_property
+
+import numpy as np
 
 from ..data.recipes import DEFAULT_RECIPE
 from ..data.world import WorldDefinition
 from ..data.world_definition import WORLD
-from ..engine import Heightfield, TerrainRecipe, finish_heightfield, sample_surface
+from ..engine import Heightfield, TerrainRecipe, finish_heightfield, prepare_river_profiles, sample_surface
 from .layout import ZoneIndex
 from .profiles import PROFILE_RECIPES, recipe_for_zone
 
@@ -48,6 +50,10 @@ class ZoneTerrain:
             moisture += part.weight * local_moisture
         return terrain, moisture
 
+    @cached_property
+    def river_profiles(self):
+        return prepare_river_profiles(self.feature_recipe, lambda x, z: self.sample_surface(x, z)[0])
+
     def generate(
         self,
         *,
@@ -68,5 +74,5 @@ class ZoneTerrain:
         terrain, moisture = self.sample_surface(x, z)
         return finish_heightfield(
             self.feature_recipe, terrain, moisture, x, z, self.seed,
-            surface_sampler=lambda sx, sz: self.sample_surface(sx, sz)[0],
+            river_profiles=self.river_profiles,
         )

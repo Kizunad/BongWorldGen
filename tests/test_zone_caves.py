@@ -47,3 +47,18 @@ def test_multilevel_cave_spans_and_ids_are_identical_when_generated_as_tiles():
         np.testing.assert_array_equal(getattr(full, layer),
                                       np.concatenate([getattr(part, layer) for part in parts], axis=1))
     assert np.any(full.cave_id)
+
+
+@pytest.mark.parametrize("name,origin_x,origin_z", (
+    ("youan_depths", 1872, 2864), ("wuxing_abyss", 5120, 1264),
+))
+def test_full_preview_cave_walls_and_shafts_fit_the_four_span_contract(name, origin_x, origin_z):
+    # This includes tangential wall columns missed by room-center checks.
+    # Previously the 256-block BlueMap window raised a span overflow here.
+    field = ZoneTerrain().generate(width=64, height=64, origin_x=origin_x,
+                                   origin_z=origin_z, cell_size=4)
+    spans = field.solid_spans
+    counts = np.count_nonzero(spans[..., 0] != 32767, axis=-1)
+    assert np.max(counts) <= 4
+    assert np.any(counts >= (4 if name == "wuxing_abyss" else 2))
+    assert np.all(spans[..., 0, 1] <= np.rint(field.height))

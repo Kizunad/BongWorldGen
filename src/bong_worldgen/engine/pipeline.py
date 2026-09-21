@@ -14,6 +14,7 @@ from .solids import add_floating_islands
 
 
 SurfaceSampler = Callable[[np.ndarray, np.ndarray], np.ndarray]
+RiverProfile = tuple[np.ndarray, np.ndarray, np.ndarray]
 
 
 def _coordinate_grid(
@@ -133,24 +134,12 @@ def _smooth_profile(profile: np.ndarray) -> np.ndarray:
 
 
 def _river_surface_profile(
-    terrain: np.ndarray,
-    grid_x: np.ndarray,
-    grid_z: np.ndarray,
     river: River,
-    cell_size: float,
-    surface_sampler: SurfaceSampler | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    sample: SurfaceSampler,
+    station_count: int,
+) -> RiverProfile:
     """沿一条手工河流构建单调下降的水面和两岸上限。"""
 
-    total_length = sum(
-        float(np.hypot(end.x - start.x, end.z - start.z))
-        for start, end in zip(river.path, river.path[1:])
-    )
-    station_count = (
-        max(32, min(4096, int(total_length / 8.0) + 1))
-        if surface_sampler is not None
-        else max(32, min(256, int(total_length / max(cell_size * 4.0, 1.0)) + 1))
-    )
     station_t, station_x, station_z = _polyline_stations(river.path, station_count)
     tangent_x = np.gradient(station_x)
     tangent_z = np.gradient(station_z)
@@ -158,11 +147,6 @@ def _river_surface_profile(
     normal_x = -tangent_z / tangent_length
     normal_z = tangent_x / tangent_length
     width_profile = river.width * (1.0 + (river.widening - 1.0) * station_t)
-    def sample(sample_x: np.ndarray, sample_z: np.ndarray) -> np.ndarray:
-        if surface_sampler is not None:
-            return surface_sampler(sample_x, sample_z)
-        return _sample_regular_grid(terrain, grid_x, grid_z, sample_x, sample_z)
-
     terrain_profile = sample(station_x, station_z)
     center_profile = _smooth_profile(terrain_profile)
     bank_offset = width_profile * 1.2
@@ -189,6 +173,19 @@ def _river_surface_profile(
     return station_t, surface_profile, bank_cap
 
 
+def _river_station_count(river: River, spacing: float, limit: int) -> int:
+    length = sum(float(np.hypot(end.x - start.x, end.z - start.z))
+                 for start, end in zip(river.path, river.path[1:]))
+    return max(32, min(limit, int(length / spacing) + 1))
+
+
+def prepare_river_profiles(recipe: TerrainRecipe, sampler: SurfaceSampler) -> tuple[RiverProfile, ...]:
+    """Precompute reusable river sections from a fixed world-coordinate sampler."""
+
+    return tuple(_river_surface_profile(river, sampler, _river_station_count(river, 8.0, 4096))
+                 for river in recipe.rivers)
+
+
 def _apply_rivers(
     terrain: np.ndarray,
     water: np.ndarray,
@@ -199,25 +196,29 @@ def _apply_rivers(
     riverbed_id: np.ndarray,
     riverbed_palette: tuple[str, ...],
     surface_sampler: SurfaceSampler | None = None,
+    river_profiles: tuple[RiverProfile, ...] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     output_height = terrain
     output_water = water
     output_riverbed = riverbed_id
+    if river_profiles is None and surface_sampler is not None:
+        river_profiles = prepare_river_profiles(recipe, surface_sampler)
+    if river_profiles is not None and len(river_profiles) != len(recipe.rivers):
+        raise ValueError("river profiles must match the recipe rivers")
     palette_index = {name: index for index, name in enumerate(riverbed_palette)}
     for river_index, river in enumerate(recipe.rivers):
         distance, progress = polyline_distance_and_progress(x, z, river.path)
         width = river.width * (1.0 + (river.widening - 1.0) * progress)
         channel_mask = distance <= width
         cell_size = float(x[0, 1] - x[0, 0]) if x.shape[1] > 1 else 1.0
-        riverbed_mask = distance <= width + (1.0 if surface_sampler is not None else cell_size)
-        station_t, water_profile, bank_profile = _river_surface_profile(
-            output_height,
-            x,
-            z,
-            river,
-            cell_size=cell_size,
-            surface_sampler=surface_sampler,
-        )
+        riverbed_mask = distance <= width + (1.0 if river_profiles is not None else cell_size)
+        if river_profiles is not None:
+            station_t, water_profile, bank_profile = river_profiles[river_index]
+        else:
+            station_t, water_profile, bank_profile = _river_surface_profile(
+                river, lambda sx, sz: _sample_regular_grid(output_height, x, z, sx, sz),
+                _river_station_count(river, max(cell_size * 4.0, 1.0), 256),
+            )
         water_surface = np.floor(np.interp(progress, station_t, water_profile))
         bank_cap = np.floor(np.interp(progress, station_t, bank_profile))
         normalized_distance = np.clip(distance / np.maximum(width, 1.0e-6), 0.0, 1.0)
@@ -306,6 +307,7 @@ def finish_heightfield(
     seed: int,
     *,
     surface_sampler: SurfaceSampler | None = None,
+    river_profiles: tuple[RiverProfile, ...] | None = None,
 ) -> Heightfield:
     """Apply water and underground geometry to an already composed surface."""
 
@@ -315,7 +317,7 @@ def finish_heightfield(
     )
     riverbed = np.full(terrain.shape, -1, dtype=np.int16)
     terrain, water, riverbed = _apply_rivers(
-        terrain, water, x, z, recipe, seed, riverbed, riverbed_palette, surface_sampler,
+        terrain, water, x, z, recipe, seed, riverbed, riverbed_palette, surface_sampler, river_profiles,
     )
     water = np.where(water >= 0.0, np.maximum(water, terrain), -1.0)
     underground = generate_underground(terrain, x, z, recipe, seed)
