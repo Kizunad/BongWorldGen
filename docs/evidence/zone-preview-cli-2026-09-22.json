@@ -1,0 +1,19 @@
+{
+  "zone_selection": "rift_mouth_blood_001",
+  "padding": 32,
+  "seed": 812731,
+  "bounds": {
+    "min_x": 3005,
+    "max_x": 3395,
+    "min_z": -2995,
+    "max_z": -2605
+  },
+  "tile_size": 64,
+  "tile_count": 56,
+  "tile_columns_by_dominant_zone": {
+    "blood_valley": 158695,
+    "rift_mouth_blood_001": 70681
+  },
+  "overview_samples_verified": 169,
+  "overview_zone_sha256": "832cd636232f025a906dc262d5805cc77ddca4e0fbd983b5ae6a075cfe77ddc8"
+}

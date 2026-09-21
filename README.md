@@ -54,6 +54,17 @@ world_metadata.py。重新从 Bong JSON 同步时运行导入工具即可重新�
 MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py generated/zone-evidence
 ```
 
+按区域导出供控制台读取的完整精度 raster：
+
+```bash
+.venv/bin/python tools/generate_preview_world.py --zone rift_mouth_blood_001 \
+  --padding 32 --tile-size 64 --output generated/blood-rift-preview
+```
+
+`--zone` 选择包含区域轮廓和过渡带的世界范围，邻区仍参与正常的高度混合与归属计算。
+也可以同时指定 `--min-x`、`--max-x`、`--min-z`、`--max-z` 四个包含端点的整数边界。
+这两种范围选法互斥；省略时继续使用默认范围。`--padding` 只用于扩大所选 zone 的范围。
+
 ## 开发
 
     cd ~/Code/BongWorldGen

@@ -347,3 +347,21 @@ tile 从 27 次轮廓计算降为 1 次，背景 tile 降为 0。背景及所有
 ```
 
 验证：Python **135 passed**，compileall 和 diff 检查通过。
+
+第二十三步：`tools/generate_preview_world.py` 新增 `--zone`、`--padding` 和四个
+显式坐标边界参数。按名称选择区域时使用同一 `ZoneIndex` 的影响包围框，覆盖旋转
+轮廓和外侧过渡带；完整世界仍参与合成，保留邻区和背景。非法参数在创建输出前报错。
+省略范围参数继续使用原有默认范围。
+
+```bash
+.venv/bin/python tools/generate_preview_world.py --zone rift_mouth_blood_001 \
+  --padding 32 --tile-size 64 --output generated/blood-rift-zone-cli-preview
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
+  generated/blood-rift-zone-cli-preview/rasters/manifest.json \
+  --output generated/blood-rift-zone-cli-preview/zone-overview.png
+```
+
+实际血谷渊口导出的范围、tile 数、区域列数、overview 校验值提交在
+`docs/evidence/zone-preview-cli-2026-09-22.json`。绘图工具已逐点验证 overview
+与详细区域 raster 相等。新增契约覆盖细长旋转区域的过渡带、负分数坐标、邻区
+归属、显式整数边界和参数互斥；Python **143 passed**，compileall 和 diff 检查通过。

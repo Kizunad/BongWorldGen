@@ -172,3 +172,11 @@ class ZoneIndex:
         indices, _ = blend.dominant()
         index = int(indices)
         return None if index < 0 else blend.contributions[index].zone
+
+    def bounds_for(self, name: str) -> tuple[float, float, float, float]:
+        """Return conservative min/max X/Z including the zone's blend band."""
+
+        for zone, bounds in zip(self.zones, self._bounds):
+            if zone.name == name:
+                return bounds
+        raise ValueError(f"unknown zone {name!r}")
