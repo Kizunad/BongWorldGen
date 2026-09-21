@@ -395,3 +395,21 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 首次与重放耗时及各数组校验值记录在 `docs/evidence/zone-cave-checkpoints-2026-09-22.json`。
 新增契约验证完整缓存复用、截断恢复，以及 seed、网格、世界和源码变化后的缓存失效。
 验证：Python **148 passed**，compileall 和 diff 检查通过。
+
+第二十六步：洞穴密度工作区改为逐层的二维数组。路径、洞室与入口在同一高度层
+计算完成后只保存布尔空腔，避免保留两份全高度的浮点密度；跨 Y 的空腔和后续
+同层间隙处理仍保留，路径合并顺序与 seed 不变。
+
+使用 tracemalloc 测量三个 64×64 真正洞穴窗口，峰值受追踪分配分别从
+**12,615,670→3,899,350**、**16,458,638→4,272,390**、
+**12,555,550→3,839,278** 字节，降低约 69%–74%。这是生成调用期间的受追踪分配，
+不等同于进程 RSS；开启跟踪也影响耗时，因此本步只据此报告内存变化。
+全部 Heightfield 层的 shape、dtype、SHA-256 与 palettes 和修改前相同，噪声调用数相同。
+原始记录：`docs/evidence/cave-workspace-before.json` / `cave-workspace-after.json`。
+
+```bash
+.venv/bin/python tools/benchmark_zone_caves.py --repeat 1 --memory \
+  --compare docs/evidence/cave-workspace-before.json
+```
+
+验证：Python **148 passed**，compileall 和 diff 检查通过。

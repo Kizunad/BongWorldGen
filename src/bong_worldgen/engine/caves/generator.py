@@ -198,8 +198,6 @@ def generate_underground(
             network_seed,
         )
         worm = sample_worm_field(warped_x, warped_z, network, network_seed)
-        network_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
-        entrance_density = np.full(network_void.shape, -np.inf, dtype=np.float64)
         path_vertical_limit = (
             network.vertical_warp
             + max(network.height * 0.5, 1.0)
@@ -216,45 +214,39 @@ def generate_underground(
         vertical_radius = max(network.height * 0.5, 1.0)
         threshold_modulation = 0.55 + 0.45 * worm.corridor
         for level_index, offset in enumerate(cave_offsets):
-            if abs(float(offset) + network.depth) > path_vertical_limit:
-                continue
             world_y = crop_surface + int(offset)
-            vertical_coordinate = (
-                float(offset) + network.depth - worm.vertical_offset
-            ) / vertical_radius
-            # Godot Voxel 的核心技巧：2D 噪声平方后按阈值截取 worm，
-            # 再用 y²-1 的抛物线调制阈值，使同一条 XZ 通道拥有圆润的
-            # 3D 截面，而不是一张“贴在平面上的 2D 洞穴贴图”。
-            parabolic_profile = 1.0 - np.square(vertical_coordinate)
-            # Every path in this network samples the same 3D field at this Y.
-            # Compute it once, retaining the original path union order below.
-            noise = sample_noise_3d(
-                warped_x,
-                world_y * (network.roughness.scale / network.vertical_scale),
-                warped_z,
-                network.roughness,
-                # A single 3D field must keep the same seed across Y.
-                # Reseeding each slice creates detached one-block voids
-                # near walls and can overflow the four-span contract.
-                network_seed + 40_001,
-            )
-            for radial_profile in radial_profiles:
-                godot_worm_density = np.minimum(radial_profile, parabolic_profile)
-                # 低频阈值调制负责制造死胡同；3D 噪声只扰动洞壁细节，
-                # 不负责凭空创造一条远离拓扑路径的洞道。
-                path_density = (
-                    godot_worm_density * threshold_modulation * (0.65 + 0.35 * worm.dead_end)
-                    + network.noise_strength * noise
-                    - network.dead_end_strength * (1.0 - worm.dead_end)
+            # Only the void mask needs all Y levels. Density workspaces are
+            # independent slices; keeping them 2D avoids two large 3D floats.
+            network_density = np.full(crop_surface.shape, -np.inf, dtype=np.float64)
+            entrance_density = np.full(crop_surface.shape, -np.inf, dtype=np.float64)
+            if abs(float(offset) + network.depth) <= path_vertical_limit:
+                vertical_coordinate = (
+                    float(offset) + network.depth - worm.vertical_offset
+                ) / vertical_radius
+                # Godot Voxel 的核心技巧：2D 噪声平方后按阈值截取 worm，
+                # 再用 y²-1 的抛物线调制阈值，使同一条 XZ 通道拥有圆润的
+                # 3D 截面，而不是一张“贴在平面上的 2D 洞穴贴图”。
+                parabolic_profile = 1.0 - np.square(vertical_coordinate)
+                # Every path samples this same 3D field; retain its seed and
+                # union order across heights to avoid detached wall fragments.
+                noise = sample_noise_3d(
+                    warped_x,
+                    world_y * (network.roughness.scale / network.vertical_scale),
+                    warped_z,
+                    network.roughness,
+                    network_seed + 40_001,
                 )
-                network_density[level_index] = _smooth_max(
-                    network_density[level_index],
-                    path_density,
-                    network.smooth_union,
-                )
+                for radial_profile in radial_profiles:
+                    godot_worm_density = np.minimum(radial_profile, parabolic_profile)
+                    # 低频阈值调制负责制造死胡同；3D 噪声只扰动洞壁细节，
+                    # 不负责凭空创造一条远离拓扑路径的洞道。
+                    path_density = (
+                        godot_worm_density * threshold_modulation * (0.65 + 0.35 * worm.dead_end)
+                        + network.noise_strength * noise
+                        - network.dead_end_strength * (1.0 - worm.dead_end)
+                    )
+                    network_density = _smooth_max(network_density, path_density, network.smooth_union)
 
-        for level_index, offset in enumerate(cave_offsets):
-            world_y = crop_surface + int(offset)
             # 将这一层的路径并集与洞室节点合并。洞室使用独立的椭球
             # SDF，能够打破“所有地方都是细管”的视觉单调性。
             for chamber in topology.chambers:
@@ -263,13 +255,13 @@ def generate_underground(
                     + ((crop_z - chamber.z) / network.chamber_radius) ** 2
                     + ((float(offset) + network.depth) / network.chamber_height) ** 2
                 ) - 1.0
-                network_density[level_index] = _smooth_max(
-                    network_density[level_index],
+                network_density = _smooth_max(
+                    network_density,
                     -chamber_sdf,
                     network.smooth_union,
                 )
             network_void[level_index] = (
-                (network_density[level_index] >= network.sdf_threshold)
+                (network_density >= network.sdf_threshold)
                 & (world_y <= crop_surface - network.roof_thickness)
                 & (world_y > SPAN_MIN_Y)
             )
@@ -283,13 +275,13 @@ def generate_underground(
                     + (max(-network.depth - float(offset), float(offset), 0.0)
                        / network.entrance_radius) ** 2
                 ) - 1.0
-                entrance_density[level_index] = _smooth_max(
-                    entrance_density[level_index],
+                entrance_density = _smooth_max(
+                    entrance_density,
                     -entrance_sdf,
                     network.smooth_union,
                 )
             network_void[level_index] |= (
-                (entrance_density[level_index] >= network.sdf_threshold)
+                (entrance_density >= network.sdf_threshold)
                 & (world_y <= crop_surface)
                 & (world_y > SPAN_MIN_Y)
             )

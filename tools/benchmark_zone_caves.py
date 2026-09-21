@@ -11,6 +11,7 @@ from pathlib import Path
 import statistics
 import sys
 import time
+import tracemalloc
 
 import numpy as np
 
@@ -38,6 +39,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=812731)
     parser.add_argument("--output", type=Path, default=Path("generated/zone-cave-benchmark/result.json"))
     parser.add_argument("--compare", type=Path, help="require identical layers to an earlier report")
+    parser.add_argument("--memory", action="store_true", help="record peak traced allocations (affects timing)")
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be positive")
@@ -57,14 +59,20 @@ def main() -> int:
     try:
         for name, x, z in (("youan_depths", 1984, 2984), ("wuxing_abyss", 5224, 1376),
                            ("baolongwang_cavern_deep", 1720, -5184)):
-            times, snapshots, noise = [], [], []
+            times, snapshots, noise, peaks = [], [], [], []
             for _ in range(args.repeat):
                 counts[:] = [0, 0]
+                if args.memory:
+                    tracemalloc.start()
                 start = time.perf_counter()
                 field = composer.generate(width=64, height=64, origin_x=x, origin_z=z)
                 times.append(time.perf_counter() - start)
+                if args.memory:
+                    peaks.append(tracemalloc.get_traced_memory()[1])
+                    tracemalloc.stop()
                 snapshots.append(snapshot(field))
                 noise.append(tuple(counts))
+                del field
             assert all(value == snapshots[0] for value in snapshots), name
             assert len(set(noise)) == 1, name
             rows.append({"zone": name, "origin": [x, z], "shape": [64, 64],
@@ -72,6 +80,8 @@ def main() -> int:
                          "noise_calls": noise[0][0], "noise_samples": noise[0][1],
                          "layers": snapshots[0]})
             print(f"{name}: {rows[-1]['median_seconds']:.3f}s, {noise[0][0]} noise calls", flush=True)
+            if peaks:
+                rows[-1]["peak_traced_bytes"] = peaks
     finally:
         generator.sample_noise_3d = original
     report = {"seed": args.seed, "repeat": args.repeat, "windows": rows}
