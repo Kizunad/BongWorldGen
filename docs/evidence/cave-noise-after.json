@@ -1,0 +1,226 @@
+{
+  "seed": 812731,
+  "repeat": 2,
+  "windows": [
+    {
+      "zone": "youan_depths",
+      "origin": [
+        1984,
+        2984
+      ],
+      "shape": [
+        64,
+        64
+      ],
+      "seconds": [
+        0.7184830539627001,
+        0.681526045082137
+      ],
+      "median_seconds": 0.7000045495224185,
+      "noise_calls": 41,
+      "noise_samples": 167936,
+      "layers": {
+        "height": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "d7150f47b3cc7b096cd65027a2b26f09ade06475401ddabc89a1de73b97260c5"
+        },
+        "moisture": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "9ac2cafbda80d2c0a6fe67c4f0a8e3bb27577318a62d962cd85d3b26567e33e2"
+        },
+        "water_level": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "969dff138e727074f93ff60d935242116287ed6dd7293211ce9e69f9c33363a1"
+        },
+        "riverbed_id": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f"
+        },
+        "riverbed_palette": "('mud', 'gravel', 'sand', 'clay', 'dirt')",
+        "solid_spans": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64,
+            4,
+            2
+          ],
+          "sha256": "d0120ad826848d5a96b1019e439fa4e69d67a4dbb1916fc7c35f8c12071db36a"
+        },
+        "underground_blocks": "()",
+        "cave_id": {
+          "dtype": "uint8",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "7dff9144a94c2abd1f1e6ca7cf95e18fbcd3542416f5505aeafd8f9728e0e206"
+        },
+        "cave_palette": "('shallow_mine_network', 'baolongwang_cavern_deep/level_1', 'youan_depths/level_1', 'wuxing_abyss/level_1', 'wuxing_abyss/level_2', 'wuxing_abyss/level_3')"
+      }
+    },
+    {
+      "zone": "wuxing_abyss",
+      "origin": [
+        5224,
+        1376
+      ],
+      "shape": [
+        64,
+        64
+      ],
+      "seconds": [
+        1.8570617799414322,
+        1.8710512790130451
+      ],
+      "median_seconds": 1.8640565294772387,
+      "noise_calls": 128,
+      "noise_samples": 524288,
+      "layers": {
+        "height": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "64c2f590571bf730bdc97ab68cd8477ad83a85729e5b3a247b40cc60acace806"
+        },
+        "moisture": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "29b50cb7203f3f233faeb62bb9bbfb6c3c8d8ef5271febe65b68ed6ad618b1e6"
+        },
+        "water_level": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "969dff138e727074f93ff60d935242116287ed6dd7293211ce9e69f9c33363a1"
+        },
+        "riverbed_id": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f"
+        },
+        "riverbed_palette": "('mud', 'gravel', 'sand', 'clay', 'dirt')",
+        "solid_spans": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64,
+            4,
+            2
+          ],
+          "sha256": "8a6c43bafa34183edbfa912c71cbfcc8311f57dc2ddcb5d341ebd78791b04f8d"
+        },
+        "underground_blocks": "()",
+        "cave_id": {
+          "dtype": "uint8",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "6aed1aee6c45ed0a77d356cd9df8588a9182df4bff42dd5818c4388a0531702b"
+        },
+        "cave_palette": "('shallow_mine_network', 'baolongwang_cavern_deep/level_1', 'youan_depths/level_1', 'wuxing_abyss/level_1', 'wuxing_abyss/level_2', 'wuxing_abyss/level_3')"
+      }
+    },
+    {
+      "zone": "baolongwang_cavern_deep",
+      "origin": [
+        1720,
+        -5184
+      ],
+      "shape": [
+        64,
+        64
+      ],
+      "seconds": [
+        0.5593694520648569,
+        0.5526643369812518
+      ],
+      "median_seconds": 0.5560168945230544,
+      "noise_calls": 30,
+      "noise_samples": 122880,
+      "layers": {
+        "height": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "401029cd8ef342d137b38c32c43b68bde4dd48723ec6f6109fd146be2a67867d"
+        },
+        "moisture": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "24f604f8e59fd419a8aa50ba1ed7fa4d72e0bd65849dab9f8b40a6e6914053c9"
+        },
+        "water_level": {
+          "dtype": "float32",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "969dff138e727074f93ff60d935242116287ed6dd7293211ce9e69f9c33363a1"
+        },
+        "riverbed_id": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f"
+        },
+        "riverbed_palette": "('mud', 'gravel', 'sand', 'clay', 'dirt')",
+        "solid_spans": {
+          "dtype": "int16",
+          "shape": [
+            64,
+            64,
+            4,
+            2
+          ],
+          "sha256": "e569d59dbcee61b19c68f3766cbfabf66c6d6b3a9eb6c5752fa47f76521daeba"
+        },
+        "underground_blocks": "()",
+        "cave_id": {
+          "dtype": "uint8",
+          "shape": [
+            64,
+            64
+          ],
+          "sha256": "23de6b2e72710eba3ac3dfe507b9e83bdb854801aed027008dc2080ef6f44260"
+        },
+        "cave_palette": "('shallow_mine_network', 'baolongwang_cavern_deep/level_1', 'youan_depths/level_1', 'wuxing_abyss/level_1', 'wuxing_abyss/level_2', 'wuxing_abyss/level_3')"
+      }
+    }
+  ],
+  "identical_to": "generated/zone-cave-benchmark/before.json"
+}

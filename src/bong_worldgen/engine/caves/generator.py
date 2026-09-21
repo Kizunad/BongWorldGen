@@ -207,36 +207,39 @@ def generate_underground(
                         / (0.55 * 0.65))
             + 1.0
         )
+        radial_profiles = []
         for path in topology.paths:
             distance, _ = polyline_distance_and_progress(warped_x, warped_z, path)
-            vertical_radius = max(network.height * 0.5, 1.0)
-            for level_index, offset in enumerate(cave_offsets):
-                if abs(float(offset) + network.depth) > path_vertical_limit:
-                    continue
-                world_y = crop_surface + int(offset)
-                vertical_coordinate = (
-                    float(offset) + network.depth - worm.vertical_offset
-                ) / vertical_radius
-                # Godot Voxel 的核心技巧：2D 噪声平方后按阈值截取 worm，
-                # 再用 y²-1 的抛物线调制阈值，使同一条 XZ 通道拥有圆润的
-                # 3D 截面，而不是一张“贴在平面上的 2D 洞穴贴图”。
-                parabolic_profile = 1.0 - np.square(vertical_coordinate)
-                radial_profile = 1.0 - distance / np.maximum(
-                    network.width * worm.radius_scale,
-                    1.0e-6,
-                )
+            radial_profiles.append(1.0 - distance / np.maximum(
+                network.width * worm.radius_scale, 1.0e-6,
+            ))
+        vertical_radius = max(network.height * 0.5, 1.0)
+        threshold_modulation = 0.55 + 0.45 * worm.corridor
+        for level_index, offset in enumerate(cave_offsets):
+            if abs(float(offset) + network.depth) > path_vertical_limit:
+                continue
+            world_y = crop_surface + int(offset)
+            vertical_coordinate = (
+                float(offset) + network.depth - worm.vertical_offset
+            ) / vertical_radius
+            # Godot Voxel 的核心技巧：2D 噪声平方后按阈值截取 worm，
+            # 再用 y²-1 的抛物线调制阈值，使同一条 XZ 通道拥有圆润的
+            # 3D 截面，而不是一张“贴在平面上的 2D 洞穴贴图”。
+            parabolic_profile = 1.0 - np.square(vertical_coordinate)
+            # Every path in this network samples the same 3D field at this Y.
+            # Compute it once, retaining the original path union order below.
+            noise = sample_noise_3d(
+                warped_x,
+                world_y * (network.roughness.scale / network.vertical_scale),
+                warped_z,
+                network.roughness,
+                # A single 3D field must keep the same seed across Y.
+                # Reseeding each slice creates detached one-block voids
+                # near walls and can overflow the four-span contract.
+                network_seed + 40_001,
+            )
+            for radial_profile in radial_profiles:
                 godot_worm_density = np.minimum(radial_profile, parabolic_profile)
-                threshold_modulation = 0.55 + 0.45 * worm.corridor
-                noise = sample_noise_3d(
-                    warped_x,
-                    world_y * (network.roughness.scale / network.vertical_scale),
-                    warped_z,
-                    network.roughness,
-                    # A single 3D field must keep the same seed across Y.
-                    # Reseeding each slice creates detached one-block voids
-                    # near walls and can overflow the four-span contract.
-                    network_seed + 40_001,
-                )
                 # 低频阈值调制负责制造死胡同；3D 噪声只扰动洞壁细节，
                 # 不负责凭空创造一条远离拓扑路径的洞道。
                 path_density = (
