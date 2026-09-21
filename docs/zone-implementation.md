@@ -89,3 +89,32 @@ Minecraft 1.20.1 的高度范围。方块契约验证 y=160–175 全为空气�
 按 floor 选 Minecraft 列，不能用四舍五入跨到另一列。
 78 点逐一验证脚下实心、头顶两格为空、X/Z 不变；raster 回读验证与 POI Y 相符。
 验证：`.venv/bin/pytest -q` → **103 passed**。
+
+第六步（断点收拾与验收工具）：
+
+- 河流剖面改为按 `ZoneTerrain` 的固定世界坐标预计算并缓存，分块生成不再重复
+  采样长河；洞穴 3D 噪声在所有 Y 层复用同一 seed，洞口改为连续竖井，路径层
+  做保守垂直裁剪。此前 256 方块样区会溢出四段 spans；修复后地穴和深渊窗口
+  均满足 `max_solid_spans <= 4`，新增回归测试。
+- Anvil 增加 `append=True`，按现有 region 的 zlib chunk 合并稀疏 gallery patch，
+  不覆盖已写 chunk；BlueMap 增加 `--zone-gallery`，每个 profile 在真实世界坐标
+  输出 256×256 patch，POI marker 写入配置，gallery 对洞穴保留完整 Y 范围。
+- `tools/zone_evidence.py` 重算每个 zone 的均值、标准差、湿地比例、spans 上限、
+  高度 hash，并以 48/49 列切块逐项比较高度、水位、河床、spans、cave_id；
+  `tools/plot_zone_evidence.py` 输出 `profiles.png` 与 `island-section.png`。
+  绘图依赖系统 matplotlib，运行前可设 `MPLCONFIGDIR` 到 `generated/.mplcache`。
+
+证据命令：
+
+```bash
+.venv/bin/pytest -q
+.venv/bin/python tools/zone_evidence.py
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py generated/zone-evidence
+.venv/bin/python tools/bluemap.py render --accept-minecraft-eula --zone-gallery --width 256 --height 256
+```
+
+2026-09-21 验收结果：`107 passed`；报告为 27 zones / 15 profiles / 78 POI，
+所有 27 个 zone 的 split_equal 为 true，最大实心段数为 4。BlueMap 5.23 使用 Java 25
+完成渲染，资源下载和 map update 日志均到 100%；证据图经人工查看，平原、残峰、
+高原、湿地、裂谷、遗址台地、洞穴和悬空岛在同一高度标尺下有可见差异，岛体下方
+保持空气层。gallery 是稀疏真实坐标样区，空白区域是未生成区，不代表背景地貌。
