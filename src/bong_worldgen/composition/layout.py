@@ -65,6 +65,25 @@ def boundary_distance(zone: ZoneDefinition, x: np.ndarray, z: np.ndarray) -> np.
     return (1.0 - radius) * radial_extent
 
 
+def _influence_bounds(zone: ZoneDefinition) -> tuple[float, float, float, float]:
+    """Conservative world bounds, including the outward half of the blend band."""
+
+    rx, rz = zone.size_x * 0.5, zone.size_z * 0.5
+    if zone.shape == "circular":
+        rx = rz = min(rx, rz)
+    elif zone.shape == "rotated_rift":
+        angle = math.pi / 6.0
+        # The rotated rectangle encloses the ellipse, including its endpoints.
+        rx, rz = rx * math.cos(angle) + rz * math.sin(angle), rx * math.sin(angle) + rz * math.cos(angle)
+    margin = zone.boundary_width * BOUNDARY_SCALE[zone.boundary_mode] * 0.5
+    return (
+        math.nextafter(zone.center_x - rx - margin, -math.inf),
+        math.nextafter(zone.center_x + rx + margin, math.inf),
+        math.nextafter(zone.center_z - rz - margin, -math.inf),
+        math.nextafter(zone.center_z + rz + margin, math.inf),
+    )
+
+
 @dataclass(frozen=True)
 class ZoneContribution:
     zone: ZoneDefinition
@@ -120,6 +139,7 @@ class ZoneIndex:
             )) or min(zone.size_x, zone.size_z) <= 0 or zone.boundary_width < 0:
                 raise ValueError(f"invalid footprint for zone {zone.name!r}")
         self.zones = tuple(sorted(zones, key=lambda zone: (zone.size_x * zone.size_z, zone.name)))
+        self._bounds = tuple(_influence_bounds(zone) for zone in self.zones)
 
     def query(self, x: np.ndarray | float, z: np.ndarray | float) -> ZoneBlend:
         x, z = np.broadcast_arrays(np.asarray(x, dtype=np.float64), np.asarray(z, dtype=np.float64))
@@ -127,8 +147,20 @@ class ZoneIndex:
             raise ValueError("zone coordinates must be finite")
         remaining = np.ones_like(x)
         contributions: list[ZoneContribution] = []
-        for zone in self.zones:
-            alpha = boundary_alpha(zone, boundary_distance(zone, x, z))
+        if x.size == 0:
+            return ZoneBlend((), remaining)
+        min_x, max_x, min_z, max_z = x.min(), x.max(), z.min(), z.max()
+        for zone, (left, right, top, bottom) in zip(self.zones, self._bounds):
+            if max_x < left or min_x > right or max_z < top or min_z > bottom:
+                continue
+            active = (x >= left) & (x <= right) & (z >= top) & (z <= bottom)
+            if not np.any(active):
+                continue
+            if np.all(active):
+                alpha = boundary_alpha(zone, boundary_distance(zone, x, z))
+            else:
+                alpha = np.zeros_like(x)
+                alpha[active] = boundary_alpha(zone, boundary_distance(zone, x[active], z[active]))
             weight = remaining * alpha
             if np.any(weight):
                 contributions.append(ZoneContribution(zone, weight))

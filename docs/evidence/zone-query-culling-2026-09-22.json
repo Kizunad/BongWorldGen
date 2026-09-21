@@ -1,0 +1,50 @@
+{
+  "repeat": 3,
+  "windows": [
+    {
+      "window": "world",
+      "shape": [
+        409,
+        401
+      ],
+      "byte_identical": true,
+      "unculled_seconds": 1.5476219500415027,
+      "culled_seconds": 0.10038944194093347,
+      "unculled_samples": 4428243,
+      "culled_samples": 16791,
+      "unculled_calls": 27,
+      "culled_calls": 27,
+      "weights_sha256": "e24df1ead764a634ee91389f3f92c328b90220229f505b447808a1b75c9e4284"
+    },
+    {
+      "window": "spawn_tile",
+      "shape": [
+        256,
+        256
+      ],
+      "byte_identical": true,
+      "unculled_seconds": 0.45127024105750024,
+      "culled_seconds": 0.013192123034968972,
+      "unculled_samples": 1769472,
+      "culled_samples": 65536,
+      "unculled_calls": 27,
+      "culled_calls": 1,
+      "weights_sha256": "be4b81fc8272691229e2a95ed021088fd15a4b5e008e28c0ec2dcc1a51afdffa"
+    },
+    {
+      "window": "background_tile",
+      "shape": [
+        256,
+        256
+      ],
+      "byte_identical": true,
+      "unculled_seconds": 0.45710907597094774,
+      "culled_seconds": 0.0008421499514952302,
+      "unculled_samples": 1769472,
+      "culled_samples": 0,
+      "unculled_calls": 27,
+      "culled_calls": 0,
+      "weights_sha256": "9d37a9102309aaf8f63604ea476de369133bb330f923899712311b89b10bf715"
+    }
+  ]
+}
