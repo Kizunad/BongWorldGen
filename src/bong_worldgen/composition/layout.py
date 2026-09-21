@@ -82,6 +82,21 @@ class ZoneBlend:
                 return contribution.weight
         return np.zeros_like(self.background)
 
+    def dominant(self) -> tuple[np.ndarray, np.ndarray]:
+        """Return contribution indices and weights; -1 means background.
+
+        Indices address this blend's contributions, not an output palette.
+        Background retains ties, followed by the index's overlay order.
+        """
+
+        indices = np.full(self.background.shape, -1, dtype=np.int32)
+        weights = self.background.copy()
+        for index, part in enumerate(self.contributions):
+            stronger = part.weight > weights
+            indices[stronger] = index
+            weights = np.maximum(weights, part.weight)
+        return indices, weights
+
 
 class ZoneIndex:
     """Smaller footprints overlay larger ones; names break equal-area ties.
@@ -122,8 +137,6 @@ class ZoneIndex:
 
     def zone_at(self, x: float, z: float) -> ZoneDefinition | None:
         blend = self.query(x, z)
-        best, weight = None, float(blend.background)
-        for contribution in blend.contributions:
-            if float(contribution.weight) > weight:
-                best, weight = contribution.zone, float(contribution.weight)
-        return best
+        indices, _ = blend.dominant()
+        index = int(indices)
+        return None if index < 0 else blend.contributions[index].zone

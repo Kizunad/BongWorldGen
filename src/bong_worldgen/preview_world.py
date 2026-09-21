@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
-from .adapters import to_bong_tile, write_bong_raster
+from .adapters import write_bong_raster
 from .adapters.bong_raster import BASE_SURFACE_PALETTE, ZONE_NONE_ID
+from .adapters.zone_raster import to_zone_tile
 from .composition import ZoneTerrain
 from .composition.pois import resolve_world_pois
 from .data.world import WorldDefinition, ZoneDefinition
@@ -83,7 +83,6 @@ def export_preview_world(
     # Palette IDs must not depend on the order in which generated zone modules
     # happen to be assembled. Names are already unique by ZoneIndex validation.
     zone_palette = tuple(sorted(zone.name for zone in world.zones))
-    zone_ids_by_name = {name: index for index, name in enumerate(zone_palette)}
     overview_width = (max_x - min_x + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE
     overview_height = (max_z - min_z + 1 + OVERVIEW_STRIDE - 1) // OVERVIEW_STRIDE
     overview_elevation = np.full((overview_height, overview_width), np.nan, dtype=np.float32)
@@ -107,24 +106,12 @@ def export_preview_world(
                 origin_x + np.arange(tile_size)[None, :],
                 origin_z + np.arange(tile_size)[:, None],
             )
-            dominant_zone_id = np.full((tile_size, tile_size), ZONE_NONE_ID, dtype=np.uint8)
-            # Match ZoneIndex.zone_at: background participates in ownership
-            # and retains ties, including the half-weight outer contour.
-            dominant_weight = blend.background.copy()
-            for part in blend.contributions:
-                weight = part.weight
-                mask = weight > dominant_weight
-                dominant_zone_id[mask] = zone_ids_by_name[part.zone.name]
-                dominant_weight[mask] = weight[mask]
-            tile = to_bong_tile(
+            tile = to_zone_tile(
                 field,
+                blend,
                 sea_level=recipe.sea_level,
-                zone_id=dominant_zone_id,
                 zone_palette=zone_palette,
             )
-            # One minus the dominant contribution exposes the actual blend
-            # band, including transitions between overlapping authored zones.
-            tile = replace(tile, boundary_weight=(1.0 - dominant_weight).astype(np.float32))
             # Sample the coordinates declared by overview.origin and cell_size.
             # Tile-local stride loops shift samples at unaligned world bounds
             # and overwrite them when tile_size is smaller than the stride.

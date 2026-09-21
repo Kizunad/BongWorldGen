@@ -179,3 +179,16 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 `.venv/bin/python tools/zone_evidence.py --output generated/zone-evidence-cave-connection`
 重算 27 zones / 15 profiles / 78 POI，全部 split_equal=true，最大实心段数仍为 4。
 定向复现：`.venv/bin/pytest -q tests/test_zone_cave_connections.py`。
+
+第十三步：CLI 的 NPZ 保存实际区域与垂直几何。新增实心段、区域 ID/palette、
+边界权重、材质 palette、世界原点和步长，支持 `np.load(..., allow_pickle=False)`。
+合成层 `ZoneBlend.dominant()` 统一标量/批量查询的最大权重规则；独立 adapter
+将贡献索引映射到 raster palette，CLI 和完整世界导出共用该转换。
+契约测试覆盖负分数坐标、2.5 方块步长、深渊四段/浮岛两段，以及同一窗口的 NPZ
+与 raster 归属、边界权重、水位、材质、荒野、洞穴 ID 和实心段逐项相等。
+验证：`.venv/bin/pytest -q` → **120 passed**，compileall 通过。实际 CLI 导出命令：
+
+```bash
+.venv/bin/bong-worldgen --width 32 --height 48 --origin-x 5576 --origin-z 2060 \
+  --cell-size 1 --output generated/zone-evidence-cave-connection/well.npz
+```

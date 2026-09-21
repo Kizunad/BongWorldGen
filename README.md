@@ -65,6 +65,12 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py gene
 
     .venv/bin/bong-worldgen --width 256 --height 256 --seed 812731 --output generated/demo.npz
 
+CLI 的 NPZ 包含 `solid_spans`（每列最多 4 段实心体）、`zone_id`、`zone_palette`、
+`boundary_weight` 和材质 palette，与完整 raster 导出共用归属转换逻辑。
+`origin` 保存 `[world_x, world_z]`，`cell_size` 保存采样步长，坐标为
+`origin + [column, row] * cell_size`；`zone_none_id=255` 代表背景。
+`recipe` 标识背景配方，`composer=zone_terrain` 标识区域合成。
+
 如果需要给现有 Rust loader 做本地 smoke test，可以调用转换层写出单 tile v2 raster：
 
     from pathlib import Path

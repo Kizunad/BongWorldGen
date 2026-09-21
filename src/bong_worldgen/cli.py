@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .adapters import to_bong_tile
+from .adapters import ZONE_NONE_ID, to_zone_tile
 from .data.recipes import DEFAULT_RECIPE
 from .composition import ZoneTerrain
 
@@ -26,14 +26,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    field = ZoneTerrain(seed=args.seed).generate(
+    composer = ZoneTerrain(seed=args.seed)
+    field = composer.generate(
         width=args.width,
         height=args.height,
         origin_x=args.origin_x,
         origin_z=args.origin_z,
         cell_size=args.cell_size,
     )
-    tile = to_bong_tile(field, sea_level=DEFAULT_RECIPE.sea_level)
+    blend = composer.index.query(
+        args.origin_x + np.arange(args.width)[None, :] * args.cell_size,
+        args.origin_z + np.arange(args.height)[:, None] * args.cell_size,
+    )
+    tile = to_zone_tile(
+        field, blend, sea_level=DEFAULT_RECIPE.sea_level,
+        zone_palette=tuple(sorted(zone.name for zone in composer.index.zones)),
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         args.output,
@@ -48,9 +56,18 @@ def main(argv: list[str] | None = None) -> int:
         riverbed_palette=np.asarray(tile.riverbed_palette),
         cave_id=tile.cave_id,
         cave_palette=np.asarray(tile.cave_palette),
+        solid_spans=tile.solid_spans,
+        zone_id=tile.zone_id,
+        zone_palette=np.asarray(tile.zone_palette),
+        zone_none_id=np.asarray(ZONE_NONE_ID, dtype=np.uint8),
+        boundary_weight=tile.boundary_weight,
+        surface_palette=np.asarray(tile.surface_palette),
         moisture=field.moisture,
+        origin=np.asarray([args.origin_x, args.origin_z], dtype=np.float64),
+        cell_size=np.asarray(args.cell_size, dtype=np.float64),
         seed=np.asarray(args.seed, dtype=np.int64),
         recipe=np.asarray(DEFAULT_RECIPE.name),
+        composer=np.asarray("zone_terrain"),
     )
     print(f"wrote {args.output} ({args.width}x{args.height}, seed={args.seed})")
     return 0
