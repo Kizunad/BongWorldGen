@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from pathlib import Path
 
@@ -21,6 +21,8 @@ class BlueMapConfig:
     start_z: int
     port: int = 8100
     accept_download: bool = False
+    marker_sets: dict[str, object] = field(default_factory=dict)
+    remove_caves_below_y: int = 55
 
     def __post_init__(self) -> None:
         if self.min_x > self.max_x or self.min_z > self.max_z:
@@ -114,7 +116,7 @@ def write_bluemap_config(config: BlueMapConfig) -> None:
                 'void-color: "#202428"',
                 "sky-light: 1",
                 "ambient-light: 0.15",
-                "remove-caves-below-y: 55",
+                f"remove-caves-below-y: {config.remove_caves_below_y}",
                 "cave-detection-ocean-floor: -5",
                 "min-inhabited-time: 0",
                 "render-mask: [",
@@ -133,7 +135,7 @@ def write_bluemap_config(config: BlueMapConfig) -> None:
                 "enable-hires: true",
                 'storage: "file"',
                 "ignore-missing-light-data: true",
-                "marker-sets: {}",
+                f"marker-sets: {json.dumps(config.marker_sets, ensure_ascii=False)}",
                 "",
             )
         ),

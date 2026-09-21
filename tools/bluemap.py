@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -20,6 +22,8 @@ from bong_worldgen.adapters import export_minecraft_world  # noqa: E402
 from bong_worldgen.bluemap_config import BlueMapConfig, write_bluemap_config  # noqa: E402
 from bong_worldgen.data.recipes import DEFAULT_RECIPE  # noqa: E402
 from bong_worldgen.composition import ZoneTerrain  # noqa: E402
+from bong_worldgen.composition.pois import resolve_world_pois  # noqa: E402
+from bong_worldgen.data.world_definition import WORLD  # noqa: E402
 
 
 BLUEMAP_VERSION = "5.23"
@@ -123,40 +127,58 @@ def render(args: argparse.Namespace) -> None:
     _replace_directory(WORLD_DIR)
     _replace_directory(WEB_DIR)
     _replace_directory(CONFIG_DIR)
-    field = ZoneTerrain(seed=args.seed).generate(
-        width=args.width,
-        height=args.height,
-        origin_x=args.origin_x,
-        origin_z=args.origin_z,
-        cell_size=1.0,
-    )
-    result = export_minecraft_world(
-        field,
-        WORLD_DIR,
-        origin_x=args.origin_x,
-        origin_z=args.origin_z,
-        sea_level=DEFAULT_RECIPE.sea_level,
-        seed=args.seed,
-        world_name=DEFAULT_RECIPE.name,
-    )
+    composer = ZoneTerrain(seed=args.seed)
+    patches = [("preview", args.origin_x, args.origin_z)]
+    if args.zone_gallery:
+        representatives = {}
+        for zone in WORLD.zones:
+            representatives.setdefault(zone.terrain_profile, zone)
+        patches = [(zone.name, math.floor((zone.center_x - args.width / 2) / 16) * 16,
+                    math.floor((zone.center_z - args.height / 2) / 16) * 16)
+                   for zone in representatives.values()]
+    total_chunks = 0
+    for name, origin_x, origin_z in patches:
+        print(f"Generating {name}: ({origin_x}, {origin_z}), {args.width} x {args.height}", flush=True)
+        field = composer.generate(width=args.width, height=args.height, origin_x=origin_x, origin_z=origin_z)
+        result = export_minecraft_world(
+            field, WORLD_DIR, origin_x=origin_x, origin_z=origin_z,
+            sea_level=DEFAULT_RECIPE.sea_level, seed=args.seed, world_name=WORLD.name, append=True,
+        )
+        total_chunks += result.chunks_written
+    min_x, min_z = min(p[1] for p in patches), min(p[2] for p in patches)
+    max_x, max_z = max(p[1] for p in patches) + args.width - 1, max(p[2] for p in patches) + args.height - 1
+    markers = {}
+    for index, poi in enumerate(resolve_world_pois(composer)):
+        x, y, z = poi.pos_xyz
+        if not any(px <= x < px + args.width and pz <= z < pz + args.height for _, px, pz in patches):
+            continue
+        markers[f"poi-{index}"] = {"type": "poi", "label": poi.poi.name,
+                                   "position": {"x": x, "y": y, "z": z}}
+    (WORLD_DIR / "zone-preview.json").write_text(json.dumps({
+        "seed": args.seed, "width": args.width, "height": args.height,
+        "patches": [{"zone": n, "origin_x": x, "origin_z": z} for n, x, z in patches],
+        "note": "Sparse gallery at original world coordinates." if args.zone_gallery else "Contiguous preview.",
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     write_bluemap_config(
         BlueMapConfig(
             config_dir=CONFIG_DIR,
             data_dir=DATA_DIR,
             web_dir=WEB_DIR,
             world_dir=WORLD_DIR,
-            min_x=args.origin_x,
-            max_x=args.origin_x + args.width - 1,
-            min_z=args.origin_z,
-            max_z=args.origin_z + args.height - 1,
-            start_x=args.origin_x + args.width // 2,
-            start_z=args.origin_z + args.height // 2,
+            min_x=min_x,
+            max_x=max_x,
+            min_z=min_z,
+            max_z=max_z,
+            start_x=patches[0][1] + args.width // 2,
+            start_z=patches[0][2] + args.height // 2,
             port=args.port,
             accept_download=True,
+            marker_sets={"landmarks": {"label": "兴趣点", "toggleable": True, "markers": markers}},
+            remove_caves_below_y=-64 if args.zone_gallery else 55,
         )
     )
     print(
-        f"Generated {result.chunks_written} chunks in {result.regions_written} regions at "
+        f"Generated {total_chunks} chunks in {len(patches)} patches at "
         f"{WORLD_DIR}"
     )
     _run_bluemap("--generate-webapp", "--render", "--force-render", "--generate-websettings")
@@ -184,6 +206,8 @@ def build_parser() -> argparse.ArgumentParser:
     render_parser.add_argument("--seed", type=int, default=812731)
     render_parser.add_argument("--port", type=int, default=8100)
     render_parser.add_argument("--accept-minecraft-eula", action="store_true")
+    render_parser.add_argument("--zone-gallery", action="store_true",
+                               help="render one patch per terrain profile at its real world coordinates")
 
     commands.add_parser("serve", help="serve the most recently rendered map")
     return parser

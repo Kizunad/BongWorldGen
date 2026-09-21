@@ -119,6 +119,29 @@ def write_region(
     return path
 
 
+def _existing_chunks(path: Path, region_x: int, region_z: int) -> dict[tuple[int, int], bytes]:
+    """Read our zlib chunks when adding another bounded patch to one world."""
+
+    if not path.is_file():
+        return {}
+    data = path.read_bytes()
+    if len(data) < REGION_HEADER_SIZE:
+        raise ValueError(f"truncated region header: {path}")
+    chunks = {}
+    for index in range(1024):
+        offset = int.from_bytes(data[index * 4:index * 4 + 3], "big") * SECTOR_SIZE
+        if offset == 0:
+            continue
+        if offset + 5 > len(data):
+            raise ValueError(f"truncated region chunk: {path}")
+        length = struct.unpack_from(">I", data, offset)[0]
+        if data[offset + 4] != 2 or length < 1 or offset + 4 + length > len(data):
+            raise ValueError(f"unsupported or truncated region chunk: {path}")
+        coords = (region_x * 32 + (index & 31), region_z * 32 + (index >> 5))
+        chunks[coords] = data[offset + 5:offset + 4 + length]
+    return chunks
+
+
 def _surface_blocks(field: Heightfield, sea_level: float) -> np.ndarray:
     tile = to_bong_tile(field, sea_level=sea_level)
     blocks = np.full(field.height.shape, GRASS_BLOCK, dtype=np.uint8)
@@ -201,6 +224,7 @@ def export_minecraft_world(
     sea_level: float,
     seed: int,
     world_name: str,
+    append: bool = False,
 ) -> MinecraftWorldExport:
     """Write one block-per-heightfield-cell as a Minecraft 1.20.1 world."""
 
@@ -228,7 +252,8 @@ def export_minecraft_world(
 
     for region_z in range(min_region_z, max_region_z + 1):
         for region_x in range(min_region_x, max_region_x + 1):
-            chunks: dict[tuple[int, int], bytes] = {}
+            chunks = _existing_chunks(region_dir / f"r.{region_x}.{region_z}.mca", region_x, region_z) if append else {}
+            patch_count = 0
             first_x = max(min_chunk_x, region_x * CHUNKS_PER_REGION)
             last_x = min(max_chunk_x, region_x * CHUNKS_PER_REGION + 31)
             first_z = max(min_chunk_z, region_z * CHUNKS_PER_REGION)
@@ -250,9 +275,10 @@ def export_minecraft_world(
                         _chunk_structure_blocks(field, local_x=local_x, local_z=local_z),
                     )
                     chunks[(chunk_x, chunk_z)] = zlib.compress(nbt, level=6)
+                    patch_count += 1
             write_region(region_x, region_z, chunks, region_dir)
             regions_written += 1
-            chunks_written += len(chunks)
+            chunks_written += patch_count
 
     spawn_x = origin_x + width // 2
     spawn_z = origin_z + height // 2
