@@ -105,7 +105,9 @@ def export_preview_world(
                 origin_z + np.arange(tile_size)[:, None],
             )
             dominant_zone_id = np.full((tile_size, tile_size), ZONE_NONE_ID, dtype=np.uint8)
-            dominant_weight = np.full((tile_size, tile_size), -1.0, dtype=np.float64)
+            # Match ZoneIndex.zone_at: background participates in ownership
+            # and retains ties, including the half-weight outer contour.
+            dominant_weight = blend.background.copy()
             for part in blend.contributions:
                 weight = part.weight
                 mask = weight > dominant_weight
@@ -119,10 +121,7 @@ def export_preview_world(
             )
             # One minus the dominant contribution exposes the actual blend
             # band, including transitions between overlapping authored zones.
-            dominant = blend.background.copy()
-            for part in blend.contributions:
-                dominant = np.maximum(dominant, part.weight)
-            tile = replace(tile, boundary_weight=(1.0 - dominant).astype(np.float32))
+            tile = replace(tile, boundary_weight=(1.0 - dominant_weight).astype(np.float32))
             for local_z in range(0, tile_size, OVERVIEW_STRIDE):
                 world_z = origin_z + local_z
                 oz = (world_z - min_z) // OVERVIEW_STRIDE

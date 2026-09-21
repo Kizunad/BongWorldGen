@@ -129,7 +129,17 @@ zone、边界竞争、背景哨兵和 palette 范围。验证：`.venv/bin/pytes
 装配顺序变化不会重新编号已存在区域；`255` 继续专用于背景，最多允许 255 个区域。
 适配器在转换前拒绝负值和超出 `u8` 范围的区域 ID。反向输入顺序的两个导出结果逐 tile
 比较 `zone_id.bin` 完全一致。
+验证：`.venv/bin/pytest -q` → **110 passed**。
 
 第九步：控制台消费 `zone_id`。Three.js 解码器新增 `zone` 配色模式，区域开关把每列
 的 canonical palette 名称映射成稳定色板；背景哨兵 `255` 回退到真实地形色。区域层
 使用透明叠加材质，不改变地形几何、水体或荒野高亮层。
+验证：`cd console && npm test` → **61 passed**；`npm run build`（包含 TypeScript
+类型检查）通过。
+
+第十步：修复导出区域归属时遗漏背景权重的错误。此前 tile 只要与某个 zone 相交，
+该 tile 的零权重列也会收到 zone ID；边界外以背景为主的列也被错误归属。现在背景
+参与最大权重选择，并与 `ZoneIndex.zone_at` 一样在平权时保留背景；边界强度复用
+同一最大权重。负坐标、两个重叠 zone 和背景构成的 64×32 样区逐列对照查询结果，
+分别按 32 和 64 大小导出 tile，结果完全一致。此回归在修复前有 1443/2048 列错误。
+复现：`.venv/bin/pytest -q tests/test_zone_raster.py -k matches_point_queries`。

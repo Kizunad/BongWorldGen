@@ -74,3 +74,35 @@ def test_zone_id_adapter_rejects_negative_and_oversized_contract_values():
     with pytest.raises(ValueError, match="at most 255"):
         to_bong_tile(field, sea_level=62, zone_id=np.zeros((1, 1), dtype=np.uint8),
                      zone_palette=tuple(f"zone-{index}" for index in range(256)))
+
+
+def test_zone_raster_matches_point_queries_and_background_across_tile_sizes(tmp_path):
+    first = replace(SPAWN, name="first", center_x=-4, center_z=16,
+                    size_x=24, size_z=24, boundary_width=8, pois=())
+    second = replace(QINGYUN_PEAKS, name="second", shape="circular", center_x=12,
+                     center_z=16, size_x=16, size_z=16, boundary_width=8, pois=())
+    world = replace(WORLD, zones=(first, second))
+    composer = ZoneTerrain(world)
+    expected = np.full((32, 64), 255, dtype=np.uint8)
+    for z in range(32):
+        for x in range(-32, 32):
+            zone = composer.index.zone_at(x, z)
+            if zone is not None:
+                expected[z, x + 32] = ("first", "second").index(zone.name)
+    assert set(np.unique(expected)) == {0, 1, 255}
+    # An exact half-weight tie at the outer contour belongs to background.
+    assert expected[16, -16 + 32] == 255
+
+    for tile_size in (32, 64):
+        output = tmp_path / str(tile_size)
+        manifest_path = export_preview_world(
+            output, world=world, recipe=TerrainRecipe(name="background"),
+            min_x=-32, max_x=31, min_z=0, max_z=31, tile_size=tile_size,
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["zone_palette"] == ["first", "second"]
+        parts = [np.fromfile(output / "rasters" / f"tile_{x}_0/zone_id.bin",
+                             dtype=np.uint8).reshape(tile_size, tile_size)
+                 for x in (-1, 0)]
+        actual = np.concatenate(parts, axis=1)[:32, tile_size - 32:tile_size + 32]
+        np.testing.assert_array_equal(actual, expected)
