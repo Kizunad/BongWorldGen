@@ -7,7 +7,7 @@ import { fetchManifest, postRegen } from "./api";
 import { loadTile, tilesByDistanceToSpawn } from "./tile-loader";
 import { Viewer, type ViewerLayers } from "./viewer";
 import type { Manifest, ManifestTile } from "./types";
-import { ZONE_COLORS, hashSwatchColor, type RGB } from "./palette";
+import { hashSwatchColor, type RGB } from "./palette";
 import { editableSubset, parseOverrides } from "./params";
 import { loadOverview } from "./overview";
 
@@ -34,7 +34,6 @@ const layerCheckboxes = new Map<keyof ViewerLayers, HTMLInputElement>();
 
 interface ZoneInfo {
   name: string;
-  profile: string;
   /** Editable blueprint subset shown in the param panel; POSTed as overrides. */
   editable: Record<string, unknown>;
 }
@@ -125,26 +124,15 @@ function buildWildernessLegend(): void {
 }
 
 function loadBlueprintZones(): void {
-  // manifest.zones carries the per-zone editable blueprint subset the server
-  // exposes (spirit_qi / danger_level / display_name / worldgen) plus its
-  // terrain_profile for the swatch. The param panel edits THIS and POSTs it back
-  // as /api/regen `overrides`, so an edit truly re-bakes the zone with the new
-  // parameters — it is a live control, not a read-only view.
+  // Static rasters expose these parameters read-only; legacy backends may
+  // accept the same subset as regeneration overrides.
   const zones = manifest.zones ?? [];
   blueprintZones = [...zones]
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((z) => ({
       name: z.name,
-      profile: z.terrain_profile ?? "",
       editable: editableSubset(z),
     }));
-}
-
-function zoneSwatch(zone: ZoneInfo): RGB {
-  // Color by the zone's real terrain_profile (surfaced in manifest.zones),
-  // matching the PNG previews. A profile with no static table entry hashes its
-  // NAME to a stable hue so distinct zones never collapse to one magenta swatch.
-  return ZONE_COLORS[zone.profile] ?? hashSwatchColor(zone.name);
 }
 
 function buildZoneList(): void {
@@ -159,7 +147,8 @@ function buildZoneList(): void {
     li.setAttribute("aria-label", `选择 zone ${zone.name}`);
     const sw = document.createElement("span");
     sw.className = "zone-swatch";
-    sw.style.background = rgbCss(zoneSwatch(zone));
+    // Use the same per-name colors as zone_id tiles and the overview.
+    sw.style.background = rgbCss(hashSwatchColor(zone.name));
     li.appendChild(sw);
     li.appendChild(document.createTextNode(zone.name));
     li.addEventListener("click", () => selectZone(zone.name));

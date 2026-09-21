@@ -203,3 +203,9 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 验证：`.venv/bin/pytest -q` → **124 passed**，compileall 通过；
 `generated/zone-evidence-cave-connection/wilderness-split.json` 记录默认 seed 下
 (-1232, 7968) 起始 64×64 样区左右分块的荒野分类差异为 **0**。
+
+第十五步：侧栏区域图例与区域图层统一按名称配色。此前侧栏仍对早期 7 种 profile
+使用旧色表，与详细 tile 和 overview 的实际区域色不一致。现在三处共用同一名称
+颜色规则，palette 排序变化不改变区域色。验证使用已有颜色、overview/详细 tile
+一致性测试与 production build。
+验证结果：控制台 **66 passed**，production build 通过。
