@@ -49,3 +49,39 @@ def test_rift_mouth_has_a_long_open_fracture_and_unequal_scarps(name, seed):
     assert np.all(np.minimum(west, east) - floor > 10)
     west_scarp, east_scarp = _surface(name, seed, [(-0.26, 0.22), (0.215, 0.22)])
     assert east_scarp - west_scarp > 15
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+@pytest.mark.parametrize("name", [n for n in ZONE_BY_NAME if n.startswith("jiuzong_")])
+def test_sect_ruin_keeps_rectilinear_foundations_separated_by_open_courtyards(name, seed):
+    corners = _surface(name, seed, [(-0.09, -0.08), (0.09, -0.08),
+                                   (-0.09, 0.08), (0.09, 0.08)])
+    courts = _surface(name, seed, [(-0.18, 0), (0.18, 0), (0, -0.18), (0, 0.18)])
+    np.testing.assert_array_equal(corners, 96)
+    assert np.all(corners - courts > 12)
+    wall, breach = _surface(name, seed, [(0.26, -0.1), (0.255, 0.035)])
+    assert wall - breach > 6  # Eastern wall is actually broken, not a closed enclosure.
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+def test_garden_terraces_are_parallel_rows_of_five_separate_flat_beds(seed):
+    xs = np.linspace(-0.34, 0.34, 341)
+    for z, h in ((-0.23, 92), (0, 86), (0.23, 80)):
+        for offset in (-0.04, 0.04):
+            heights = _surface("dan_zong_yi_yuan", seed,
+                               np.column_stack((xs, np.full_like(xs, z + offset))))
+            bed = heights > h - 0.1
+            starts = np.flatnonzero(np.diff(np.r_[False, bed, False].astype(int)) == 1)
+            assert len(starts) == 5
+            assert np.min(heights) <= h - 3.9
+        beds = _surface("dan_zong_yi_yuan", seed, [(x, z) for x in (-0.26, -0.13, 0, 0.13, 0.26)])
+        np.testing.assert_array_equal(beds, h)
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+def test_observation_platform_has_diamond_corners_and_an_axial_stair(seed):
+    heights = _surface("wangyintai", seed, [(0.28, 0), (-0.28, 0), (0.2, 0.2), (-0.2, 0.2)])
+    np.testing.assert_array_equal(heights[:2], 91)
+    assert np.all(heights[2:] < 82)  # Same radius, but outside the oblique straight edge.
+    stair = _surface("wangyintai", seed, [(0, z) for z in (0, 0.235, 0.30, 0.365)])
+    np.testing.assert_allclose(stair, [104, 99, 95, 85])

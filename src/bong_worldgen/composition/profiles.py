@@ -144,26 +144,38 @@ PROFILE_RECIPES = MappingProxyType({
         name="jiu_zong_ruin", base_height=76, sea_level=61,
         base_noise=(NoiseLayer(scale=95, amplitude=6, octaves=3, seed_offset=103),),
         plateaus=(
-            Plateau(Point(0, 0), radius_x=0.25, radius_z=0.23, height=96, edge_width=0.07),
-            Plateau(Point(-0.28, -0.18), radius_x=0.10, radius_z=0.10, height=84, edge_width=0.035),
-            Plateau(Point(0.27, 0.23), radius_x=0.12, radius_z=0.10, height=83, edge_width=0.035),
+            # Separate foundations around an open, broken courtyard.
+            Plateau(Point(0, 0), 0.13, 0.12, height=96, edge_width=0.018, shape="rectangle"),
+            Plateau(Point(-0.02, -0.26), 0.25, 0.035, height=90, edge_width=0.012, shape="rectangle"),
+            Plateau(Point(-0.26, -0.045), 0.034, 0.18, height=89, edge_width=0.012, shape="rectangle"),
+            Plateau(Point(-0.16, 0.22), 0.115, 0.035, height=86, edge_width=0.012, shape="rectangle"),
+            Plateau(Point(0.26, -0.14), 0.033, 0.13, height=87, edge_width=0.012, shape="rectangle"),
+            Plateau(Point(0.255, 0.155), 0.043, 0.075, height=84, edge_width=0.014, shape="rectangle"),
+            Plateau(Point(-0.24, -0.255), 0.07, 0.06, height=91, edge_width=0.015, shape="rectangle"),
         ),
     ),
     "dan_zong_yi_yuan": TerrainRecipe(
         name="dan_zong_yi_yuan", base_height=78, sea_level=61,
         base_noise=(NoiseLayer(scale=240, amplitude=4, octaves=3, seed_offset=107),),
         plateaus=(
-            Plateau(Point(0, -0.23), radius_x=0.33, radius_z=0.14, height=92, edge_width=0.045),
-            Plateau(Point(0, 0), radius_x=0.34, radius_z=0.14, height=86, edge_width=0.045),
-            Plateau(Point(0, 0.23), radius_x=0.33, radius_z=0.14, height=80, edge_width=0.045),
+            # Three descending rows, each divided into five beds by lower aisles.
+            *(Plateau(Point(0, z), 0.345, 0.095, height=h - 4, edge_width=0.012, shape="rectangle")
+              for z, h in ((-0.23, 92), (0, 86), (0.23, 80))),
+            *(Plateau(Point(x, z), 0.047, 0.078, height=h, edge_width=0.009, shape="rectangle")
+              for z, h in ((-0.23, 92), (0, 86), (0.23, 80))
+              for x in (-0.26, -0.13, 0, 0.13, 0.26)),
         ),
     ),
     "wangyintai": TerrainRecipe(
         name="wangyintai", base_height=78, sea_level=61,
         base_noise=(NoiseLayer(scale=180, amplitude=2, octaves=2, seed_offset=109),),
         plateaus=(
-            Plateau(Point(0, 0), radius_x=0.35, radius_z=0.35, height=91, edge_width=0.06),
-            Plateau(Point(0, 0), radius_x=0.18, radius_z=0.18, height=104, edge_width=0.055),
+            Plateau(Point(0, 0), 0.27, 0.27, height=91, edge_width=0.035,
+                    shape="rectangle", rotation=math.pi / 4),
+            *(Plateau(Point(0, sign * z), 0.033, 0.042, height=h, edge_width=0.008, shape="rectangle")
+              for sign in (-1, 1) for z, h in ((0.235, 99), (0.30, 95), (0.365, 85))),
+            Plateau(Point(0, 0), 0.125, 0.125, height=104, edge_width=0.025,
+                    shape="rectangle", rotation=math.pi / 4),
         ),
     ),
     "cave_network": TerrainRecipe(
@@ -220,6 +232,7 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
         plateaus=tuple(replace(
             plateau, center=point(plateau.center), radius_x=plateau.radius_x * zone.size_x,
             radius_z=plateau.radius_z * zone.size_z, edge_width=plateau.edge_width * scale,
+            rotation=plateau.rotation + (math.pi / 6 if zone.shape == "rotated_rift" else 0),
         ) for plateau in template.plateaus),
         mountains=tuple(replace(
             mountain, path=tuple(point(p) for p in mountain.path), width=mountain.width * scale,

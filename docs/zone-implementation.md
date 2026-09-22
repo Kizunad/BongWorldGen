@@ -430,3 +430,21 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 ```bash
 .venv/bin/pytest -q tests/test_zone_morphology.py tests/test_zone_profiles.py
 ```
+
+第二十八步：拆开三类人造遗迹。通用 Plateau 增加默认兼容的 `shape` 与弧度
+`rotation`，支持连续收边的矩形／旋转台地；engine 不含区域判断或数据导入。
+合成层把残宗改成分离方形台基、低院地与断墙，把遗园改成三排五畦的平行台地，
+把王印台改成菱形两级主台及南北踏级。几何选择依据与正典边界见
+`docs/zone-morphology.md`；未添加宗门历史、法阵效用或剧情设定。
+
+三 seed 下七处残宗的院地均比中央台基低超过 12 格，东侧确有断口；遗园每排
+横切两条线均得到五块分离平畦，畦间小路低 4 格；王印台等半径的轴向／斜向
+测点显示直边菱形，轴向踏级为 104/99/95/85。原中央平整、三排高度、王印台
+旧采样高度断言全部保留。通用原语另验证旋转轴向、矩形角部、连续收边和负分数
+坐标分块逐字节相等。
+
+验证：Python **195 passed**；复现：
+
+```bash
+.venv/bin/pytest -q tests/test_plateaus.py tests/test_zone_morphology.py tests/test_zone_profiles.py
+```

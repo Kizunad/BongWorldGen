@@ -208,19 +208,26 @@ class Basin:
 
 @dataclass(frozen=True)
 class Plateau:
-    """A level elliptical shelf with a continuous transition at its perimeter."""
+    """A level shelf with a continuous inward transition at its perimeter.
+
+    Radii are local half extents; rotation is in radians in the X/Z plane.
+    """
 
     center: Point
     radius_x: float
     radius_z: float
     height: float
     edge_width: float
+    shape: Literal["ellipse", "rectangle"] = "ellipse"
+    rotation: float = 0.0
 
     def __post_init__(self) -> None:
         if self.radius_x <= 0 or self.radius_z <= 0 or self.edge_width <= 0:
             raise ValueError("plateau radii and edge width must be positive")
+        if self.shape not in ("ellipse", "rectangle"):
+            raise ValueError("plateau shape must be ellipse or rectangle")
         if not np.isfinite((self.center.x, self.center.z, self.radius_x,
-                            self.radius_z, self.height, self.edge_width)).all():
+                            self.radius_z, self.height, self.edge_width, self.rotation)).all():
             raise ValueError("plateau parameters must be finite")
 
 

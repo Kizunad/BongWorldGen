@@ -288,9 +288,15 @@ def sample_surface(
     terrain = _apply_basins(terrain, x, z, recipe)
     terrain = _apply_mountains(terrain, x, z, recipe, seed)
     for plateau in recipe.plateaus:
-        radius = np.hypot((x - plateau.center.x) / plateau.radius_x,
-                          (z - plateau.center.z) / plateau.radius_z)
-        distance = (1.0 - radius) * min(plateau.radius_x, plateau.radius_z)
+        dx, dz = x - plateau.center.x, z - plateau.center.z
+        if plateau.rotation:
+            cosine, sine = np.cos(plateau.rotation), np.sin(plateau.rotation)
+            dx, dz = dx * cosine + dz * sine, -dx * sine + dz * cosine
+        if plateau.shape == "rectangle":
+            distance = np.minimum(plateau.radius_x - np.abs(dx), plateau.radius_z - np.abs(dz))
+        else:
+            radius = np.hypot(dx / plateau.radius_x, dz / plateau.radius_z)
+            distance = (1.0 - radius) * min(plateau.radius_x, plateau.radius_z)
         t = np.clip(distance / plateau.edge_width, 0.0, 1.0)
         weight = t**3 * (t * (t * 6.0 - 15.0) + 10.0)
         terrain = terrain * (1.0 - weight) + plateau.height * weight
