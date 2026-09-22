@@ -15,9 +15,11 @@ from ..engine import Basin, FloatingIsland, MountainRange, NoiseLayer, Plateau, 
 from .caves import caves_for_zone
 
 
-def _ring(radius: float) -> tuple[Point, ...]:
-    return tuple(Point(radius * math.cos(i * math.tau / 24), radius * math.sin(i * math.tau / 24))
-                 for i in range(25))
+def _arc(radius: float, start: float, end: float) -> tuple[Point, ...]:
+    """An open ejecta segment; angles are degrees in the local X/Z plane."""
+    return tuple(Point(radius * math.cos(math.radians(start + (end - start) * i / 12)),
+                       radius * math.sin(math.radians(start + (end - start) * i / 12)))
+                 for i in range(13))
 
 
 PROFILE_RECIPES = MappingProxyType({
@@ -80,20 +82,47 @@ PROFILE_RECIPES = MappingProxyType({
     "rift_mouth_barrens": TerrainRecipe(
         name="rift_mouth_barrens", base_height=82.0, sea_level=61.0,
         base_noise=(NoiseLayer(scale=35, amplitude=3, octaves=2, seed_offset=73),),
-        basins=(Basin(Point(0, 0), radius_x=0.12, radius_z=0.18, depth=18),),
-        mountains=(MountainRange(
-            path=_ring(0.24), width=0.065, height=21, roughness_contrast=0.3,
-            roughness=NoiseLayer(kind="ridge", scale=40, seed_offset=79),
-        ),),
+        basins=(Basin(Point(-0.10, -0.21), radius_x=0.085, radius_z=0.13, depth=9),),
+        mountains=(
+            # A through-going fracture with a shorter diagonal collapse branch.
+            MountainRange(path=(Point(-0.07, -0.44), Point(0.03, -0.20), Point(0, 0),
+                                Point(0.04, 0.18), Point(-0.04, 0.44)),
+                          width=0.16, height=0, valley_depth=19),
+            MountainRange(path=(Point(0.02, 0.08), Point(-0.14, 0.22), Point(-0.25, 0.29)),
+                          width=0.10, height=0, valley_depth=12),
+            # Offset, unequal scarp remnants leave both ends open.
+            MountainRange(path=(Point(0.22, -0.36), Point(0.22, -0.10), Point(0.26, 0),
+                                Point(0.20, 0.28), Point(0.12, 0.40)),
+                          width=0.055, height=25, roughness_contrast=0.3,
+                          roughness=NoiseLayer(kind="ridge", scale=40, seed_offset=79)),
+            MountainRange(path=(Point(-0.24, -0.32), Point(-0.20, -0.12), Point(-0.22, 0.06)),
+                          width=0.065, height=15, roughness_contrast=0.3),
+        ),
     ),
     "tribulation_scorch": TerrainRecipe(
         name="tribulation_scorch", base_height=88.0, sea_level=61.0,
         base_noise=(NoiseLayer(scale=85, amplitude=2.5, octaves=3, seed_offset=83),),
-        basins=(Basin(Point(0, 0), radius_x=0.20, radius_z=0.20, depth=23),),
-        mountains=(MountainRange(
-            path=_ring(0.27), width=0.065, height=19, roughness_contrast=0.25,
-            roughness=NoiseLayer(kind="ridge", scale=80, seed_offset=89),
-        ),),
+        basins=(Basin(Point(0, 0), radius_x=0.14, radius_z=0.17, depth=25),),
+        mountains=(
+            MountainRange(path=_arc(0.26, -30, 38), width=0.06, height=22,
+                          roughness_contrast=0.25,
+                          roughness=NoiseLayer(kind="ridge", scale=80, seed_offset=89)),
+            MountainRange(path=_arc(0.23, 86, 145), width=0.055, height=17,
+                          roughness_contrast=0.25),
+            MountainRange(path=_arc(0.28, 188, 232), width=0.045, height=14,
+                          roughness_contrast=0.25),
+            # Branched outward scars cross the gaps in the broken impact rim.
+            MountainRange(path=(Point(0.04, 0.07), Point(0.12, 0.20), Point(0.25, 0.35)),
+                          width=0.10, height=0, valley_depth=12),
+            MountainRange(path=(Point(0.12, 0.20), Point(0.07, 0.32), Point(0.10, 0.43)),
+                          width=0.075, height=0, valley_depth=9),
+            MountainRange(path=(Point(-0.07, 0), Point(-0.22, 0.10), Point(-0.39, 0.07)),
+                          width=0.11, height=0, valley_depth=12),
+            MountainRange(path=(Point(0, -0.08), Point(-0.06, -0.25), Point(-0.20, -0.39)),
+                          width=0.11, height=0, valley_depth=13),
+            MountainRange(path=(Point(-0.06, -0.25), Point(0.11, -0.30), Point(0.22, -0.40)),
+                          width=0.08, height=0, valley_depth=10),
+        ),
     ),
     "ancient_battlefield": TerrainRecipe(
         name="ancient_battlefield", base_height=78, sea_level=61,

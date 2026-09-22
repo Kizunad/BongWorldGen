@@ -413,3 +413,20 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 ```
 
 验证：Python **148 passed**，compileall 和 diff 检查通过。
+
+第二十七步：按用户看图验收拆开焦土和渊口。正典与实现选择集中记录在
+`docs/zone-morphology.md`（包括来源版本与行号）；焦土依据
+`worldview.md §十七 L1688` 表达灼击凹心、断裂隆起和向外分叉的伤痕，渊口依据
+`worldview.md §十六 L1409` 表达纵向裂缝、旁支塌陷和错位崖肩。仅修改上层配方。
+
+新增跨三 seed 的空间契约，原有坑底／隆起边缘断言保持通过。seed=812731 下，
+焦土四条外侧沟的「较低侧岸－沟底」由旧配方 **-4.59/-1.30/-3.24/-1.18** 格变为
+**10.95/11.36/13.99/9.33** 格；渊口四条纵向横断面由
+**-2.67/5.69/-1.62/0.49** 格变为 **16.35/14.08/19.95/19.45** 格。
+这些测点位于不同方向／纵深，可否证旧的完整环形配方。
+
+验证：Python **160 passed**，原有 148 项未改断言。复现：
+
+```bash
+.venv/bin/pytest -q tests/test_zone_morphology.py tests/test_zone_profiles.py
+```
