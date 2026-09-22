@@ -40,3 +40,18 @@
 原验收图与采样已留在 `generated/zone-evidence-before-morphology/`。
 最终重跑 `tools/zone_evidence.py` 和 `tools/plot_zone_evidence.py`，由用户肉眼验收
 `generated/zone-evidence/profiles.png`。所有统计只作为可复现辅助，不替代看图。
+
+## 用户暂停时的断点
+
+灼击／地裂、人造遗迹和战场三组形态已实现，完整回归为 198 项通过。用户要求暂停，
+本轮尚未重新生成验收图；`generated/zone-evidence/profiles.png` 仍是此前的版本，
+不能用于验收这三组新形态。
+
+恢复后先处理 `cave_network` / `abyssal_maze` 的地表线索，保留 `ash_dead_zone`。
+表中的地下形态是待实现方向，当前配方尚未修改。洞穴高度跟随局部地表，调整时需
+保护既有三层空气／岩层、POI 支撑面和井口连通契约，并重新运行地下连通证据扫描；
+尤其保留 `tests/test_zone_caves.py` 中三层壁片回归的原断言。
+
+完成这组后重新采样全部区域、生成 `generated/zone-evidence/profiles.png`，
+向用户提供路径进行肉眼验收，并提交可复现证据。基线仍保留在
+`generated/zone-evidence-before-morphology/`。不启动或排查 BlueMap serve。

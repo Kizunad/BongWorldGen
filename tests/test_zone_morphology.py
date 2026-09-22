@@ -85,3 +85,28 @@ def test_observation_platform_has_diamond_corners_and_an_axial_stair(seed):
     assert np.all(heights[2:] < 82)  # Same radius, but outside the oblique straight edge.
     stair = _surface("wangyintai", seed, [(0, z) for z in (0, 0.235, 0.30, 0.365)])
     np.testing.assert_allclose(stair, [104, 99, 95, 85])
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+def test_battlefield_contains_crossing_scars_craters_and_a_burial_mound(seed):
+    name = "zhanhun_plain"
+    # Sections on both strike directions, away from their crossing.
+    probes = np.array([[-0.29, 0.0834], [0.245, -0.1282], [0.29, -0.1547],
+                       [-0.1015, -0.074], [0.143, 0.271]])
+    normals = np.array([[0.02, 0.05], [0.02, 0.05], [0.02, 0.05],
+                        [0.05, -0.04], [0.05, -0.03]])
+    floor = _surface(name, seed, probes)
+    banks = np.minimum(_surface(name, seed, probes + normals),
+                       _surface(name, seed, probes - normals))
+    assert np.all(banks - floor > 6)
+
+    centers = np.array([[-0.31, 0.20], [0.24, 0.18], [0.05, -0.27]])
+    angles = np.arange(8) * np.pi / 4
+    ring = centers[:, None, :] + 0.11 * np.column_stack((np.cos(angles), np.sin(angles)))
+    assert np.all(np.median(_surface(name, seed, ring), axis=1) - _surface(name, seed, centers) > 8)
+
+    mound, west, east = _surface(name, seed, [(0.1, -0.125), (0.04, -0.125), (0.16, -0.125)])
+    assert mound - max(west, east) > 10
+    remnants = _surface(name, seed, [(-0.255, -0.24), (-0.19, -0.25), (-0.145, -0.19)])
+    broken_core = _surface(name, seed, [(-0.20, -0.1875)])[0]
+    assert np.all(remnants - broken_core > 15)

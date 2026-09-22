@@ -131,14 +131,33 @@ PROFILE_RECIPES = MappingProxyType({
             NoiseLayer(scale=48, amplitude=2, octaves=2, seed_offset=101),
         ),
         basins=(
-            Basin(Point(-0.2, -0.14), radius_x=0.075, radius_z=0.09, depth=10),
-            Basin(Point(0.17, 0.12), radius_x=0.09, radius_z=0.065, depth=8),
-            Basin(Point(0.05, -0.27), radius_x=0.05, radius_z=0.06, depth=6),
+            Basin(Point(-0.31, 0.20), radius_x=0.065, radius_z=0.09, depth=14),
+            Basin(Point(0.24, 0.18), radius_x=0.085, radius_z=0.06, depth=16),
+            Basin(Point(0.05, -0.27), radius_x=0.055, radius_z=0.065, depth=11),
+            Basin(Point(-0.20, -0.1875), radius_x=0.055, radius_z=0.055, depth=10),
+            Basin(Point(0.40, -0.3125), radius_x=0.065, radius_z=0.08, depth=15),
         ),
-        mountains=(MountainRange(
-            path=(Point(-0.26, 0.26), Point(-0.08, 0.16)), width=0.06, height=9,
-            roughness_contrast=0.2,
-        ),),
+        mountains=(
+            # Crossing strikes leave long narrow scars across the otherwise
+            # low plain. Their shoulders are displaced soil, not mountain chains.
+            MountainRange(path=(Point(-0.38, 0.12), Point(-0.22, 0.055), Point(-0.08, 0.02),
+                                Point(0.05, -0.02), Point(0.18, -0.09), Point(0.35, -0.19)),
+                          width=0.12, height=4, valley_depth=20, roughness_contrast=0.2),
+            MountainRange(path=(Point(-0.27, -0.30), Point(-0.16, -0.17), Point(-0.02, 0.06),
+                                Point(0.10, 0.18), Point(0.18, 0.35)),
+                          width=0.10, height=3, valley_depth=16, roughness_contrast=0.2),
+            # The authored burial ground (万骨冢) is on an elongated remnant mound.
+            MountainRange(path=(Point(0.065, -0.18), Point(0.11, -0.11), Point(0.14, -0.07)),
+                          width=0.045, height=16, roughness_contrast=0.2),
+            MountainRange(path=(Point(-0.26, 0.26), Point(-0.08, 0.16)),
+                          width=0.035, height=12, roughness_contrast=0.2),
+        ),
+        plateaus=(
+            # Disconnected fragments around the authored broken formation.
+            Plateau(Point(-0.255, -0.24), 0.025, 0.065, height=87, edge_width=0.01, shape="rectangle"),
+            Plateau(Point(-0.19, -0.25), 0.055, 0.02, height=86, edge_width=0.008, shape="rectangle"),
+            Plateau(Point(-0.145, -0.19), 0.02, 0.04, height=84, edge_width=0.008, shape="rectangle"),
+        ),
     ),
     "jiu_zong_ruin": TerrainRecipe(
         name="jiu_zong_ruin", base_height=76, sea_level=61,

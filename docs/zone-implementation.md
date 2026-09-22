@@ -448,3 +448,19 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 ```bash
 .venv/bin/pytest -q tests/test_plateaus.py tests/test_zone_morphology.py tests/test_zone_profiles.py
 ```
+
+第二十九步：战魂平野增加两组交错长沟、局部冲击凹地、破碎阵眼周围的分离残基，
+并让万骨冢落在细长隆脊上。依据 `worldview.md §十六 L1386` 的古战场遗存与
+`worldview.md §十六 L1471` 的破损品描述，结合本库现有 POI 选择布局；具体几何
+属于地貌实现，不新增战役或剧情设定。仅修改合成层配方，基础高度和噪声参数不变。
+
+新增三个 seed 的空间契约：两方向上的五处横断面均要求两岸比沟底高超过 6 格，
+三处凹地中心比周围八点的中位高度低超过 8 格，万骨冢比两侧高超过 10 格，
+三块阵基残片比破碎中心高超过 15 格。原平野起伏范围和分位高度断言未修改。
+
+验证：完整回归 **198 passed in 11.53s**；本段定向测试 **62 passed**。复现：
+
+```bash
+.venv/bin/pytest -q tests/test_zone_profiles.py tests/test_zone_morphology.py
+.venv/bin/pytest -q
+```
