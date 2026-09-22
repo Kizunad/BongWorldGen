@@ -464,3 +464,10 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_overview.py \
 .venv/bin/pytest -q tests/test_zone_profiles.py tests/test_zone_morphology.py
 .venv/bin/pytest -q
 ```
+
+暂停断点（用户要求）：本段战场形态及契约测试已完成，到此停止，不开启新工作。
+`cave_network` / `abyssal_maze` 的形态区分留到用户要求恢复后实施，保持
+`ash_dead_zone`，并验证地表变化对洞穴三层结构、POI 支撑面和连通性的影响。
+新版 `generated/zone-evidence/profiles.png` 也留到恢复后重新采样生成、由用户看图验收；
+当前路径中的图片仍是旧版，不代表本轮新形态。详细线索见 `docs/zone-morphology.md`。
+`.task-zone-resume.md` 和 `.task-zone-next.md` 是用户任务卡，保持未跟踪，不纳入提交。
