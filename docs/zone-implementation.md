@@ -521,3 +521,22 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
 PNG 已验证能够完整解码；当前图片工具未向代理回显可见画面，**未宣称完成肉眼
 验收**。依用户任务卡约定，提供上述路径，由用户检查空间形态的实际视觉差异。
 实现与数值验证已完成，肉眼验收结论待用户提供；后续按该结论继续调整。
+
+第三十二步：调度看图验收第三十一步通过，继续处理特征覆盖范围与外缘细环。先把
+`0d49bc7` 的报告、27 份采样和三张图完整保存在 `generated/zone-evidence-0d49bc7/`，
+与已提交报告和图片 SHA-256 核对一致，作为后续 Before。
+
+外缘白色细环的直接来源是绘图工具一直叠加的 `weight=0.5` 等值线（白色、0.6 线宽），
+每种轮廓都有，因此看起来像统一盖章。这是诊断覆盖层，不是地形高度。默认去掉，
+仅在显式 `--show-boundaries` 时画出。以相同采样绘制时两种模式底图像素完全相同，
+默认 0 个轮廓对象、诊断模式 1 个；全部 27 份 NPZ 的所有数组与基线逐字节相同。
+
+边界本身仍为连续五次平滑混合，非零宽度两端斜率为零，hard 采用半宽。现有边界／
+轮廓契约 **25 passed**，包含单调、无过冲、无截断墙及分块一致性。北荒的数据所定
+台地硬边保留。新旧对照两侧均默认不加白线，避免把诊断标记误认作地貌。
+
+```bash
+.venv/bin/pytest -q tests/test_zone_boundaries.py tests/test_zone_layout.py
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
+  generated/zone-evidence --compare generated/zone-evidence-0d49bc7
+```
