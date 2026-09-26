@@ -16,6 +16,14 @@ def draw_profile(ax, directory, row, light, *, show_boundaries=False):
     with np.load(directory / f"{row['zone']}.npz") as data:
         rgb = light.shade(data["height"], cmap=plt.get_cmap("terrain"), vmin=45, vmax=310,
                           dx=float(data["cell_size"]), dy=float(data["cell_size"]), vert_exag=2)
+        if "surface_palette" in data and "blackstone" in data["surface_palette"]:
+            charred_id = list(data["surface_palette"]).index("blackstone")
+            charred = data["surface_id"] == charred_id
+            # Show the actual exported surface treatment, preserving local
+            # shading; height data and elevation scale remain untouched.
+            shade = light.hillshade(data["height"], dx=float(data["cell_size"]),
+                                    dy=float(data["cell_size"]), vert_exag=2)
+            rgb[charred, :3] = np.array([54, 52, 58]) / 255 * (0.7 + 0.3 * shade[charred, None])
         rgb[data["water"] >= 0, :3] = [0.16, 0.40, 0.68]
         ax.imshow(rgb, origin="upper")
         if show_boundaries:
@@ -40,7 +48,8 @@ def main() -> None:
     light = LightSource(azdeg=315, altdeg=50)
     for ax, (profile, row) in zip(axes.flat, profiles.items()):
         draw_profile(ax, args.directory, row, light, show_boundaries=args.show_boundaries)
-    fig.suptitle(f"Zone terrain evidence | seed {report['seed']} | common elevation scale 45-310", fontsize=18)
+    fig.suptitle(f"Zone terrain evidence | seed {report['seed']} | common elevation scale 45-310\n"
+                 "Water and exported charred surfaces overlaid", fontsize=18)
     fig.savefig(args.directory / "profiles.png", dpi=130)
     plt.close(fig)
 
@@ -71,7 +80,8 @@ def main() -> None:
                 draw_profile(right, args.directory, row, light, show_boundaries=args.show_boundaries)
                 left.set_title("Before | " + left.get_title())
                 right.set_title("After | " + right.get_title())
-            fig.suptitle(f"Morphology comparison | seed {report['seed']} | common elevation scale 45-310",
+            fig.suptitle(f"Morphology comparison | seed {report['seed']} | common elevation scale 45-310\n"
+                         "Water and exported charred surfaces overlaid",
                          fontsize=16)
             fig.savefig(args.directory / "profiles-before-after.png", dpi=130)
             plt.close(fig)

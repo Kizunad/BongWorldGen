@@ -45,6 +45,7 @@ OAK_LOG = 15
 OAK_PLANKS = 16
 CHEST = 17
 TORCH = 18
+BLACKSTONE = 19
 
 BLOCK_NAMES = (
     "minecraft:air",
@@ -66,6 +67,7 @@ BLOCK_NAMES = (
     "minecraft:oak_planks",
     "minecraft:chest",
     "minecraft:torch",
+    "minecraft:blackstone",
 )
 
 
@@ -313,6 +315,7 @@ def _validate_chunk_arrays(
         CLAY,
         PACKED_MUD,
         MUD_BRICKS,
+        BLACKSTONE,
     )
     if not np.isin(surface_blocks, allowed_surface_blocks).all():
         raise ValueError("surface_blocks contains an unsupported block id")

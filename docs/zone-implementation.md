@@ -565,3 +565,25 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
 .venv/bin/python tools/zone_cave_evidence.py --seed 812731 --resume \
   --output generated/zone-cave-coverage/812731
 ```
+
+第三十四步：落实焦土「坑心焦黑」。合成层根据实际灼击坑计算世界坐标的焦黑范围，
+只覆盖坑心，边缘有小幅不规则变化，并随 zone 权重淡出；覆盖小区域时服从原有
+归属，手工河床材质优先。适配层将该范围输出为 blackstone，已有控制台支持黑石
+颜色；Minecraft 导出可接收同一地表 tile，BlueMap 有限渲染入口也已接线。引擎
+仍不认识 zone 或方块材质。此处黑石是焦灼地表的表现选择，依据仍为
+`worldview.md §十七 L1688`，不引入新的资源或剧情设定。
+
+新增 15 项契约覆盖三处焦土、三个 seed 的中央与四处外围坑心，确认坑缘及外侧
+地面不会整片涂黑；负分数坐标在单列／多块裁切时材质逐字节一致；重叠区域和河床
+仍优先。实际读取导出的 Anvil 压缩 NBT，在坑心地表坐标解码得到
+`minecraft:blackstone`，同窗口 raster 材质与之匹配。错误地表 tile 在写出前被拒绝。
+完整回归 **266 passed**。
+
+验收采样新增实际 `surface_id` 与 palette，并纳入分块一致性校验。绘图保持原高程
+色标，同时显示实际焦黑材质，图标题明确标注水体／焦黑覆盖；不是将高度数据染黑
+来代替地貌实现。Before 无该材质层，按 `0d49bc7` 的原采样正常绘制。
+
+```bash
+.venv/bin/pytest -q tests/test_zone_scorch_surface.py tests/test_minecraft_world.py
+.venv/bin/pytest -q
+```

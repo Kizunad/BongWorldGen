@@ -6,6 +6,7 @@ import numpy as np
 
 from ..composition.layout import ZoneBlend
 from ..composition.terrain import ZoneTerrain
+from ..composition.surface import scorch_mask
 from ..engine import Heightfield
 from .bong_raster import BongTile, ZONE_NONE_ID, to_bong_tile
 
@@ -74,12 +75,15 @@ def generate_zone_tile(
             if 1 <= block.x <= width and 1 <= block.z <= height
         ),
     )
-    blend = composer.index.query(
-        origin_x + np.arange(width)[None, :] * cell_size,
-        origin_z + np.arange(height)[:, None] * cell_size,
-    )
+    x = origin_x + np.arange(width)[None, :] * cell_size
+    z = origin_z + np.arange(height)[:, None] * cell_size
+    blend = composer.index.query(x, z)
     tile = to_zone_tile(
         field, blend, sea_level=composer.background.sea_level,
         zone_palette=tuple(sorted(zone.name for zone in composer.index.zones)), surface_slope=slope,
     )
+    scorched = scorch_mask(composer, x, z, blend) & (field.riverbed_id < 0)
+    surfaces = tile.surface_id.copy()
+    surfaces[scorched] = tile.surface_palette.index("blackstone")
+    tile = replace(tile, surface_id=surfaces)
     return field, tile

@@ -16,7 +16,7 @@ from ..data.wilderness import classify_wilderness, wilderness_palette_manifest
 from ..engine.models import Heightfield
 
 
-BASE_SURFACE_PALETTE = ("stone", "coarse_dirt", "gravel", "grass_block")
+BASE_SURFACE_PALETTE = ("stone", "coarse_dirt", "gravel", "grass_block", "blackstone")
 RIVERBED_NONE_ID = 255
 ZONE_NONE_ID = 255
 

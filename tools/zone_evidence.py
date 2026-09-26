@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from bong_worldgen.composition import ZoneTerrain
 from bong_worldgen.composition.pois import resolve_world_pois
+from bong_worldgen.adapters import generate_zone_tile
 
 
 def main() -> int:
@@ -31,8 +32,8 @@ def main() -> int:
         stride = max(1, int(np.ceil(extent / 96)))
         size = 97
         origin_x, origin_z = zone.center_x - stride * 48, zone.center_z - stride * 48
-        field = composer.generate(width=size, height=size, origin_x=origin_x,
-                                  origin_z=origin_z, cell_size=stride)
+        field, tile = generate_zone_tile(composer, width=size, height=size, origin_x=origin_x,
+                                         origin_z=origin_z, cell_size=stride)
         x, z = np.meshgrid(origin_x + np.arange(size) * stride, origin_z + np.arange(size) * stride)
         weights = composer.index.query(x, z).weight_for(zone.name)
         core = weights >= 0.9
@@ -47,18 +48,21 @@ def main() -> int:
             "wet_fraction": float((field.water_level[core] >= 0).mean()),
             "max_solid_spans": int(np.count_nonzero(field.solid_spans[..., 0] != 32767, axis=-1).max()),
             "height_sha256": hashlib.sha256(field.height.tobytes()).hexdigest(),
+            "blackstone_fraction": float((tile.surface_id[core] == tile.surface_palette.index("blackstone")).mean()),
         }
         # Check the same coordinates when generated in two separate crops.
         for offset, width in ((0, 48), (48, 49)):
-            part = composer.generate(width=width, height=size, origin_x=origin_x + offset * stride,
-                                     origin_z=origin_z, cell_size=stride)
+            part, part_tile = generate_zone_tile(composer, width=width, height=size,
+                origin_x=origin_x + offset * stride, origin_z=origin_z, cell_size=stride)
             for layer in ("height", "water_level", "riverbed_id", "solid_spans", "cave_id"):
                 np.testing.assert_array_equal(getattr(part, layer),
                                               getattr(field, layer)[:, offset:offset + width])
+            np.testing.assert_array_equal(part_tile.surface_id, tile.surface_id[:, offset:offset + width])
         row["split_equal"] = True
         np.savez_compressed(args.output / f"{zone.name}.npz", height=field.height,
                             water=field.water_level, spans=field.solid_spans, weight=weights,
-                            origin=np.array([origin_x, origin_z]), cell_size=stride)
+                            origin=np.array([origin_x, origin_z]), cell_size=stride,
+                            surface_id=tile.surface_id, surface_palette=np.asarray(tile.surface_palette))
         rows.append(row)
         print(f"{zone.name}: mean={row['mean_height']:.2f}, std={row['std_height']:.2f}, split=exact", flush=True)
     pois = [poi.manifest() for poi in resolve_world_pois(composer)]

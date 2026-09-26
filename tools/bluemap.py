@@ -18,7 +18,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from bong_worldgen.adapters import export_minecraft_world  # noqa: E402
+from bong_worldgen.adapters import export_minecraft_world, generate_zone_tile  # noqa: E402
 from bong_worldgen.bluemap_config import BlueMapConfig, write_bluemap_config  # noqa: E402
 from bong_worldgen.data.recipes import DEFAULT_RECIPE  # noqa: E402
 from bong_worldgen.composition import ZoneTerrain  # noqa: E402
@@ -144,10 +144,12 @@ def render(args: argparse.Namespace) -> None:
     total_chunks = 0
     for name, origin_x, origin_z in patches:
         print(f"Generating {name}: ({origin_x}, {origin_z}), {args.width} x {args.height}", flush=True)
-        field = composer.generate(width=args.width, height=args.height, origin_x=origin_x, origin_z=origin_z)
+        field, tile = generate_zone_tile(composer, width=args.width, height=args.height,
+                                         origin_x=origin_x, origin_z=origin_z)
         result = export_minecraft_world(
             field, world_dir, origin_x=origin_x, origin_z=origin_z,
             sea_level=DEFAULT_RECIPE.sea_level, seed=args.seed, world_name=WORLD.name, append=True,
+            surface_tile=tile,
         )
         total_chunks += result.chunks_written
     min_x, min_z = min(p[1] for p in patches), min(p[2] for p in patches)

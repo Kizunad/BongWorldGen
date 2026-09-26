@@ -12,6 +12,7 @@ import numpy as np
 from ..data.wilderness import LAKE, MOUNTAINS, RIVER
 from ..engine.models import Heightfield
 from .anvil_nbt import (
+    BLACKSTONE,
     CLAY,
     COARSE_DIRT,
     DIRT,
@@ -32,7 +33,7 @@ from .anvil_nbt import (
     encode_chunk_nbt,
     encode_level_dat,
 )
-from .bong_raster import to_bong_tile
+from .bong_raster import BongTile, to_bong_tile
 
 
 CHUNKS_PER_REGION = 32
@@ -57,6 +58,9 @@ UNDERGROUND_BLOCKS = {
     "chest": CHEST,
     "torch": TORCH,
 }
+
+SURFACE_BLOCKS = {**RIVERBED_BLOCKS, "stone": STONE, "grass_block": GRASS_BLOCK,
+                  "blackstone": BLACKSTONE, "snow_block": SNOW_BLOCK}
 
 
 @dataclass(frozen=True)
@@ -142,13 +146,21 @@ def _existing_chunks(path: Path, region_x: int, region_z: int) -> dict[tuple[int
     return chunks
 
 
-def _surface_blocks(field: Heightfield, sea_level: float) -> np.ndarray:
-    tile = to_bong_tile(field, sea_level=sea_level)
+def _surface_blocks(field: Heightfield, sea_level: float, tile: BongTile | None = None) -> np.ndarray:
+    tile = to_bong_tile(field, sea_level=sea_level) if tile is None else tile
+    if not np.array_equal(tile.height, np.asarray(field.height, dtype=np.float32)):
+        raise ValueError("surface tile must match the exported heightfield")
+    if (not np.issubdtype(tile.surface_id.dtype, np.integer) or
+            np.any(tile.surface_id < 0) or np.any(tile.surface_id >= len(tile.surface_palette))):
+        raise ValueError("surface tile contains an unknown material id")
     blocks = np.full(field.height.shape, GRASS_BLOCK, dtype=np.uint8)
-    blocks[tile.surface_id == 0] = STONE
-    blocks[tile.surface_id == 1] = COARSE_DIRT
-    blocks[tile.surface_id == 2] = GRAVEL
-    blocks[(tile.wilderness_id == LAKE) | (tile.wilderness_id == RIVER)] = GRAVEL
+    for index, material in enumerate(tile.surface_palette):
+        material = material.removeprefix("minecraft:").replace("-", "_")
+        if material not in SURFACE_BLOCKS:
+            raise ValueError(f"surface material {material!r} has no Minecraft block mapping")
+        blocks[tile.surface_id == index] = SURFACE_BLOCKS[material]
+    charred = blocks == BLACKSTONE
+    blocks[~charred & ((tile.wilderness_id == LAKE) | (tile.wilderness_id == RIVER))] = GRAVEL
     if tile.riverbed_palette:
         for material_index, material in enumerate(tile.riverbed_palette):
             material = material.removeprefix("minecraft:").replace("-", "_")
@@ -159,7 +171,7 @@ def _surface_blocks(field: Heightfield, sea_level: float) -> np.ndarray:
                     f"river bed material {material!r} has no Minecraft block mapping"
                 ) from exc
             blocks[tile.riverbed_id == material_index] = block_id
-    blocks[(tile.wilderness_id == MOUNTAINS) & (field.height >= sea_level + 92.0)] = SNOW_BLOCK
+    blocks[~charred & (tile.wilderness_id == MOUNTAINS) & (field.height >= sea_level + 92.0)] = SNOW_BLOCK
     return blocks
 
 
@@ -225,6 +237,7 @@ def export_minecraft_world(
     seed: int,
     world_name: str,
     append: bool = False,
+    surface_tile: BongTile | None = None,
 ) -> MinecraftWorldExport:
     """Write one block-per-heightfield-cell as a Minecraft 1.20.1 world."""
 
@@ -235,7 +248,7 @@ def export_minecraft_world(
         raise ValueError("world origins must be aligned to a 16-block chunk boundary")
 
     surface_y, water_y, water_flow = _block_heights(field, sea_level)
-    surface_blocks = _surface_blocks(field, sea_level)
+    surface_blocks = _surface_blocks(field, sea_level, surface_tile)
     solid_spans = field.solid_spans
     if solid_spans is None:
         solid_spans = _fallback_solid_spans(surface_y)
