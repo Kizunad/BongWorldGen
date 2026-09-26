@@ -12,7 +12,7 @@ from types import MappingProxyType
 
 from ..data.world import ZoneDefinition
 from ..engine import Basin, FloatingIsland, MountainRange, NoiseLayer, Plateau, Point, TerrainRecipe
-from .caves import caves_for_zone
+from .caves import caves_for_zone, with_cave_landforms
 
 
 def _arc(radius: float, start: float, end: float) -> tuple[Point, ...]:
@@ -200,7 +200,14 @@ PROFILE_RECIPES = MappingProxyType({
     "cave_network": TerrainRecipe(
         name="cave_network", base_height=84, sea_level=61,
         base_noise=(NoiseLayer(scale=170, amplitude=8, octaves=3, seed_offset=113),),
-        basins=(Basin(Point(0, 0), radius_x=0.25, radius_z=0.25, depth=6),),
+        basins=(
+            Basin(Point(0, 0), radius_x=0.25, radius_z=0.25, depth=6),
+            # Isolated roof collapses, separated by intact ground; the actual
+            # entrance gets its own local basin after world-space compilation.
+            Basin(Point(-0.23, 0.16), radius_x=0.075, radius_z=0.095, depth=18),
+            Basin(Point(0.25, -0.22), radius_x=0.07, radius_z=0.09, depth=18),
+            Basin(Point(0.18, 0.21), radius_x=0.085, radius_z=0.07, depth=18),
+        ),
     ),
     "abyssal_maze": TerrainRecipe(
         name="abyssal_maze", base_height=90, sea_level=61,
@@ -237,7 +244,7 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
             x, z = x * math.cos(angle) - z * math.sin(angle), x * math.sin(angle) + z * math.cos(angle)
         return Point(zone.center_x + x, zone.center_z + z)
 
-    return replace(
+    recipe = replace(
         template,
         caves=caves_for_zone(zone, template.base_height),
         floating_islands=tuple(replace(
@@ -257,3 +264,4 @@ def recipe_for_zone(zone: ZoneDefinition) -> TerrainRecipe:
             mountain, path=tuple(point(p) for p in mountain.path), width=mountain.width * scale,
         ) for mountain in template.mountains),
     )
+    return with_cave_landforms(zone, recipe)

@@ -1,0 +1,561 @@
+{
+  "scope": "All authored and generated cave paths; six-neighbor air with two-block clearance; surface air excluded. Does not prove walking, climbing, or game unlock rules.",
+  "total_sampled_columns": 2162688,
+  "reachable_pois": 33,
+  "baseline_commit": "d76fd116e086da9e6dcb6969eef4ef13aabfcacd",
+  "command_template": ".venv/bin/python tools/zone_cave_evidence.py --seed SEED --resume --output generated/zone-cave-morphology/SEED",
+  "runs": [
+    {
+      "seed": 7,
+      "tile_size": 64,
+      "scope": "All authored and generated cave paths; six-neighbor air with two-block clearance; surface air excluded. Does not prove walking, climbing, or game unlock rules.",
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            67,
+            -5210
+          ],
+          "tiles": 14,
+          "sampled_columns": 57344,
+          "cache_key": "dd38541d122bdbed61632e95cf4e7f006fab8afa5227369a091bafade53bcaab",
+          "reused_tiles": 0,
+          "generated_tiles": 14,
+          "seconds": 1.6805462059564888,
+          "connected_intervals": 8684,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -47.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -50.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "888614bc046959074d245d1b721343c273f8a10ab5f7b4dac9a41d362cfc0388",
+            "upper": "1a65ba409a74180e34403236a08b2a766f7b39a5ed91f7b0e9efa8976197fa9d",
+            "connected": "f8703edcd8958376a512f8fb3fbd0729db40390a6478ba66a83540ab9c67a2c1",
+            "origin": "1f200e30ea889dbf4e16ea48ca8de474953210d586e959e6eaaa9c3663cf1a6a",
+            "tiles": "0a04aa3103084b13d4826304ca73e09e030c7ce556cbcdf847dfbfabd484b0cc"
+          },
+          "source_report": "generated/zone-cave-morphology/7/report.json"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            61,
+            3000
+          ],
+          "tiles": 59,
+          "sampled_columns": 241664,
+          "cache_key": "dd38541d122bdbed61632e95cf4e7f006fab8afa5227369a091bafade53bcaab",
+          "reused_tiles": 0,
+          "generated_tiles": 59,
+          "seconds": 8.40063109784387,
+          "connected_intervals": 23093,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                -10.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                3.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                3.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -2.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "7a760ffb13381f39ed7294855a64166fba478df760886e7b850debb49b65e468",
+            "upper": "92cba70f12f158a6cedb57b6d285eaff7f1fee7cd2c8778958d60df542aaa3b6",
+            "connected": "836e483f44bcc1b711d2ae4ccc8c73729d830d0187fd6c116db78969b1f2562d",
+            "origin": "43f6ab2773fee5d20445cd258ca33e7dffaa419635f552c43be57a89534e9c81",
+            "tiles": "fe45d76c8f307ca1c47d5562454880c29960480f7fc57da1e3d281ed346a250b"
+          },
+          "source_report": "generated/zone-cave-morphology/7/report.json"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            69,
+            1400
+          ],
+          "tiles": 105,
+          "sampled_columns": 430080,
+          "cache_key": "dd38541d122bdbed61632e95cf4e7f006fab8afa5227369a091bafade53bcaab",
+          "reused_tiles": 0,
+          "generated_tiles": 105,
+          "seconds": 44.543122640112415,
+          "connected_intervals": 127930,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -51.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -29.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -44.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                15.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -48.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "6ee7686be2bda7503f3d777e4976fd5583b259e9756b61cd2bfd7adfbffd11dc",
+            "upper": "7d0906f98330963d9636da64300e08265d58764a7021b1ea5da07eadbddb8bd4",
+            "connected": "b02fdd0e1ebf2c7bb5bb40363a25962efd3d3bb7e7a6190ed7e4fcd7f8c7053a",
+            "origin": "ccd3ecaf8b07aab849bdad24f259534f059f56d8da1303266f38b2b25151336e",
+            "tiles": "0d596fcd0a2c3b3cc4fb8951418d1090bca7a7026e2e89407d2e5217856e0ba1"
+          },
+          "source_report": "generated/zone-cave-morphology/7/report.json"
+        }
+      ]
+    },
+    {
+      "seed": 812731,
+      "tile_size": 64,
+      "scope": "All authored and generated cave paths; six-neighbor air with two-block clearance; surface air excluded. Does not prove walking, climbing, or game unlock rules.",
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            65,
+            -5210
+          ],
+          "tiles": 15,
+          "sampled_columns": 61440,
+          "cache_key": "23f3453e71de967e3d3eadf96f4907b6a8038a5cb8aa445b52ed164e7c334fa5",
+          "reused_tiles": 0,
+          "generated_tiles": 15,
+          "seconds": 1.7194203950930387,
+          "connected_intervals": 8619,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -51.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -51.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "a40ecc8b466eab711f94175ba530060487d2308d1060363060c4d23c34d8de0a",
+            "upper": "95151fe106c380ec2e795faec401d143fd7da19d088bc5fe7799daf09a35f815",
+            "connected": "055dee1c21fb4ae7ace58b508f0a68c8767815fda35b859de6c406b16703dd52",
+            "origin": "1f200e30ea889dbf4e16ea48ca8de474953210d586e959e6eaaa9c3663cf1a6a",
+            "tiles": "5e712b5badd330585dede856b36753018442d1598896e115571dba1eff0ff889"
+          },
+          "source_report": "generated/zone-cave-morphology/812731/report.json"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            60,
+            3000
+          ],
+          "tiles": 49,
+          "sampled_columns": 200704,
+          "cache_key": "23f3453e71de967e3d3eadf96f4907b6a8038a5cb8aa445b52ed164e7c334fa5",
+          "reused_tiles": 0,
+          "generated_tiles": 49,
+          "seconds": 6.867532890057191,
+          "connected_intervals": 22197,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                -11.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                -1.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                4.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -1.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "c32f7b21eb0df36c72f670e7dd90fdd38f256f6655d3ed245f912dbd9c391a5f",
+            "upper": "ebf48bd0c4b827d9a31ad38ae03c60c5ad914a86d3407df83db3d1c653bba98e",
+            "connected": "f6d44e036540f87f3e8c15b518d35e9289c17bd78acc78ff0e124c8d51f33fc8",
+            "origin": "43f6ab2773fee5d20445cd258ca33e7dffaa419635f552c43be57a89534e9c81",
+            "tiles": "2b6dcaa8e36f87c6cb258e210d177d7e7c5abc9c0f51a8fa4813c707b83e083b"
+          },
+          "source_report": "generated/zone-cave-morphology/812731/report.json"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            68,
+            1400
+          ],
+          "tiles": 108,
+          "sampled_columns": 442368,
+          "cache_key": "23f3453e71de967e3d3eadf96f4907b6a8038a5cb8aa445b52ed164e7c334fa5",
+          "reused_tiles": 0,
+          "generated_tiles": 108,
+          "seconds": 45.80750291701406,
+          "connected_intervals": 128367,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -51.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -28.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -38.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                19.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -47.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "8df810c746eabb1e7d494eac9422a8394d4cbf8559426103697d2e7e0e2017e6",
+            "upper": "0a617a4e216b3b2daeb0176ec4c87eacfaa7aa64f4c2d018a99e632a0c451a52",
+            "connected": "3fbd9036e7d33d974e953fab61c95b6bcacfb4556a2f2abcfc1486cfa480835e",
+            "origin": "2c8587971a1b0ff004368e9ac55dbfcaeb8c8b3292ade2a5f113b36d3d274c12",
+            "tiles": "830bd1d67c52dcdebc42cdfc610f7f33ad1d5c70554be09b392c0d59062cc784"
+          },
+          "source_report": "generated/zone-cave-morphology/812731/report.json"
+        }
+      ]
+    },
+    {
+      "seed": 2026,
+      "tile_size": 64,
+      "scope": "All authored and generated cave paths; six-neighbor air with two-block clearance; surface air excluded. Does not prove walking, climbing, or game unlock rules.",
+      "zones": [
+        {
+          "zone": "baolongwang_cavern_deep",
+          "source": [
+            1610,
+            63,
+            -5210
+          ],
+          "tiles": 14,
+          "sampled_columns": 57344,
+          "cache_key": "1533dbf6a6ee537533ac8a1f86caca01720000e26898a335bcfa9dbcde641d04",
+          "reused_tiles": 0,
+          "generated_tiles": 14,
+          "seconds": 1.6841472978703678,
+          "connected_intervals": 7257,
+          "pois": [
+            {
+              "name": "暴龙王丹炉",
+              "pos_xyz": [
+                1750.0,
+                -52.0,
+                -5100.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暴龙王",
+              "pos_xyz": [
+                1750.0,
+                -54.0,
+                -5200.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "0858e164655d873dc1894e7fb22caf5070c85b1496095a151196b8c2d5399615",
+            "upper": "0bf6eb8b786ee1fe56d60c1e140c0b77bbeca4ab6434ea20cb2776d08dff7791",
+            "connected": "01a2d5cd6235ab954505fab96ef186331e32e1abf50a334b76172424542c2ade",
+            "origin": "1f200e30ea889dbf4e16ea48ca8de474953210d586e959e6eaaa9c3663cf1a6a",
+            "tiles": "22fa85aad9e83a47fc5750090227a2fc37bc84f75e1f1a33eaf4a6104d7f2fb5"
+          },
+          "source_report": "generated/zone-cave-morphology/2026/report.json"
+        },
+        {
+          "zone": "youan_depths",
+          "source": [
+            2000,
+            60,
+            3000
+          ],
+          "tiles": 54,
+          "sampled_columns": 221184,
+          "cache_key": "1533dbf6a6ee537533ac8a1f86caca01720000e26898a335bcfa9dbcde641d04",
+          "reused_tiles": 0,
+          "generated_tiles": 54,
+          "seconds": 7.723441020119935,
+          "connected_intervals": 23383,
+          "pois": [
+            {
+              "name": "陷穴主门",
+              "pos_xyz": [
+                2000.0,
+                -12.0,
+                3000.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "封禁厅",
+              "pos_xyz": [
+                2120.0,
+                0.0,
+                3080.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "暗河灵泉",
+              "pos_xyz": [
+                1820.0,
+                3.0,
+                3160.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "镇邪古坛",
+              "pos_xyz": [
+                2420.0,
+                -6.0,
+                3400.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "9261fd4e0be2832dfdeb05880d872c490eb3306e58d9b508852d8ef066d43a82",
+            "upper": "e3e76b5886963fe9129255b8d0c3e262103aabf44ba4dcc36a860e6cb243101a",
+            "connected": "c3ee60a5ae8d65d14bbfc8d0c7e07945be3b369c7aa0290aca0c66e6e2615690",
+            "origin": "43f6ab2773fee5d20445cd258ca33e7dffaa419635f552c43be57a89534e9c81",
+            "tiles": "5d04820fff6a18ea934529771ad50b3cc5439255d3a7069a56245f1c66e4c982"
+          },
+          "source_report": "generated/zone-cave-morphology/2026/report.json"
+        },
+        {
+          "zone": "wuxing_abyss",
+          "source": [
+            5250,
+            69,
+            1400
+          ],
+          "tiles": 110,
+          "sampled_columns": 450560,
+          "cache_key": "1533dbf6a6ee537533ac8a1f86caca01720000e26898a335bcfa9dbcde641d04",
+          "reused_tiles": 0,
+          "generated_tiles": 110,
+          "seconds": 47.032252884004265,
+          "connected_intervals": 126527,
+          "pois": [
+            {
+              "name": "玄渊主门",
+              "pos_xyz": [
+                5250.0,
+                -47.0,
+                1400.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "三重镇禁殿",
+              "pos_xyz": [
+                5200.0,
+                -29.0,
+                1480.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "深渊藏脉眼",
+              "pos_xyz": [
+                5480.0,
+                -39.0,
+                1820.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "无名修士骸骨阵",
+              "pos_xyz": [
+                4880.0,
+                15.0,
+                780.0
+              ],
+              "reachable": true
+            },
+            {
+              "name": "坠渊井",
+              "pos_xyz": [
+                5600.0,
+                -40.0,
+                2100.0
+              ],
+              "reachable": true
+            }
+          ],
+          "all_pois_reachable": true,
+          "array_sha256": {
+            "lower": "60f06cb5c6af73177228daebc1f51c811c7a0c77447ddc8c28e8f42c82a60d9c",
+            "upper": "167eceba1c5f02d191759b4032c53b8aee26288459dc5e02dcf90596441502a0",
+            "connected": "de1058fd044652d383ea321f72ab847354b5f3acba6eb2953e51d997e9c5de42",
+            "origin": "ccd3ecaf8b07aab849bdad24f259534f059f56d8da1303266f38b2b25151336e",
+            "tiles": "d504ce7c652f47ec9d14c2d2a847930a1a54565783b2b716338dd711520d3d3a"
+          },
+          "source_report": "generated/zone-cave-morphology/2026/report.json"
+        }
+      ]
+    }
+  ]
+}

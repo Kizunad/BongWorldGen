@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+import math
 import statistics
 
 from ..data.world import ZoneDefinition
-from ..engine import CaveNetwork, Point
+from ..engine import Basin, CaveNetwork, MountainRange, Point, TerrainRecipe
 
 
 def caves_for_zone(zone: ZoneDefinition, surface_height: float) -> tuple[CaveNetwork, ...]:
@@ -40,3 +42,51 @@ def caves_for_zone(zone: ZoneDefinition, surface_height: float) -> tuple[CaveNet
         entrance_radius=4, roof_thickness=4,
         fill_vertical_gaps=True,
     ) for index, depth in enumerate(depths))
+
+
+def with_cave_landforms(zone: ZoneDefinition, recipe: TerrainRecipe) -> TerrainRecipe:
+    """Place surface collapse features at the compiled underground entrances."""
+
+    if not recipe.caves:
+        return recipe
+    scale = min(zone.size_x, zone.size_z)
+    entrances = recipe.caves[0].entrance_points
+    basins, mountains = list(recipe.basins), list(recipe.mountains)
+    if zone.terrain_profile == "cave_network":
+        for entrance in entrances:
+            basins.append(Basin(entrance, radius_x=0.075 * scale,
+                                radius_z=0.095 * scale, depth=12))
+            mountains.append(MountainRange(
+                path=tuple(Point(entrance.x + x * scale, entrance.z + z * scale)
+                           for x, z in ((-0.14, 0.04), (-0.055, -0.02), (0, 0), (0.11, 0.07))),
+                width=0.065 * scale, height=2, valley_depth=5, roughness_contrast=0.2,
+            ))
+    elif zone.terrain_profile == "abyssal_maze":
+        main = entrances[0]
+        targets = entrances[1:] or (Point(main.x + scale * 0.23, main.z + scale * 0.46),)
+        for target in targets:
+            dx, dz = target.x - main.x, target.z - main.z
+            length = math.hypot(dx, dz)
+            if length == 0:
+                continue
+            nx, nz = -dz / length, dx / length
+            # A bent collapse corridor joins the actual main door and shaft.
+            # Unequal, offset shoulders form two broken escarpments, without
+            # exposing the underground rooms as an open surface canyon.
+            path = tuple(Point(main.x + t * dx + bend * scale * nx,
+                               main.z + t * dz + bend * scale * nz)
+                         for t, bend in ((-0.16, 0), (0, 0), (0.25, 0.045),
+                                         (0.5, -0.04), (0.78, 0.03), (1, 0)))
+            mountains.append(MountainRange(path=path, width=0.15 * scale,
+                                             height=0, valley_depth=14))
+            for side, start, end, offset, height, width in (
+                (-1, 0, 4, 0.095, 32, 0.035),
+                (1, 1, 6, 0.075, 18, 0.04),
+            ):
+                mountains.append(MountainRange(
+                    path=tuple(Point(p.x + side * offset * scale * nx,
+                                     p.z + side * offset * scale * nz)
+                               for p in path[start:end]),
+                    width=width * scale, height=height, roughness_contrast=0.2,
+                ))
+    return replace(recipe, basins=tuple(basins), mountains=tuple(mountains))
