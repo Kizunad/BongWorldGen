@@ -102,7 +102,13 @@ PROFILE_RECIPES = MappingProxyType({
     "tribulation_scorch": TerrainRecipe(
         name="tribulation_scorch", base_height=88.0, sea_level=61.0,
         base_noise=(NoiseLayer(scale=85, amplitude=2.5, octaves=3, seed_offset=83),),
-        basins=(Basin(Point(0, 0), radius_x=0.14, radius_z=0.17, depth=25),),
+        basins=(
+            Basin(Point(0, 0), radius_x=0.14, radius_z=0.17, depth=25),
+            Basin(Point(-0.27, -0.20), radius_x=0.10, radius_z=0.105, depth=24),
+            Basin(Point(0.20, -0.28), radius_x=0.105, radius_z=0.09, depth=23),
+            Basin(Point(-0.28, 0.26), radius_x=0.105, radius_z=0.09, depth=25),
+            Basin(Point(0.34, 0.10), radius_x=0.085, radius_z=0.11, depth=24),
+        ),
         mountains=(
             MountainRange(path=_arc(0.26, -30, 38), width=0.06, height=22,
                           roughness_contrast=0.25,
@@ -122,6 +128,16 @@ PROFILE_RECIPES = MappingProxyType({
                           width=0.11, height=0, valley_depth=13),
             MountainRange(path=(Point(-0.06, -0.25), Point(0.11, -0.30), Point(0.22, -0.40)),
                           width=0.08, height=0, valley_depth=10),
+            # Separate strikes reach all four outer sectors. Their raised,
+            # broken lips surround local bowls rather than one central crater.
+            *(MountainRange(path=tuple(Point(x + p.x, z + p.z) for p in _arc(radius, start, end)),
+                            width=0.045, height=16, roughness_contrast=0.2)
+              for x, z, radius, start, end in (
+                  (-0.27, -0.20, 0.135, -30, 235),
+                  (0.20, -0.28, 0.14, -70, 195),
+                  (-0.28, 0.26, 0.135, -100, 170),
+                  (0.34, 0.10, 0.13, -150, 105),
+              )),
         ),
     ),
     "ancient_battlefield": TerrainRecipe(
@@ -213,6 +229,19 @@ PROFILE_RECIPES = MappingProxyType({
         name="abyssal_maze", base_height=90, sea_level=61,
         base_noise=(NoiseLayer(kind="ridge", scale=190, amplitude=12, seed_offset=127),),
         basins=(Basin(Point(0, 0), radius_x=0.23, radius_z=0.31, depth=14),),
+        mountains=(
+            # Long, staggered collapse slots leave intervening rock corridors.
+            # The entrance-to-well fracture is compiled separately from POIs.
+            MountainRange(path=(Point(-0.29, -0.32), Point(-0.32, -0.08),
+                                Point(-0.27, 0.08), Point(-0.32, 0.26)),
+                          width=0.30, height=0, valley_depth=24),
+            MountainRange(path=(Point(-0.19, -0.33), Point(-0.03, -0.37), Point(0.16, -0.30)),
+                          width=0.30, height=0, valley_depth=24),
+            MountainRange(path=(Point(0.32, -0.27), Point(0.27, -0.13), Point(0.34, 0.015)),
+                          width=0.28, height=0, valley_depth=23),
+            MountainRange(path=(Point(-0.22, 0.16), Point(-0.15, 0.30), Point(0.015, 0.36)),
+                          width=0.28, height=0, valley_depth=23),
+        ),
     ),
     "sky_isle": TerrainRecipe(
         name="sky_isle", base_height=72, sea_level=61,

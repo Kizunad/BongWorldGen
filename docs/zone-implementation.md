@@ -540,3 +540,28 @@ PNG 已验证能够完整解码；当前图片工具未向代理回显可见画�
 MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
   generated/zone-evidence --compare generated/zone-evidence-0d49bc7
 ```
+
+第三十三步：扩大洞穴、深渊和焦土的主体形态。普通洞穴在原有三处陷穴外增加九处
+大小不同的塌陷，圆形巢穴按实际圆形直径定位；深渊在入口至井口的主槽外增加四条
+覆盖北、西、东、南部的错位长槽，中间保留岩脊通道；焦土在四个外围方位增加独立
+灼击坑和断开的翻起坑缘。原有中心结构与空间断言保留。
+
+正典区分仍遵守 `worldview.md §十三 L1267` 的幽暗地下网络、
+`worldview.md §十六 L1409` 的塌陷／洞口线索，以及 `worldview.md §十七 L1688`
+的永久渡劫遗痕。无垠深渊的多层结构来自本库现有 POI，地表错槽是地貌表达，不把
+`worldview.md §十六 L1377` 的独立坍缩渊位面搬到主世界。几何仅在合成层编排。
+
+新增 36 项可证伪契约，包括外圈八处坑群、四条长槽六个横断面、四处灼击坑的
+坑缘高度，以及六处 zone ×三个 seed 的面积覆盖。覆盖率比较相同基础高度与噪声
+下的塑形前后高差（>6 格），单独检查主体与半径 >0.25 的外围，调均值／噪声不能
+代替这些结构。完整回归 **251 passed**，原 215 项测试及断言未修改。
+
+扩形后重新扫描三个 seed 的全部洞穴路径，共 2,162,688 列，**33/33 个 POI 落点**
+仍可从入口通过双格净空连通到达。记录与数组校验值：
+`docs/evidence/zone-cave-coverage-2026-09-26.json`。
+
+```bash
+.venv/bin/pytest -q
+.venv/bin/python tools/zone_cave_evidence.py --seed 812731 --resume \
+  --output generated/zone-cave-coverage/812731
+```

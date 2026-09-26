@@ -53,6 +53,23 @@ def with_cave_landforms(zone: ZoneDefinition, recipe: TerrainRecipe) -> TerrainR
     entrances = recipe.caves[0].entrance_points
     basins, mountains = list(recipe.basins), list(recipe.mountains)
     if zone.terrain_profile == "cave_network":
+        # A field of broad collapses covers the outer body as well as the
+        # entrance. Circular zones use their true diameter on both axes.
+        extent_x = scale if zone.shape == "circular" else zone.size_x
+        extent_z = scale if zone.shape == "circular" else zone.size_z
+        for x, z, rx, rz, depth in (
+            (-0.31, -0.23, 0.11, 0.10, 18),
+            (-0.10, -0.35, 0.12, 0.095, 20),
+            (0.13, -0.36, 0.085, 0.085, 16),
+            (0.37, -0.06, 0.085, 0.095, 18),
+            (0.33, 0.20, 0.10, 0.10, 16),
+            (0.07, 0.36, 0.11, 0.085, 18),
+            (-0.16, 0.34, 0.10, 0.09, 17),
+            (-0.36, 0.02, 0.095, 0.10, 18),
+            (-0.14, -0.11, 0.09, 0.10, 12),
+        ):
+            basins.append(Basin(Point(zone.center_x + x * extent_x, zone.center_z + z * extent_z),
+                                radius_x=rx * extent_x, radius_z=rz * extent_z, depth=depth))
         for entrance in entrances:
             basins.append(Basin(entrance, radius_x=0.075 * scale,
                                 radius_z=0.095 * scale, depth=12))

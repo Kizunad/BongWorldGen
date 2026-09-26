@@ -8,6 +8,7 @@ import pytest
 from bong_worldgen.composition import ZoneTerrain
 from bong_worldgen.data.world_definition import WORLD
 from bong_worldgen.data.zones import ZONE_BY_NAME
+from bong_worldgen.engine import sample_surface
 
 
 def _surface(name, seed, points):
@@ -182,3 +183,74 @@ def test_surface_collapse_follows_relocated_entrance_data(profile):
     assert before - after > 10
     column = updated.generate(width=1, height=1, origin_x=x, origin_z=z)
     assert column.solid_spans[0, 0, 0, 1] < after - 20
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+@pytest.mark.parametrize("name,min_core,min_outer", (
+    ("youan_depths", 0.60, 0.55),
+    ("baolongwang_cavern_deep", 0.55, 0.50),
+    ("wuxing_abyss", 0.70, 0.65),
+    ("drift_scorch_001", 0.55, 0.48),
+    ("blood_valley_east_scorch", 0.48, 0.40),
+    ("north_waste_east_scorch", 0.55, 0.48),
+))
+def test_large_landforms_cover_the_zone_body_including_the_outer_sectors(name, min_core, min_outer, seed):
+    zone = ZONE_BY_NAME[name]
+    composer = ZoneTerrain(replace(WORLD, zones=(zone,)), seed=seed)
+    lx, lz = np.meshgrid(np.linspace(-0.48, 0.48, 161), np.linspace(-0.48, 0.48, 161))
+    size_x = min(zone.size_x, zone.size_z) if zone.shape == "circular" else zone.size_x
+    size_z = size_x if zone.shape == "circular" else zone.size_z
+    x, z = zone.center_x + lx * size_x, zone.center_z + lz * size_z
+    core = composer.index.query(x, z).weight_for(name) > 0.99
+    outer = core & (np.hypot(lx, lz) > 0.25)
+    recipe = composer.recipes[name]
+    # Keep the identical noise and altitude; measure shaped relief separately
+    # so changing the base height or noise variance cannot satisfy this gate.
+    plain, _ = sample_surface(replace(recipe, basins=(), mountains=(), plateaus=()), x, z, seed)
+    shaped, _ = composer.sample_surface(x, z)
+    affected = np.abs(shaped - plain) > 6
+    assert affected[core].mean() > min_core
+    assert affected[outer].mean() > min_outer
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+@pytest.mark.parametrize("name", ("youan_depths", "baolongwang_cavern_deep"))
+def test_cave_sinkhole_field_has_many_outer_depressions_in_every_quadrant(name, seed):
+    zone = ZONE_BY_NAME[name]
+    centers = np.array([[-0.31, -0.23], [-0.10, -0.35], [0.13, -0.36], [0.37, -0.06],
+                        [0.33, 0.20], [0.07, 0.36], [-0.16, 0.34], [-0.36, 0.02]])
+    angles = np.arange(12) * np.pi / 6
+    ring = centers[:, None, :] + 0.125 * np.column_stack((np.cos(angles), np.sin(angles)))
+    scale = np.array([1, min(zone.size_x, zone.size_z) / zone.size_z
+                      if zone.shape == "circular" else 1])
+    margins = np.median(_surface(name, seed, ring * scale), axis=1) - _surface(name, seed, centers * scale)
+    distinct = margins > 7
+    assert distinct.sum() >= 6
+    for quadrant in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        assert distinct[np.all(np.sign(centers) == quadrant, axis=1)].any()
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+def test_abyss_multiple_staggered_slots_reach_north_west_east_and_south(seed):
+    # Sections across four separate elongated slots, away from intersections.
+    floor = np.array([[-0.305, -0.20], [-0.11, -0.35], [0.065, -0.335],
+                      [0.295, -0.20], [0.305, -0.0575], [-0.0675, 0.33]])
+    normal = np.array([[0.10, 0.015], [0.03, 0.09], [-0.03, 0.09],
+                       [0.09, 0.03], [0.10, -0.02], [-0.025, 0.09]])
+    west = _surface("wuxing_abyss", seed, floor - normal)
+    east = _surface("wuxing_abyss", seed, floor + normal)
+    assert np.all(np.minimum(west, east) - _surface("wuxing_abyss", seed, floor) > 10)
+
+
+@pytest.mark.parametrize("seed", (7, 812731, 2026))
+@pytest.mark.parametrize("name", ("drift_scorch_001", "blood_valley_east_scorch", "north_waste_east_scorch"))
+def test_scorch_has_four_outer_impact_bowls_with_upturned_rims(name, seed):
+    centers = np.array([[-0.27, -0.20], [0.20, -0.28], [-0.28, 0.26], [0.34, 0.10]])
+    angles = np.arange(16) * np.pi / 8
+    rims = centers[:, None, :] + 0.135 * np.column_stack((np.cos(angles), np.sin(angles)))
+    floors = _surface(name, seed, centers)
+    # Broken rims still have raised ejecta on multiple sides, rather than
+    # just a dark dimple in the noise or a nearby unrelated high point.
+    rim = _surface(name, seed, rims)
+    assert np.all(np.quantile(rim, 0.75, axis=1) - floors > 25)
+    assert np.all(np.count_nonzero(rim > 92, axis=1) >= 5)
