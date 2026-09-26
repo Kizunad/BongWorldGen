@@ -49,5 +49,16 @@
 原三层空气／岩层、POI 支撑面和井口连通契约全部保留。
 
 洞穴高度仍跟随地表，地下实际连通性使用 `tools/zone_cave_evidence.py` 重新扫描；
-新版全部区域采样和验收图另行记录。基线保留在
-`generated/zone-evidence-before-morphology/`。不启动或排查 BlueMap serve。
+三个 seed 共 2,162,688 列、33/33 个 POI 落点连通，记录在
+`docs/evidence/zone-cave-morphology-2026-09-26.json`。这证明双格净空的几何连通，
+不代表可步行、可攀爬或已满足游戏解锁条件。
+
+全部 27 个区域及 78 个 POI 已重新采样；新版总览是
+`generated/zone-evidence/profiles.png`，前后对照是
+`generated/zone-evidence/profiles-before-after.png`。原基线保留在
+`generated/zone-evidence-before-morphology/`；两版使用相同的高程色标、seed 与采样
+网格，灰烬死地采样完全一致。数值记录与图片校验值见
+`docs/evidence/zone-morphology-2026-09-26.json`。
+
+图片工具没有回显可见画面，代理没有宣称肉眼验收通过；按任务卡约定由用户直接
+打开 PNG 验收。实现和证据已完成，视觉结论待用户提供。不启动或排查 BlueMap serve。

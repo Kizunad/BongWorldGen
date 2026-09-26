@@ -498,3 +498,26 @@ seed=812731，与恢复前 `d76fd11` 的配方比较，三个陷穴的「周围�
 .venv/bin/python tools/zone_cave_evidence.py --seed 812731 --resume \
   --output generated/zone-cave-morphology/812731
 ```
+
+第三十一步：重新生成本轮全部形态的验收采样与图片。27 个区域、15 类地貌及 78 个
+兴趣点全部重新采样，97×97 网格的 48/49 分块在高度、水位、河床、实心段和洞穴
+标识五层逐字节相同。总览继续使用 45–310 的统一高程色标。绘图工具新增可选
+`--compare`，要求前后 seed、采样坐标与区域权重一致，生成同色标的前后对照图。
+
+```bash
+.venv/bin/python tools/zone_evidence.py --output generated/zone-evidence
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
+  generated/zone-evidence --compare generated/zone-evidence-before-morphology
+```
+
+验收文件：`generated/zone-evidence/profiles.png`（2080×2730）与
+`generated/zone-evidence/profiles-before-after.png`（1560×4862）。对照图包含本轮
+改形的八类地貌、受邻区变化影响的血谷／北荒采样，以及灰烬死地对照。灰烬死地的
+高度、水位、实心段、权重、原点和步长均与基线逐字节相同。区域核心（权重 ≥0.9）
+的高度最大变化在血谷约为 0.011 格、北荒为 0；明显变化位于采样范围里的邻区。
+
+统计、基线对比、数组校验值和图片 SHA-256 记录在
+`docs/evidence/zone-morphology-2026-09-26.json`，生成源码提交为 `5ad6e3d`。
+PNG 已验证能够完整解码；当前图片工具未向代理回显可见画面，**未宣称完成肉眼
+验收**。依用户任务卡约定，提供上述路径，由用户检查空间形态的实际视觉差异。
+实现与数值验证已完成，肉眼验收结论待用户提供；后续按该结论继续调整。

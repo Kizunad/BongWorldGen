@@ -1,0 +1,861 @@
+{
+  "generator_commit": "5ad6e3d",
+  "seed": 812731,
+  "zone_count": 27,
+  "profile_count": 15,
+  "poi_count": 78,
+  "sampling": "97 x 97, integer stride; metrics use zone weight >= 0.9",
+  "common_elevation_scale": [
+    45,
+    310
+  ],
+  "report_path": "generated/zone-evidence/report.json",
+  "report_sha256": "cf225222c824f1e464e441853de035be5313048e846c1804cdd9de0509ac1617",
+  "baseline_report_path": "generated/zone-evidence-before-morphology/report.json",
+  "baseline_report_sha256": "a9321b44a05d5f24aef28a6b90d5ce369303198fbd26a774a793cd8da84ca68b",
+  "images": {
+    "profiles.png": "eab62735b1ed886c5595169a8df168ed754055db648271e194d3437cb7bf9eaf",
+    "profiles-before-after.png": "703e2f875c51138ed15240bb6364b88446e2dda8f0d64eecafe6f77a79e2c094",
+    "island-section.png": "217a038514b25549a9108b98f60196239b4adc1c8defafda71e6d08889ae0510"
+  },
+  "visual_acceptance": "Pending user inspection; image tool did not display a viewable image in the agent session.",
+  "zones": [
+    {
+      "zone": "spawn",
+      "profile": "spawn_plain",
+      "mean_height": 69.67748260498047,
+      "std_height": 2.097829818725586,
+      "min_height": 60.0,
+      "max_height": 73.18238830566406,
+      "wet_fraction": 0.06706960421134724,
+      "max_solid_spans": 1,
+      "height_sha256": "5d65ece6232497e19c2bcf563b159439a743dfbf61b11a6e314ac3c33d75d5ac",
+      "split_equal": true,
+      "before_mean_height": 69.67748260498047,
+      "before_std_height": 2.097829818725586,
+      "same_as_before": {
+        "height": true,
+        "water": true,
+        "spans": true,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "5d65ece6232497e19c2bcf563b159439a743dfbf61b11a6e314ac3c33d75d5ac",
+        "water": "6c868948758723055ac7161d9c4be596886ce8319bcfe1ccdf063e4b3308fa82",
+        "spans": "5861041a8fb84b694491db243df794e456de2b5b0d22b1f384a2ba6daf71877e",
+        "weight": "c94062f4f5979c38021c6c69cc9834aa313b1bb15c32ddb000db70a4c607538f",
+        "origin": "26f9a92cd0d56b1696524a229b950d30886defade548e9545052746ff5eb2ff6",
+        "cell_size": "e48d939f60d90eb530fe27e3605e548e51c7232e13baddfdfeaa4e04fb478319"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "qingyun_peaks",
+      "profile": "broken_peaks",
+      "mean_height": 151.46348571777344,
+      "std_height": 28.794267654418945,
+      "min_height": 94.00274658203125,
+      "max_height": 229.48463439941406,
+      "wet_fraction": 0.043491963441537974,
+      "max_solid_spans": 1,
+      "height_sha256": "0043e812af6aac7f1c8a0f4cd41a389967def183a18dcaa3bdd4964ce9dee6b7",
+      "split_equal": true,
+      "before_mean_height": 151.46348571777344,
+      "before_std_height": 28.794267654418945,
+      "same_as_before": {
+        "height": true,
+        "water": true,
+        "spans": true,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "0043e812af6aac7f1c8a0f4cd41a389967def183a18dcaa3bdd4964ce9dee6b7",
+        "water": "1757a94b9da30b2dcbd7fa9a7363aa46c7115ee4389bbb0fcc38d5bbb95526b3",
+        "spans": "c0bfeb98afcd5c2de9ea72fd0d872da21ce4ccac89ef429c4a011b7c210cb66e",
+        "weight": "eb395573637acedb86a210bef9b51e209017e3a2690c71d78194276f0425dd47",
+        "origin": "70820fc9d1798969719486eda71203b36c706fdd9c42541e48477e007bcb921d",
+        "cell_size": "5eb6da0e0e522104c6d50b0748e6893762f7f2c00a7163a46ccbb535bfd61a0d"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "lingquan_marsh",
+      "profile": "spring_marsh",
+      "mean_height": 61.72600173950195,
+      "std_height": 1.7953717708587646,
+      "min_height": 56.9277229309082,
+      "max_height": 65.67340850830078,
+      "wet_fraction": 0.33959578707657273,
+      "max_solid_spans": 1,
+      "height_sha256": "1192ed6de93bbb412b682469bacb1587a36fb6115840168b3a70d7a7be1f80a2",
+      "split_equal": true,
+      "before_mean_height": 61.72600173950195,
+      "before_std_height": 1.7953717708587646,
+      "same_as_before": {
+        "height": true,
+        "water": true,
+        "spans": true,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "1192ed6de93bbb412b682469bacb1587a36fb6115840168b3a70d7a7be1f80a2",
+        "water": "4ade206127ed32a7ba25a1ba4616f949d00b82f1db69aa171314d8e0284645ca",
+        "spans": "f94e792cde0d117d2a9529ad6b84277926e7912826b439920d84933cf3a2bd8c",
+        "weight": "4ae1f2cac98b9b04f97e7c48257c8e7720d74569920ca5ad7bc7f2d4fd9c294d",
+        "origin": "17f32f7c171dd31d707fddc737ae253423429d12665dea30cbb422e6ec30f889",
+        "cell_size": "18d8d609947c6b82b9607704ae40d3317038e709238514de750b5c7411ba4c20"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "blood_valley_east_scorch",
+      "profile": "tribulation_scorch",
+      "mean_height": 86.12674713134766,
+      "std_height": 7.336089611053467,
+      "min_height": 55.11366653442383,
+      "max_height": 108.12129974365234,
+      "wet_fraction": 0.005139920045688178,
+      "max_solid_spans": 1,
+      "height_sha256": "7453ae86e01ffdbdad1066f67161c7618c3a6e6c7614ddf3ffac3bf05d98895d",
+      "split_equal": true,
+      "before_mean_height": 87.59007263183594,
+      "before_std_height": 8.055877685546875,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "7453ae86e01ffdbdad1066f67161c7618c3a6e6c7614ddf3ffac3bf05d98895d",
+        "water": "0e2099a6648ffa0dce24dd1d443197175af6402cc3cb6ea57b47601fc2913107",
+        "spans": "1453bc5c70baed261ca55d665c034c3fa83adcbf86f2ec708fca1068e3c6f66c",
+        "weight": "0bbf6938c0dab8e7d4156ad4d9d303bbf2fe3fa44211a1ce6f124b0ddf31bab9",
+        "origin": "e960e9d091c5674ada39907359d5cdc4ba891d044b204104557c22261a2d3576",
+        "cell_size": "b0bd73e6922c0d2496dbcb99eac08eb5870090e59f6e06b1eb477d540002a5cd"
+      },
+      "core_height_max_abs_change": 31.200584411621094
+    },
+    {
+      "zone": "north_waste_east_scorch",
+      "profile": "tribulation_scorch",
+      "mean_height": 86.24678039550781,
+      "std_height": 9.034680366516113,
+      "min_height": 52.385101318359375,
+      "max_height": 108.94873809814453,
+      "wet_fraction": 0.010739490641301013,
+      "max_solid_spans": 1,
+      "height_sha256": "2215c8c6d6875d26f939cf517408a2f81f8ef2dca1885ce9b9166bca6270b92d",
+      "split_equal": true,
+      "before_mean_height": 88.45504760742188,
+      "before_std_height": 9.279112815856934,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "2215c8c6d6875d26f939cf517408a2f81f8ef2dca1885ce9b9166bca6270b92d",
+        "water": "403feb67c44713c0851138184078dc9e561da545ecd842b6c11668ab4ed54735",
+        "spans": "1459b9067c2e91522220b2d7bae2bcc89d01f9c25f33671dccb6a7e69ac0917b",
+        "weight": "02bfc1355c027131af0be3cee06ca02b720f6c07c8594f088b54da390ad07fb8",
+        "origin": "bfec8880ee44100f9e3fad35184c065e1c40e64783436db6147006b71457544e",
+        "cell_size": "a4bd89d0c3e16ec03c5436d0b9b8eb1a934beeac808447459e5ee2f9a23e97d7"
+      },
+      "core_height_max_abs_change": 35.32099914550781
+    },
+    {
+      "zone": "drift_scorch_001",
+      "profile": "tribulation_scorch",
+      "mean_height": 86.51936340332031,
+      "std_height": 9.160204887390137,
+      "min_height": 54.57374572753906,
+      "max_height": 109.17703247070312,
+      "wet_fraction": 0.010249307479224376,
+      "max_solid_spans": 1,
+      "height_sha256": "44dbed7d52e911cc51445302817fa6f2f94f2da786e65c2895c8064d3d8f1c40",
+      "split_equal": true,
+      "before_mean_height": 89.03341674804688,
+      "before_std_height": 9.265689849853516,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "44dbed7d52e911cc51445302817fa6f2f94f2da786e65c2895c8064d3d8f1c40",
+        "water": "313927d421a648a1f4bf711b7cdc2e40ba8b73fd9b535b34874ad7e345b853d4",
+        "spans": "04f7475b2c9cb5e0f5d100cd6aafcb03e1afb0efc06cce1c5643ffab257bc445",
+        "weight": "943a72a193818e8b3e42cf6fa717cfd02f3f125ae6f8111abfa31d7ca93f4087",
+        "origin": "b595b849d48f40b91b25503b554083709c92979a742558222784c608330e84ca",
+        "cell_size": "b0bd73e6922c0d2496dbcb99eac08eb5870090e59f6e06b1eb477d540002a5cd"
+      },
+      "core_height_max_abs_change": 33.385353088378906
+    },
+    {
+      "zone": "rift_mouth_north_001",
+      "profile": "rift_mouth_barrens",
+      "mean_height": 83.1750717163086,
+      "std_height": 8.78886890411377,
+      "min_height": 52.552947998046875,
+      "max_height": 107.05522155761719,
+      "wet_fraction": 0.0023139220979560356,
+      "max_solid_spans": 1,
+      "height_sha256": "00e804fedbb71dc357211d4448f2062a8965523b391ffc94c3de4274e083cde2",
+      "split_equal": true,
+      "before_mean_height": 84.71344757080078,
+      "before_std_height": 7.441888809204102,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "00e804fedbb71dc357211d4448f2062a8965523b391ffc94c3de4274e083cde2",
+        "water": "1e54d3e2c0f3bad5195458a6882dc5374afeb90ef92776e86ab833e4b87b7e90",
+        "spans": "865a5b3804cc3d5ef583131de8c85eefa9833f7ddbf85573e283242653d2abae",
+        "weight": "54b491fbcc94aeedc2225b3014dcc60c78516d037940aaeb1195cd957c6cbc4a",
+        "origin": "020484772c5bf06456d799fbf423dacbdb2d0c79e1403707ec2c6adfaf50438c",
+        "cell_size": "f13ee6ed54ea2aae9fc49a9faeb5da6e8ddef0e12ed5d30d35a624ae813e0485"
+      },
+      "core_height_max_abs_change": 37.022064208984375
+    },
+    {
+      "zone": "rift_mouth_north_002",
+      "profile": "rift_mouth_barrens",
+      "mean_height": 83.37094116210938,
+      "std_height": 9.140345573425293,
+      "min_height": 52.22642135620117,
+      "max_height": 107.15714263916016,
+      "wet_fraction": 0.005784805244890089,
+      "max_solid_spans": 1,
+      "height_sha256": "50c460c7826f41f9645afd4678dffa7a5a5d3db60bbec7c2bb384eda5f4171ea",
+      "split_equal": true,
+      "before_mean_height": 84.9329833984375,
+      "before_std_height": 7.751655101776123,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "50c460c7826f41f9645afd4678dffa7a5a5d3db60bbec7c2bb384eda5f4171ea",
+        "water": "8d9b54469542061add5aad216922ccdd3f21f260e6da8494e99db6d4031fe416",
+        "spans": "2a72cdb94caf580fe17b0698fca05b755e5f3eb25a9ec98723a4131a8beb8222",
+        "weight": "54b491fbcc94aeedc2225b3014dcc60c78516d037940aaeb1195cd957c6cbc4a",
+        "origin": "0ec902d19204ce9c429f90578bcce76ae72ac28c726c1356cad73dcac5254480",
+        "cell_size": "f13ee6ed54ea2aae9fc49a9faeb5da6e8ddef0e12ed5d30d35a624ae813e0485"
+      },
+      "core_height_max_abs_change": 36.71768569946289
+    },
+    {
+      "zone": "rift_mouth_blood_001",
+      "profile": "rift_mouth_barrens",
+      "mean_height": 83.48491668701172,
+      "std_height": 8.93178653717041,
+      "min_height": 51.19611358642578,
+      "max_height": 107.16438293457031,
+      "wet_fraction": 0.0038565368299267257,
+      "max_solid_spans": 1,
+      "height_sha256": "09de786ea61c833d8612182a58ff2af1db13c3d00e11039083139c3aace130e8",
+      "split_equal": true,
+      "before_mean_height": 85.21804809570312,
+      "before_std_height": 7.746844291687012,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "09de786ea61c833d8612182a58ff2af1db13c3d00e11039083139c3aace130e8",
+        "water": "db95feaa0fae481e8c17cf21e1e2cb870b318629668ea9c018379a9245de9201",
+        "spans": "ed72bd4268452a803a18f719fcbe703d67739fdf5809816f3ac89b0d896c3862",
+        "weight": "54b491fbcc94aeedc2225b3014dcc60c78516d037940aaeb1195cd957c6cbc4a",
+        "origin": "c88f2af443aa7539431c8302a8ca1d66c483185cd6fe80038b7fe2994cb6136c",
+        "cell_size": "f13ee6ed54ea2aae9fc49a9faeb5da6e8ddef0e12ed5d30d35a624ae813e0485"
+      },
+      "core_height_max_abs_change": 35.15561294555664
+    },
+    {
+      "zone": "rift_mouth_west_001",
+      "profile": "rift_mouth_barrens",
+      "mean_height": 83.31230926513672,
+      "std_height": 9.18791389465332,
+      "min_height": 51.50809860229492,
+      "max_height": 106.98811340332031,
+      "wet_fraction": 0.006170458927882761,
+      "max_solid_spans": 1,
+      "height_sha256": "afae67e565bce8e9adbabcae901120594d111e8c683def7b304ecdede09833bf",
+      "split_equal": true,
+      "before_mean_height": 84.98423767089844,
+      "before_std_height": 7.656282424926758,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "afae67e565bce8e9adbabcae901120594d111e8c683def7b304ecdede09833bf",
+        "water": "c9a541ddf116743b00babb51d81b82b69050864b898bc8fa527b88446e9fd445",
+        "spans": "fbd427d875a09e6a5ccb3150f32ca008fa63105323504ce354b78bfe50f6cbec",
+        "weight": "54b491fbcc94aeedc2225b3014dcc60c78516d037940aaeb1195cd957c6cbc4a",
+        "origin": "dcf6a7345227caf5ff2b52ceaf6d347a698c224e34d80572c497b3ad2d565bc1",
+        "cell_size": "f13ee6ed54ea2aae9fc49a9faeb5da6e8ddef0e12ed5d30d35a624ae813e0485"
+      },
+      "core_height_max_abs_change": 37.54829025268555
+    },
+    {
+      "zone": "blood_valley",
+      "profile": "rift_valley",
+      "mean_height": 101.24124145507812,
+      "std_height": 16.161359786987305,
+      "min_height": 49.04888153076172,
+      "max_height": 128.8231964111328,
+      "wet_fraction": 0.03260869565217391,
+      "max_solid_spans": 1,
+      "height_sha256": "8229634b46171fb4df07326f223fb097f51387dbe17ca7caae62e5b83696fc08",
+      "split_equal": true,
+      "before_mean_height": 101.2412338256836,
+      "before_std_height": 16.161367416381836,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "8229634b46171fb4df07326f223fb097f51387dbe17ca7caae62e5b83696fc08",
+        "water": "dc4e6071eba5f216ee6d30ed0f3987c2ed9ddfb650402dc3265286d3288bd71d",
+        "spans": "c8f00489f68e874b5d0d42d8e52a8ab5d13989387dd91707627a98ad9446fbd6",
+        "weight": "d237f3fb70d4c1b8d6b6187297fa54b572938c1b800db8ed0d93aa26a893d248",
+        "origin": "24926168fbc71124020b67c13376922c4705bbd780f5400048dff840315ec5d7",
+        "cell_size": "e48d939f60d90eb530fe27e3605e548e51c7232e13baddfdfeaa4e04fb478319"
+      },
+      "core_height_max_abs_change": 0.010711669921875
+    },
+    {
+      "zone": "youan_depths",
+      "profile": "cave_network",
+      "mean_height": 78.90206146240234,
+      "std_height": 6.756983280181885,
+      "min_height": 58.000465393066406,
+      "max_height": 89.43556213378906,
+      "wet_fraction": 0.050626304801670144,
+      "max_solid_spans": 2,
+      "height_sha256": "6f529ef8df0dda720240a506df817396b7a68194c35d81a413145fdd66e015f6",
+      "split_equal": true,
+      "before_mean_height": 80.90020751953125,
+      "before_std_height": 5.408792018890381,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "6f529ef8df0dda720240a506df817396b7a68194c35d81a413145fdd66e015f6",
+        "water": "3f9c2be07de5142d0ee73b918d2d2335743bcb41637191a19e0807d722051031",
+        "spans": "a392eb436f94c516b29adc8b32277cead59362d862d327e829ffc6554b897b81",
+        "weight": "6065380d4f977219a3130884ee73ab07e951246a48f2243fad6cfa10a6e6719d",
+        "origin": "c267c9b23793c0c81c1edc390e47a9c38ae4acff39417d5aad968387afcd1e62",
+        "cell_size": "a4bd89d0c3e16ec03c5436d0b9b8eb1a934beeac808447459e5ee2f9a23e97d7"
+      },
+      "core_height_max_abs_change": 17.982524871826172
+    },
+    {
+      "zone": "north_wastes",
+      "profile": "waste_plateau",
+      "mean_height": 118.55000305175781,
+      "std_height": 1.8276938199996948,
+      "min_height": 113.1815185546875,
+      "max_height": 123.26457977294922,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "579c277108e9bd3208d183256e0cc50b150e473ab1be3dc3bd353d8f77baf825",
+      "split_equal": true,
+      "before_mean_height": 118.55000305175781,
+      "before_std_height": 1.8276938199996948,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "579c277108e9bd3208d183256e0cc50b150e473ab1be3dc3bd353d8f77baf825",
+        "water": "475410c439075c383323f98efcc6faaae741329f06c4b871c92068d5bc061787",
+        "spans": "f9d07caf6bb1888ddbbde523bcfb689c81a199cdab431075d3a0e649703a9717",
+        "weight": "0dce978cb90bf3aa66da3f70b34f72b14203be3ee0bde46213b50e561d685603",
+        "origin": "da4710221130dff28ed8acfcc00391f481d11181a3f6b4a4639ae4ec0f1f2547",
+        "cell_size": "280263b8515b99c473d9685d1fca1b992ae0949c742ba11c9ba625d9cd984506"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "celestial_isles",
+      "profile": "sky_isle",
+      "mean_height": 145.08731079101562,
+      "std_height": 99.55709838867188,
+      "min_height": 68.93020629882812,
+      "max_height": 294.48291015625,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 2,
+      "height_sha256": "f45a57570874cd6cd8df57b48262918f26ada4cb367592f4c313c6bade972c4a",
+      "split_equal": true,
+      "before_mean_height": 145.08731079101562,
+      "before_std_height": 99.55709838867188,
+      "same_as_before": {
+        "height": true,
+        "water": true,
+        "spans": true,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "f45a57570874cd6cd8df57b48262918f26ada4cb367592f4c313c6bade972c4a",
+        "water": "ac634d5588ea54eed2264c0ede3d53327b96418daa9119b3b5084037ba940853",
+        "spans": "7e9f8a79fd1610496ac815e3b9ee6f146ddb70a586345f1d93e635f8687f0e9b",
+        "weight": "aafb1ff6ffa69262e3e46718f6514ed40e1ccb383f793f2a654f391a698fff45",
+        "origin": "f8fe5a8b8865905ca5b1f41c0e8bb22d59df14fcf1b84566b7ab51fe38e6446b",
+        "cell_size": "0c27700c82d333aa295692f1814040a962d7bc530253af661d97635dd5ed7af9"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "south_ash_dead_zone",
+      "profile": "ash_dead_zone",
+      "mean_height": 81.43767547607422,
+      "std_height": 5.099182605743408,
+      "min_height": 62.68377685546875,
+      "max_height": 93.93013763427734,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "13065aabc10658a797fd0065fc582382dd3782e5490e0826b7bae6d22333f2ff",
+      "split_equal": true,
+      "before_mean_height": 81.43767547607422,
+      "before_std_height": 5.099182605743408,
+      "same_as_before": {
+        "height": true,
+        "water": true,
+        "spans": true,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "13065aabc10658a797fd0065fc582382dd3782e5490e0826b7bae6d22333f2ff",
+        "water": "dfe3e1a44e9e536eb9d2394422b8fe14a1b33a7e3cfee78547d1350c8671b151",
+        "spans": "41af34c2447410cfba4415430fb90cae3cf5c9c4506918eb1ffaf6dff95593d8",
+        "weight": "dbd17682c192f7f679c15f7c142e9379795e68f6c14b649f71cf81c35128efed",
+        "origin": "1930b20d692403366830759bcda4049559ab8d45d6ef88f92c022a9e298b8e84",
+        "cell_size": "c69a9157638e69fb692d827383c3f27e586e0c98989cffdf8bd4c982ad837a4c"
+      },
+      "core_height_max_abs_change": 0.0
+    },
+    {
+      "zone": "zhanhun_plain",
+      "profile": "ancient_battlefield",
+      "mean_height": 76.24639892578125,
+      "std_height": 5.442708969116211,
+      "min_height": 50.92631530761719,
+      "max_height": 97.2625503540039,
+      "wet_fraction": 0.015015742310486802,
+      "max_solid_spans": 2,
+      "height_sha256": "eb07862d39d8ea16304231fbc7132e51b92134cf5a18b59fd23c9522ef3158da",
+      "split_equal": true,
+      "before_mean_height": 76.58558654785156,
+      "before_std_height": 3.2511086463928223,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "eb07862d39d8ea16304231fbc7132e51b92134cf5a18b59fd23c9522ef3158da",
+        "water": "f5cdea1852979654c356ed98af19270c5a4ccf640c3035320f541fc481ab55b2",
+        "spans": "14d251e1f454c56dcba10eea40d6926710565a292d7cbb514d87076f1d681dbd",
+        "weight": "3177601851dba376eeabf0d4b1245f63732fecf32c13af885dc175d078ecfacd",
+        "origin": "65746484ac00d58348a38807a7f27fcf7158a14531b91c710b30d8e492ff43fb",
+        "cell_size": "cbb032642036ec7043fa4529f06c9c9d8b12fa70ea6799a19ca8321a808d86fa"
+      },
+      "core_height_max_abs_change": 29.00809097290039
+    },
+    {
+      "zone": "wuxing_abyss",
+      "profile": "abyssal_maze",
+      "mean_height": 94.15556335449219,
+      "std_height": 6.989481449127197,
+      "min_height": 65.62262725830078,
+      "max_height": 122.4808578491211,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 4,
+      "height_sha256": "8a4195d20ceda252756e3e100205a698cf84db6ca541e8676575ecfd25b1061a",
+      "split_equal": true,
+      "before_mean_height": 92.92044067382812,
+      "before_std_height": 5.233376979827881,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "8a4195d20ceda252756e3e100205a698cf84db6ca541e8676575ecfd25b1061a",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "fb0b2309f5be2af5c5c6f082ef9050e9b764f1dd3a8ead60d6d4813999cd8ad0",
+        "weight": "e1d52dbd858cace5e140ba438d99d7617e8598aca6e70c7b9d6c4d2a124787c2",
+        "origin": "6b1ddf18d9bfa0a1e0fe6fa28a8b1de7941db8935bb4cdbceec34931fd7a5555",
+        "cell_size": "debcea1f166010e428df48387304e45c0bf7843a1fa7f1beb38f852228df789b"
+      },
+      "core_height_max_abs_change": 31.90343475341797
+    },
+    {
+      "zone": "jiuzong_bloodstream_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 79.50177764892578,
+      "std_height": 6.957244396209717,
+      "min_height": 71.562744140625,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "8e8e9b5a941602967d4b2e7ea47d0834afb6cf52fab247e770518ff381dbd525",
+      "split_equal": true,
+      "before_mean_height": 80.81836700439453,
+      "before_std_height": 8.091316223144531,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "8e8e9b5a941602967d4b2e7ea47d0834afb6cf52fab247e770518ff381dbd525",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "8983914fa3e559b10f09be58f3ea179ef499f18108cffb7b974da6d650095be3",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "b14f8fd75a50ca5840143f8a833070af9e60c21d0211a575cc7cf24942f0ec6e",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 23.10852813720703
+    },
+    {
+      "zone": "jiuzong_beiling_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 79.61497497558594,
+      "std_height": 6.905398368835449,
+      "min_height": 71.38243103027344,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "d802f9377fea3980e18083ba62ed0b1ae0d0ad8bcb9ada876e406c9da06f4743",
+      "split_equal": true,
+      "before_mean_height": 80.91168212890625,
+      "before_std_height": 8.070767402648926,
+      "same_as_before": {
+        "height": false,
+        "water": false,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "d802f9377fea3980e18083ba62ed0b1ae0d0ad8bcb9ada876e406c9da06f4743",
+        "water": "de0244f0a283497cbd20e40dac565341d709a2bc557b9eb91f18536fbc95ece7",
+        "spans": "559ff593ef774a09ae65f30cc5b66c619e751a535142f33cc7b12b7f83a04df7",
+        "weight": "6c1b5e018ab693741f997e3f1e0012ee824f5ab17643059d20540b33a7510bc7",
+        "origin": "169435c8acf487b67a6fdcc9ea9959700a210da4612b27a3ccff4dea25185f95",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 23.938018798828125
+    },
+    {
+      "zone": "jiuzong_nanyuan_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 79.72664642333984,
+      "std_height": 6.815019130706787,
+      "min_height": 71.9686050415039,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "b6dd76e0b1bf0c81d37749a891f62eb485e4b9addbf21abb19fe5977c5bfceb7",
+      "split_equal": true,
+      "before_mean_height": 80.96267700195312,
+      "before_std_height": 8.010404586791992,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "b6dd76e0b1bf0c81d37749a891f62eb485e4b9addbf21abb19fe5977c5bfceb7",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "4f1460a4de41998513c6fff8bc9e5d98c692d7c0f6adb3c3961bc43c9a0e1742",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "9629575af8a129c4aaca9fd96556777d394dca6baa969ac6cf8cf8564b51f5df",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 23.379791259765625
+    },
+    {
+      "zone": "jiuzong_chixia_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 79.97648620605469,
+      "std_height": 6.695970058441162,
+      "min_height": 71.37998962402344,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "22cc86de3448c5d2841f1e89ea91aff0b83b7d7bfa13191c5404da80cdaf58d4",
+      "split_equal": true,
+      "before_mean_height": 81.1301040649414,
+      "before_std_height": 7.982277870178223,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "22cc86de3448c5d2841f1e89ea91aff0b83b7d7bfa13191c5404da80cdaf58d4",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "8f7049fe3023e8d9814e3df55d98006aa4335066ba1f00616ea9dc463e62b5e3",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "2f1dfe9970a4b5cdd7fe9ab7fdbd539a54b57f774d1b7ecc9001f8acd57ac715",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 21.82402801513672
+    },
+    {
+      "zone": "jiuzong_xuanshui_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 80.09799194335938,
+      "std_height": 6.623329162597656,
+      "min_height": 71.6827392578125,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "9e19c5b6fff89d98973fe5e84eb4a4bee75064acdaeb8c9f68153a283c5f129b",
+      "split_equal": true,
+      "before_mean_height": 81.23136901855469,
+      "before_std_height": 7.872328281402588,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "9e19c5b6fff89d98973fe5e84eb4a4bee75064acdaeb8c9f68153a283c5f129b",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "c50a5c4a4fb1f22d2928b9bc1214783f16b52fa635b376ce94444ce3c7060208",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "7b07b1deb9b126b9f8c777e41c00f3f8855260d41671a1c215d9343dee63aaba",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 23.481414794921875
+    },
+    {
+      "zone": "jiuzong_taichu_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 79.49759674072266,
+      "std_height": 6.976158618927002,
+      "min_height": 71.37792205810547,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "25e848bcb36ef4894268cf36324aeede337bfb02ad5590abf8ee94ba7dd14418",
+      "split_equal": true,
+      "before_mean_height": 80.89356231689453,
+      "before_std_height": 8.032458305358887,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "25e848bcb36ef4894268cf36324aeede337bfb02ad5590abf8ee94ba7dd14418",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "a5e1a61eba1f1beaa644f76a8fed3a4932adf04e4cfbcebd0518483633d5a21d",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "46ceab5dcb2469f6bee7516f029bd95bb9d94ab515c95af2997d7ac276aa58ac",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 24.21839141845703
+    },
+    {
+      "zone": "jiuzong_youan_ruin",
+      "profile": "jiu_zong_ruin",
+      "mean_height": 80.0748291015625,
+      "std_height": 6.707375526428223,
+      "min_height": 70.90936279296875,
+      "max_height": 96.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "42b5afa3a9288a2f9ef178631650efdbc6ca156ad182669b09d62afb8638a593",
+      "split_equal": true,
+      "before_mean_height": 81.25491333007812,
+      "before_std_height": 7.903814792633057,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "42b5afa3a9288a2f9ef178631650efdbc6ca156ad182669b09d62afb8638a593",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "afe9571ee4c8aedfd1ae8543c5f0933763058ca9e30fa4a75fc808d5fd841112",
+        "weight": "69319ccaababbbb0d6236cad029807a79cd93c55f8a2b2d0423c91034806df13",
+        "origin": "50a993bc36508e4e04cd3645b3011b268e34c595ed77fbf67fa66a3d69e4603e",
+        "cell_size": "5fd1b79ebdef9619a57916a3bfc264b54d37a792659b3693f8ab36ec3ebce448"
+      },
+      "core_height_max_abs_change": 23.69251251220703
+    },
+    {
+      "zone": "dan_zong_yi_yuan",
+      "profile": "dan_zong_yi_yuan",
+      "mean_height": 80.910888671875,
+      "std_height": 4.824349880218506,
+      "min_height": 74.73728942871094,
+      "max_height": 92.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "50cfec55ab7b19a9201a670c3d379fa486f0af5c8015c62f1d99ad4039b833ec",
+      "split_equal": true,
+      "before_mean_height": 81.27204132080078,
+      "before_std_height": 4.886600017547607,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "50cfec55ab7b19a9201a670c3d379fa486f0af5c8015c62f1d99ad4039b833ec",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "b1da5e96cf0c7ced090a8277bcde56d43000bc1e02b4f1bfafa510c3cd487e97",
+        "weight": "a47e2fa967fdc89d1d372207bb822eebaff16ceb3538698dea9b98ccc9913069",
+        "origin": "1ad346a962b671edef23ab24139f908e2229dbaa31d4262549d2350e83d6ad9e",
+        "cell_size": "1023cd53096fa66c8a605b9cd21f77cb3f8cd12f855482b27c01e85c95b9515f"
+      },
+      "core_height_max_abs_change": 15.83795166015625
+    },
+    {
+      "zone": "wangyintai",
+      "profile": "wangyintai",
+      "mean_height": 83.65689849853516,
+      "std_height": 7.986657619476318,
+      "min_height": 76.24076843261719,
+      "max_height": 104.0,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 1,
+      "height_sha256": "8a61648075d348b6640e37846eb97d2276849e1ec09d689f22d0b490d94b0846",
+      "split_equal": true,
+      "before_mean_height": 85.05355834960938,
+      "before_std_height": 8.391053199768066,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "8a61648075d348b6640e37846eb97d2276849e1ec09d689f22d0b490d94b0846",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "5e6ce72a02b74cdc99ae95e53973b12a1ccca70671f727491a1eaeaa14e924bb",
+        "weight": "57b71b2cd4f98337589e1fc421f7cdeefbcfe22e38eebf96f0bc9055488485cf",
+        "origin": "47c177749e24eb025def4cd1ac56fc2c5ceef5986accfe49a4686035611a1c58",
+        "cell_size": "220dde27afee4d537cac96d85d6546f825153b90e828931b74e103807541bc42"
+      },
+      "core_height_max_abs_change": 14.055732727050781
+    },
+    {
+      "zone": "baolongwang_cavern_deep",
+      "profile": "cave_network",
+      "mean_height": 79.03701782226562,
+      "std_height": 4.5488505363464355,
+      "min_height": 61.311771392822266,
+      "max_height": 86.03589630126953,
+      "wet_fraction": 0.0,
+      "max_solid_spans": 2,
+      "height_sha256": "c77584890396690b2d7059067aaedf31f14e5d439a1e79223c4d29b0cc24d899",
+      "split_equal": true,
+      "before_mean_height": 81.17093658447266,
+      "before_std_height": 2.1699845790863037,
+      "same_as_before": {
+        "height": false,
+        "water": true,
+        "spans": false,
+        "weight": true,
+        "origin": true,
+        "cell_size": true
+      },
+      "array_sha256": {
+        "height": "c77584890396690b2d7059067aaedf31f14e5d439a1e79223c4d29b0cc24d899",
+        "water": "5a526bafcfe4b35ca4e2802dfd225a073efce992d9aef0ff32c67cc32f24602d",
+        "spans": "bead0a6d7957d711708f5d8f46a1f72a5575a0f30d2f23c6f77e0f89513bc09e",
+        "weight": "8744041a5e9defe306422b255b2873cfc1552176cae06424ac7d29537d67c15a",
+        "origin": "ac720785d4734d89be4073b796884670a870332e643f4be4d139b335bcc6fd70",
+        "cell_size": "cbbd5f990c53684d7ae650b40fcb5656e02261b53da5f6a7d8c819c92f2828f8"
+      },
+      "core_height_max_abs_change": 17.995105743408203
+    }
+  ]
+}
