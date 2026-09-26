@@ -72,3 +72,10 @@
 覆盖率门禁保留同一噪声和基础高度，要求多数主体区域出现至少 6 格塑形高差，
 外围单独计量。原来的中心与入口空间契约继续保留。图上的白色细环已确认为
 绘图叠加的等权重诊断线，默认关闭，可用 `--show-boundaries` 单独开启。
+
+本次扩形验收图已重新生成：`generated/zone-evidence/profiles.png` 和
+`generated/zone-evidence/profiles-before-after.png`，后者的 Before 为 `0d49bc7`。
+焦土坑心还会输出真实 blackstone 地表材质，栅格／Minecraft 导出共用结果，图中
+显示同一材质范围。完整回归为 266 项；地下扫描仍为 33/33 个 POI 落点连通。
+覆盖率报告与图片校验值分别存于 `docs/evidence/zone-landform-coverage-2026-09-26.json`
+和 `docs/evidence/zone-review-coverage-2026-09-26.json`。新版本待调度看图复验。

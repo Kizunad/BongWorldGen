@@ -1,0 +1,110 @@
+{
+  "seed": 812731,
+  "before_directory": "generated/zone-evidence-0d49bc7",
+  "after_directory": "generated/zone-evidence",
+  "definition": "Absolute relief >6 blocks relative to the SAME base height/noise without basins, mountains or plateaus; core weight >0.99; outer fractional radius >0.25. Base height/noise must be unchanged between versions.",
+  "zones": [
+    {
+      "zone": "blood_valley_east_scorch",
+      "profile": "tribulation_scorch",
+      "core_samples": 1699,
+      "outer_samples": 1234,
+      "baseline_recipe": "TerrainRecipe(name='tribulation_scorch', base_height=88.0, base_noise=(NoiseLayer(kind='fbm', scale=85, amplitude=2.5, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=83, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(), sea_level=61.0, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.266627427898764,
+        "outer_fraction": 0.1312803889789303,
+        "height_sha256": "7453ae86e01ffdbdad1066f67161c7618c3a6e6c7614ddf3ffac3bf05d98895d"
+      },
+      "after": {
+        "core_fraction": 0.4896998234255444,
+        "outer_fraction": 0.4165316045380875,
+        "height_sha256": "dbe604e2d8b2dab35aa81880b36983dcea1e45808a432307b7405ccc756e3421"
+      }
+    },
+    {
+      "zone": "north_waste_east_scorch",
+      "profile": "tribulation_scorch",
+      "core_samples": 3190,
+      "outer_samples": 2145,
+      "baseline_recipe": "TerrainRecipe(name='tribulation_scorch', base_height=88.0, base_noise=(NoiseLayer(kind='fbm', scale=85, amplitude=2.5, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=83, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(), sea_level=61.0, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.3683385579937304,
+        "outer_fraction": 0.22237762237762237,
+        "height_sha256": "2215c8c6d6875d26f939cf517408a2f81f8ef2dca1885ce9b9166bca6270b92d"
+      },
+      "after": {
+        "core_fraction": 0.5978056426332289,
+        "outer_fraction": 0.5361305361305362,
+        "height_sha256": "a1964fce95821e905c16173550c8bd6bd0bb23356edc0b0b6e858e5707e82d9c"
+      }
+    },
+    {
+      "zone": "drift_scorch_001",
+      "profile": "tribulation_scorch",
+      "core_samples": 3521,
+      "outer_samples": 2360,
+      "baseline_recipe": "TerrainRecipe(name='tribulation_scorch', base_height=88.0, base_noise=(NoiseLayer(kind='fbm', scale=85, amplitude=2.5, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=83, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(), sea_level=61.0, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.3873899460380574,
+        "outer_fraction": 0.24322033898305084,
+        "height_sha256": "44dbed7d52e911cc51445302817fa6f2f94f2da786e65c2895c8064d3d8f1c40"
+      },
+      "after": {
+        "core_fraction": 0.6171542175518319,
+        "outer_fraction": 0.5529661016949152,
+        "height_sha256": "1c87075b6aa9625865d0cc53f2c61dd1458824518e51c0cedf3ab6a6359df0b6"
+      }
+    },
+    {
+      "zone": "youan_depths",
+      "profile": "cave_network",
+      "core_samples": 3704,
+      "outer_samples": 2447,
+      "baseline_recipe": "TerrainRecipe(name='cave_network', base_height=84, base_noise=(NoiseLayer(kind='fbm', scale=170, amplitude=8, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=113, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(CaveNetwork(name='youan_depths/level_1', paths=((Point(x=2000.0, z=3000.0), Point(x=2120.0, z=3080.0)), (Point(x=2000.0, z=3000.0), Point(x=1820.0, z=3160.0)), (Point(x=2000.0, z=3000.0), Point(x=2420.0, z=3400.0)), (Point(x=2000.0, z=3000.0), Point(x=1664.0, z=2856.0)), (Point(x=2000.0, z=3000.0), Point(x=2324.0, z=3180.0))), width=5.0, height=8, depth=64.0, noise_strength=0.06, sdf_threshold=0.0, roof_thickness=4, vertical_scale=24.0, worm_threshold=0.55, dead_end_strength=0.25, vertical_warp=1.5, domain_warp_scale=180.0, domain_warp_strength=1.5, branch_count=4, branch_segments=3, branch_length=156.0, branch_turn=0.65, chamber_count=2, chamber_radius=18, chamber_height=8, smooth_union=0.8, entrance_count=0, entrance_radius=4, chamber_centers=(Point(x=2120.0, z=3080.0), Point(x=1820.0, z=3160.0), Point(x=2420.0, z=3400.0)), entrance_points=(Point(x=2000.0, z=3000.0),), worm_noise=NoiseLayer(kind='fbm', scale=150.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), vertical_warp_noise=NoiseLayer(kind='fbm', scale=320.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), roughness=NoiseLayer(kind='value', scale=72.0, amplitude=1.0, octaves=1, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), fill_vertical_gaps=True),), sea_level=61, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.2602591792656587,
+        "outer_fraction": 0.22313036371066614,
+        "height_sha256": "6f529ef8df0dda720240a506df817396b7a68194c35d81a413145fdd66e015f6"
+      },
+      "after": {
+        "core_fraction": 0.7346112311015118,
+        "outer_fraction": 0.8442991418062934,
+        "height_sha256": "610500899199eda7e7e0f12394168865678e4507c3f154215a9bac095f300b8a"
+      }
+    },
+    {
+      "zone": "wuxing_abyss",
+      "profile": "abyssal_maze",
+      "core_samples": 3598,
+      "outer_samples": 2401,
+      "baseline_recipe": "TerrainRecipe(name='abyssal_maze', base_height=90, base_noise=(NoiseLayer(kind='ridge', scale=190, amplitude=12, octaves=4, lacunarity=2.0, gain=0.5, seed_offset=127, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(CaveNetwork(name='wuxing_abyss/level_1', paths=((Point(x=5250.0, z=1400.0), Point(x=5200.0, z=1480.0)), (Point(x=5250.0, z=1400.0), Point(x=5480.0, z=1820.0)), (Point(x=5250.0, z=1400.0), Point(x=4880.0, z=780.0)), (Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), (Point(x=5250.0, z=1400.0), Point(x=4830.0, z=1220.0)), (Point(x=5250.0, z=1400.0), Point(x=5655.0, z=1625.0))), width=6.5, height=8, depth=34.0, noise_strength=0.06, sdf_threshold=0.0, roof_thickness=4, vertical_scale=24.0, worm_threshold=0.55, dead_end_strength=0.25, vertical_warp=1.5, domain_warp_scale=180.0, domain_warp_strength=1.5, branch_count=4, branch_segments=3, branch_length=195.0, branch_turn=0.65, chamber_count=2, chamber_radius=18, chamber_height=8, smooth_union=0.8, entrance_count=0, entrance_radius=4, chamber_centers=(Point(x=5200.0, z=1480.0), Point(x=5480.0, z=1820.0), Point(x=4880.0, z=780.0)), entrance_points=(Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), worm_noise=NoiseLayer(kind='fbm', scale=150.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), vertical_warp_noise=NoiseLayer(kind='fbm', scale=320.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), roughness=NoiseLayer(kind='value', scale=72.0, amplitude=1.0, octaves=1, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), fill_vertical_gaps=True), CaveNetwork(name='wuxing_abyss/level_2', paths=((Point(x=5250.0, z=1400.0), Point(x=5200.0, z=1480.0)), (Point(x=5250.0, z=1400.0), Point(x=5480.0, z=1820.0)), (Point(x=5250.0, z=1400.0), Point(x=4880.0, z=780.0)), (Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), (Point(x=5250.0, z=1400.0), Point(x=4830.0, z=1220.0)), (Point(x=5250.0, z=1400.0), Point(x=5655.0, z=1625.0))), width=6.5, height=8, depth=72.0, noise_strength=0.06, sdf_threshold=0.0, roof_thickness=4, vertical_scale=24.0, worm_threshold=0.55, dead_end_strength=0.25, vertical_warp=1.5, domain_warp_scale=180.0, domain_warp_strength=1.5, branch_count=4, branch_segments=3, branch_length=195.0, branch_turn=0.65, chamber_count=2, chamber_radius=18, chamber_height=8, smooth_union=0.8, entrance_count=0, entrance_radius=4, chamber_centers=(Point(x=5200.0, z=1480.0), Point(x=5480.0, z=1820.0), Point(x=4880.0, z=780.0)), entrance_points=(Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), worm_noise=NoiseLayer(kind='fbm', scale=150.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), vertical_warp_noise=NoiseLayer(kind='fbm', scale=320.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), roughness=NoiseLayer(kind='value', scale=72.0, amplitude=1.0, octaves=1, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), fill_vertical_gaps=True), CaveNetwork(name='wuxing_abyss/level_3', paths=((Point(x=5250.0, z=1400.0), Point(x=5200.0, z=1480.0)), (Point(x=5250.0, z=1400.0), Point(x=5480.0, z=1820.0)), (Point(x=5250.0, z=1400.0), Point(x=4880.0, z=780.0)), (Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), (Point(x=5250.0, z=1400.0), Point(x=4830.0, z=1220.0)), (Point(x=5250.0, z=1400.0), Point(x=5655.0, z=1625.0))), width=6.5, height=8, depth=112.0, noise_strength=0.06, sdf_threshold=0.0, roof_thickness=4, vertical_scale=24.0, worm_threshold=0.55, dead_end_strength=0.25, vertical_warp=1.5, domain_warp_scale=180.0, domain_warp_strength=1.5, branch_count=4, branch_segments=3, branch_length=195.0, branch_turn=0.65, chamber_count=2, chamber_radius=18, chamber_height=8, smooth_union=0.8, entrance_count=0, entrance_radius=4, chamber_centers=(Point(x=5200.0, z=1480.0), Point(x=5480.0, z=1820.0), Point(x=4880.0, z=780.0)), entrance_points=(Point(x=5250.0, z=1400.0), Point(x=5600.0, z=2100.0)), worm_noise=NoiseLayer(kind='fbm', scale=150.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), vertical_warp_noise=NoiseLayer(kind='fbm', scale=320.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), roughness=NoiseLayer(kind='value', scale=72.0, amplitude=1.0, octaves=1, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), fill_vertical_gaps=True)), sea_level=61, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.311561978877154,
+        "outer_fraction": 0.09496043315285298,
+        "height_sha256": "8a4195d20ceda252756e3e100205a698cf84db6ca541e8676575ecfd25b1061a"
+      },
+      "after": {
+        "core_fraction": 0.8046136742634797,
+        "outer_fraction": 0.7909204498125781,
+        "height_sha256": "86b478d63e49e140952b9ba9959cbf67d217614a08eff22e01c7c299377bfe51"
+      }
+    },
+    {
+      "zone": "baolongwang_cavern_deep",
+      "profile": "cave_network",
+      "core_samples": 2241,
+      "outer_samples": 1648,
+      "baseline_recipe": "TerrainRecipe(name='cave_network', base_height=84, base_noise=(NoiseLayer(kind='fbm', scale=170, amplitude=8, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=113, warp_scale=1200.0, warp_strength=0.0),), basins=(), mountains=(), rivers=(), caves=(CaveNetwork(name='baolongwang_cavern_deep/level_1', paths=((Point(x=1750.0, z=-5150.0), Point(x=1750.0, z=-5100.0)), (Point(x=1750.0, z=-5150.0), Point(x=1750.0, z=-5200.0)), (Point(x=1750.0, z=-5150.0), Point(x=1610.0, z=-5210.0)), (Point(x=1750.0, z=-5150.0), Point(x=1885.0, z=-5075.0))), width=5.0, height=8, depth=122.5, noise_strength=0.06, sdf_threshold=0.0, roof_thickness=4, vertical_scale=24.0, worm_threshold=0.55, dead_end_strength=0.25, vertical_warp=1.5, domain_warp_scale=180.0, domain_warp_strength=1.5, branch_count=4, branch_segments=3, branch_length=65.0, branch_turn=0.65, chamber_count=2, chamber_radius=17.5, chamber_height=8, smooth_union=0.8, entrance_count=0, entrance_radius=4, chamber_centers=(Point(x=1750.0, z=-5100.0), Point(x=1750.0, z=-5200.0)), entrance_points=(Point(x=1610.0, z=-5210.0),), worm_noise=NoiseLayer(kind='fbm', scale=150.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), vertical_warp_noise=NoiseLayer(kind='fbm', scale=320.0, amplitude=1.0, octaves=2, lacunarity=2.0, gain=0.55, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), roughness=NoiseLayer(kind='value', scale=72.0, amplitude=1.0, octaves=1, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), fill_vertical_gaps=True),), sea_level=61, moisture_noise=NoiseLayer(kind='fbm', scale=1800.0, amplitude=1.0, octaves=3, lacunarity=2.0, gain=0.5, seed_offset=0, warp_scale=1200.0, warp_strength=0.0), plateaus=(), floating_islands=())",
+      "before": {
+        "core_fraction": 0.18340026773761714,
+        "outer_fraction": 0.22330097087378642,
+        "height_sha256": "c77584890396690b2d7059067aaedf31f14e5d439a1e79223c4d29b0cc24d899"
+      },
+      "after": {
+        "core_fraction": 0.6474788041053101,
+        "outer_fraction": 0.7493932038834952,
+        "height_sha256": "fc8437809369cce8559902ad34dce7335ce027c10c8461692b1c1cb9129f4e8b"
+      }
+    }
+  ]
+}

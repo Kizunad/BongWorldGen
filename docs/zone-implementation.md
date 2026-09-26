@@ -587,3 +587,41 @@ MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
 .venv/bin/pytest -q tests/test_zone_scorch_surface.py tests/test_minecraft_world.py
 .venv/bin/pytest -q
 ```
+
+第三十五步：按调度新任务卡重生成两张验收图，Before 使用本次指定的 `0d49bc7`
+完整结果，两侧统一 45–310 高程色标、相同采样坐标且默认不画边界线。
+当前总览 `generated/zone-evidence/profiles.png` 为 2080×2730，前后对照
+`generated/zone-evidence/profiles-before-after.png` 为 1560×3094。PNG 已完整解码验证；
+新版仍由调度看图复验，不把数值门禁当成新的肉眼验收结论。
+
+新增 `tools/zone_coverage_evidence.py`，用完全相同基础高度／噪声作为参照，统计
+塑形造成超过 6 格高差的面积。97×97 整数采样的主体覆盖（weight >0.99）如下：
+
+| 区域 | Before | After | 外围 Before → After |
+|---|---:|---:|---:|
+| 幽暗地穴 | 26.0% | 73.5% | 22.3% → 84.4% |
+| 暴龙王巢穴 | 18.3% | 64.7% | 22.3% → 74.9% |
+| 无垠深渊 | 31.2% | 80.5% | 9.5% → 79.1% |
+| 血谷东陲焦土 | 26.7% | 49.0% | 13.1% → 41.7% |
+| 北荒东陲焦土 | 36.8% | 59.8% | 22.2% → 53.6% |
+| 游离焦土 | 38.7% | 61.7% | 24.3% → 55.3% |
+
+外围指按区域大小归一化后的半径 >0.25，单独计量以防特征仍只集中在中心。
+记录：`docs/evidence/zone-landform-coverage-2026-09-26.json`。该指标依赖前后基础
+高度／噪声不变，本轮满足此条件。空间形态仍由多处坑缘、长槽横断面、坑间高地
+契约分别约束，不能仅靠面积比例代替。
+
+27 个区域、15 类地貌、78 个 POI 已重新采样，六层（含地表材质）分块严格相等；
+灰烬死地的原六个采样数组与 Before 完全相同。完整统计及报告／图像 SHA-256：
+`docs/evidence/zone-review-coverage-2026-09-26.json`，对应生成代码提交 `31f65a3`。
+
+```bash
+.venv/bin/python tools/zone_evidence.py --output generated/zone-evidence
+MPLCONFIGDIR="$PWD/generated/.mplcache" python3 tools/plot_zone_evidence.py \
+  generated/zone-evidence --compare generated/zone-evidence-0d49bc7
+.venv/bin/python tools/zone_coverage_evidence.py \
+  --before generated/zone-evidence-0d49bc7 --after generated/zone-evidence \
+  --output generated/zone-coverage/report.json
+```
+
+任务卡 `.task-zone-resume.md`、`.task-zone-next.md`、`.task-zone-review-0926.md` 均不提交。
